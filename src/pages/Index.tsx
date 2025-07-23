@@ -1,14 +1,48 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { LoginPage } from "@/components/LoginPage";
+import { Dashboard } from "@/components/Dashboard";
+import { CustomerManagement } from "@/components/CustomerManagement";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [currentView, setCurrentView] = useState<"login" | "dashboard" | string>("login");
+  const [userType, setUserType] = useState<string>("");
+
+  const handleLogin = (type: string) => {
+    setUserType(type);
+    setCurrentView("dashboard");
+  };
+
+  const handleLogout = () => {
+    setCurrentView("login");
+    setUserType("");
+  };
+
+  const handleNavigate = (module: string) => {
+    if (module === "Customer Profiles" || module === "Add Customer") {
+      setCurrentView("customer-management");
+    } else {
+      // For now, just show an alert for other modules
+      alert(`${module} module coming soon!`);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentView("dashboard");
+  };
+
+  if (currentView === "login") {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (currentView === "dashboard") {
+    return <Dashboard onLogout={handleLogout} onNavigate={handleNavigate} />;
+  }
+
+  if (currentView === "customer-management") {
+    return <CustomerManagement onBack={handleBack} />;
+  }
+
+  return null;
 };
 
 export default Index;
