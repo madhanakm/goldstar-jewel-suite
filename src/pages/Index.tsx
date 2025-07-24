@@ -2,6 +2,11 @@ import { useState } from "react";
 import { LoginPage } from "@/components/LoginPage";
 import { Dashboard } from "@/components/Dashboard";
 import { CustomerManagement } from "@/components/CustomerManagement";
+import { InventoryManagement } from "@/components/InventoryManagement";
+import { SalesBilling } from "@/components/SalesBilling";
+import { PurchaseManagement } from "@/components/PurchaseManagement";
+import { FinancialModules } from "@/components/FinancialModules";
+import { AnalyticsReports } from "@/components/AnalyticsReports";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<"login" | "dashboard" | string>("login");
