@@ -26,16 +26,29 @@ const Index = () => {
     switch (module) {
       case "Customer Profiles":
       case "Add Customer":
+      case "KYC Management":
+      case "Purchase History":
+      case "Loyalty & Referrals":
         setCurrentView("customer-management");
         break;
+      case "Inventory Management":
+      case "Stock Tracking":
+      case "Barcode System":
+      case "Real-time Updates":
       case "Product Inventory":
       case "Stock Management":
       case "Barcode Generation":
+      case "Stock Check":
         setCurrentView("inventory-management");
         break;
       case "Sales Billing":
+      case "Retail Billing":
       case "Invoice Generation":
       case "Quotation Management":
+      case "Making Charges":
+      case "Old Gold Exchange":
+      case "Payment Methods":
+      case "New Sale":
         setCurrentView("sales-billing");
         break;
       case "Purchase Orders":
@@ -43,15 +56,20 @@ const Index = () => {
       case "Raw Material Inward":
         setCurrentView("purchase-management");
         break;
+      case "Gold Loan":
       case "Gold Loan Management":
       case "Advance Booking":
       case "GST Reports":
       case "Accounting":
         setCurrentView("financial-modules");
         break;
+      case "Business Dashboard":
+      case "Stock Reports":
+      case "Customer Analytics":
+      case "Performance Metrics":
       case "Business Analytics":
       case "Sales Reports":
-      case "Stock Reports":
+      case "Daily Report":
         setCurrentView("analytics-reports");
         break;
       default:
