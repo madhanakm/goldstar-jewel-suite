@@ -23,11 +23,39 @@ const Index = () => {
   };
 
   const handleNavigate = (module: string) => {
-    if (module === "Customer Profiles" || module === "Add Customer") {
-      setCurrentView("customer-management");
-    } else {
-      // For now, just show an alert for other modules
-      alert(`${module} module coming soon!`);
+    switch (module) {
+      case "Customer Profiles":
+      case "Add Customer":
+        setCurrentView("customer-management");
+        break;
+      case "Product Inventory":
+      case "Stock Management":
+      case "Barcode Generation":
+        setCurrentView("inventory-management");
+        break;
+      case "Sales Billing":
+      case "Invoice Generation":
+      case "Quotation Management":
+        setCurrentView("sales-billing");
+        break;
+      case "Purchase Orders":
+      case "Vendor Management":
+      case "Raw Material Inward":
+        setCurrentView("purchase-management");
+        break;
+      case "Gold Loan Management":
+      case "Advance Booking":
+      case "GST Reports":
+      case "Accounting":
+        setCurrentView("financial-modules");
+        break;
+      case "Business Analytics":
+      case "Sales Reports":
+      case "Stock Reports":
+        setCurrentView("analytics-reports");
+        break;
+      default:
+        alert(`${module} module coming soon!`);
     }
   };
 
@@ -45,6 +73,26 @@ const Index = () => {
 
   if (currentView === "customer-management") {
     return <CustomerManagement onBack={handleBack} />;
+  }
+
+  if (currentView === "inventory-management") {
+    return <InventoryManagement onBack={handleBack} />;
+  }
+
+  if (currentView === "sales-billing") {
+    return <SalesBilling onBack={handleBack} />;
+  }
+
+  if (currentView === "purchase-management") {
+    return <PurchaseManagement onBack={handleBack} />;
+  }
+
+  if (currentView === "financial-modules") {
+    return <FinancialModules onBack={handleBack} />;
+  }
+
+  if (currentView === "analytics-reports") {
+    return <AnalyticsReports onBack={handleBack} />;
   }
 
   return null;
