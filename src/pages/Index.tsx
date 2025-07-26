@@ -4,6 +4,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { CustomerManagement } from "@/components/CustomerManagement";
 import { InventoryManagement } from "@/components/InventoryManagement";
 import { SalesBilling } from "@/components/SalesBilling";
+import { SilverSpecialBilling } from "@/components/SilverSpecialBilling";
 import { PurchaseManagement } from "@/components/PurchaseManagement";
 import { FinancialModules } from "@/components/FinancialModules";
 import { AnalyticsReports } from "@/components/AnalyticsReports";
@@ -50,6 +51,11 @@ const Index = () => {
       case "Payment Methods":
       case "New Sale":
         setCurrentView("sales-billing");
+        break;
+      case "Silver Billing":
+      case "Silver Sales":
+      case "Silver Exchange":
+        setCurrentView("silver-billing");
         break;
       case "Purchase Orders":
       case "Vendor Management":
@@ -99,6 +105,10 @@ const Index = () => {
 
   if (currentView === "sales-billing") {
     return <SalesBilling onBack={handleBack} />;
+  }
+
+  if (currentView === "silver-billing") {
+    return <SilverSpecialBilling onBack={handleBack} />;
   }
 
   if (currentView === "purchase-management") {

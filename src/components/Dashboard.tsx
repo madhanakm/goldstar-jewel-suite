@@ -50,6 +50,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
       category: "Sales & Billing",
       items: [
         { name: "Retail Billing", icon: ShoppingCart, description: "GST compliant billing system", color: "bg-rose-500" },
+        { name: "Silver Billing", icon: Gem, description: "Specialized silver jewelry billing", color: "bg-slate-400" },
         { name: "Making Charges", icon: Calculator, description: "Configure charges and wastage", color: "bg-amber-500" },
         { name: "Old Gold Exchange", icon: Gem, description: "Buy-back and exchange management", color: "bg-yellow-500" },
         { name: "Payment Methods", icon: CreditCard, description: "Cash, UPI, Card, and credit sales", color: "bg-pink-500" }

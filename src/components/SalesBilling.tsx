@@ -55,8 +55,13 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
   const mockProducts = [
     { id: "1", name: "Gold Ring 22K", category: "Gold", weight: 5.5, purity: "22K", rate: 5200, makingCharges: 500 },
     { id: "2", name: "Gold Chain 18K", category: "Gold", weight: 12.2, purity: "18K", rate: 4800, makingCharges: 1200 },
-    { id: "3", name: "Silver Bangles", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300 },
-    { id: "4", name: "Diamond Earrings", category: "Diamond", weight: 2.1, purity: "VVS1", rate: 85000, makingCharges: 2000 },
+    { id: "3", name: "Silver Bangles Set", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300 },
+    { id: "4", name: "Silver Necklace Chain", category: "Silver", weight: 28.5, purity: "925", rate: 78, makingCharges: 250 },
+    { id: "5", name: "Silver Earrings Studs", category: "Silver", weight: 8.2, purity: "925", rate: 80, makingCharges: 150 },
+    { id: "6", name: "Silver Rings Collection", category: "Silver", weight: 12.0, purity: "925", rate: 82, makingCharges: 180 },
+    { id: "7", name: "Silver Anklets Pair", category: "Silver", weight: 35.0, purity: "925", rate: 76, makingCharges: 280 },
+    { id: "8", name: "Silver Bracelets", category: "Silver", weight: 22.5, purity: "925", rate: 79, makingCharges: 220 },
+    { id: "9", name: "Diamond Earrings", category: "Diamond", weight: 2.1, purity: "VVS1", rate: 85000, makingCharges: 2000 },
   ];
 
   const mockBills: Bill[] = [
@@ -88,6 +93,37 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
       gst: 1739,
       total: 59499,
       paymentMethod: "Card",
+      status: "Paid"
+    },
+    {
+      id: "INV003",
+      customerName: "Meera Patel",
+      customerPhone: "+91 99887 76543",
+      date: "2024-01-16",
+      items: [
+        { id: "3", itemName: "Silver Bangles Set", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300, quantity: 1, total: 3675 },
+        { id: "4", itemName: "Silver Necklace Chain", category: "Silver", weight: 28.5, purity: "925", rate: 78, makingCharges: 250, quantity: 1, total: 2473 }
+      ],
+      subtotal: 6148,
+      discount: 200,
+      gst: 178,
+      total: 6126,
+      paymentMethod: "Cash",
+      status: "Paid"
+    },
+    {
+      id: "INV004",
+      customerName: "Anita Singh",
+      customerPhone: "+91 88776 65432",
+      date: "2024-01-17",
+      items: [
+        { id: "5", itemName: "Silver Earrings Studs", category: "Silver", weight: 8.2, purity: "925", rate: 80, makingCharges: 150, quantity: 2, total: 1364 }
+      ],
+      subtotal: 1364,
+      discount: 50,
+      gst: 39,
+      total: 1353,
+      paymentMethod: "UPI",
       status: "Paid"
     }
   ];

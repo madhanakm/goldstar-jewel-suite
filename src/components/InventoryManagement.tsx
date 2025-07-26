@@ -39,18 +39,30 @@ export const InventoryManagement = ({ onBack }: InventoryManagementProps) => {
   const mockInventory: InventoryItem[] = [
     { id: "1", category: "Gold", itemName: "Gold Ring 22K", weight: 5.5, purity: "22K", quantity: 25, rate: 5200, value: 143000, barcode: "GR22001", location: "Shelf A1", status: "In Stock" },
     { id: "2", category: "Gold", itemName: "Gold Chain 18K", weight: 12.2, purity: "18K", quantity: 8, rate: 4800, value: 469440, barcode: "GC18001", location: "Shelf A2", status: "Low Stock" },
-    { id: "3", category: "Silver", itemName: "Silver Bangles", weight: 45.0, purity: "925", quantity: 50, rate: 75, value: 168750, barcode: "SB925001", location: "Shelf B1", status: "In Stock" },
-    { id: "4", category: "Diamond", itemName: "Diamond Earrings", weight: 2.1, purity: "VVS1", quantity: 3, rate: 85000, value: 535500, barcode: "DE001", location: "Safe C1", status: "Low Stock" },
-    { id: "5", category: "Platinum", itemName: "Platinum Ring", weight: 8.5, purity: "950", quantity: 12, rate: 3200, value: 326400, barcode: "PR950001", location: "Shelf D1", status: "In Stock" }
+    { id: "3", category: "Silver", itemName: "Silver Bangles Set", weight: 45.0, purity: "925", quantity: 50, rate: 75, value: 168750, barcode: "SB925001", location: "Shelf B1", status: "In Stock" },
+    { id: "4", category: "Silver", itemName: "Silver Necklace Chain", weight: 28.5, purity: "925", quantity: 15, rate: 78, value: 33345, barcode: "SN925002", location: "Shelf B2", status: "In Stock" },
+    { id: "5", category: "Silver", itemName: "Silver Earrings Studs", weight: 8.2, purity: "925", quantity: 25, rate: 80, value: 16400, barcode: "SE925003", location: "Shelf B3", status: "In Stock" },
+    { id: "6", category: "Silver", itemName: "Silver Rings Collection", weight: 12.0, purity: "925", quantity: 30, rate: 82, value: 29520, barcode: "SR925004", location: "Shelf B4", status: "In Stock" },
+    { id: "7", category: "Silver", itemName: "Silver Anklets Pair", weight: 35.0, purity: "925", quantity: 8, rate: 76, value: 21280, barcode: "SA925005", location: "Shelf B5", status: "Low Stock" },
+    { id: "8", category: "Silver", itemName: "Silver Bracelets", weight: 22.5, purity: "925", quantity: 12, rate: 79, value: 21285, barcode: "SBR925006", location: "Shelf B6", status: "In Stock" },
+    { id: "9", category: "Silver", itemName: "Silver Pendant Lockets", weight: 15.8, purity: "925", quantity: 20, rate: 85, value: 26860, barcode: "SP925007", location: "Shelf B7", status: "In Stock" },
+    { id: "10", category: "Silver", itemName: "Silver Toe Rings", weight: 6.5, purity: "925", quantity: 40, rate: 77, value: 20020, barcode: "STR925008", location: "Shelf B8", status: "In Stock" },
+    { id: "11", category: "Diamond", itemName: "Diamond Earrings", weight: 2.1, purity: "VVS1", quantity: 3, rate: 85000, value: 535500, barcode: "DE001", location: "Safe C1", status: "Low Stock" },
+    { id: "12", category: "Platinum", itemName: "Platinum Ring", weight: 8.5, purity: "950", quantity: 12, rate: 3200, value: 326400, barcode: "PR950001", location: "Shelf D1", status: "In Stock" }
   ];
 
   const categories = ["Gold", "Silver", "Diamond", "Platinum", "Stones", "Others"];
   const purities = {
     Gold: ["24K", "22K", "18K", "14K"],
-    Silver: ["999", "925", "900"],
+    Silver: ["999", "925", "900", "835", "800"],
     Diamond: ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2"],
     Platinum: ["999", "950", "900"]
   };
+
+  const silverCategories = [
+    "Bangles", "Necklaces", "Earrings", "Rings", "Anklets", 
+    "Bracelets", "Pendants", "Toe Rings", "Chains", "Sets"
+  ];
 
   const filteredInventory = mockInventory.filter(item => {
     const matchesSearch = item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
