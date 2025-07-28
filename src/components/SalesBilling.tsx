@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Plus, Minus, Printer, Calculator, CreditCard, Banknote, Smartphone, Receipt } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ShoppingCart, Plus, Minus, Printer, Calculator, CreditCard, Banknote, Smartphone, Receipt, Scan, Gem, Crown, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 interface SalesBillingProps {
   onBack: () => void;
@@ -51,18 +53,31 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [isNewBillOpen, setIsNewBillOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("general");
+  const [oldSilverExchange, setOldSilverExchange] = useState(false);
+  const [oldSilverWeight, setOldSilverWeight] = useState(0);
+  const [oldSilverRate, setOldSilverRate] = useState(70);
+  const [gstEnabled, setGstEnabled] = useState(true);
 
-  const mockProducts = [
-    { id: "1", name: "Gold Ring 22K", category: "Gold", weight: 5.5, purity: "22K", rate: 5200, makingCharges: 500 },
-    { id: "2", name: "Gold Chain 18K", category: "Gold", weight: 12.2, purity: "18K", rate: 4800, makingCharges: 1200 },
-    { id: "3", name: "Silver Bangles Set", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300 },
-    { id: "4", name: "Silver Necklace Chain", category: "Silver", weight: 28.5, purity: "925", rate: 78, makingCharges: 250 },
-    { id: "5", name: "Silver Earrings Studs", category: "Silver", weight: 8.2, purity: "925", rate: 80, makingCharges: 150 },
-    { id: "6", name: "Silver Rings Collection", category: "Silver", weight: 12.0, purity: "925", rate: 82, makingCharges: 180 },
-    { id: "7", name: "Silver Anklets Pair", category: "Silver", weight: 35.0, purity: "925", rate: 76, makingCharges: 280 },
-    { id: "8", name: "Silver Bracelets", category: "Silver", weight: 22.5, purity: "925", rate: 79, makingCharges: 220 },
-    { id: "9", name: "Diamond Earrings", category: "Diamond", weight: 2.1, purity: "VVS1", rate: 85000, makingCharges: 2000 },
+  const goldProducts = [
+    { id: "1", name: "Gold Ring 22K", category: "Gold", weight: 5.5, purity: "22K", rate: 5200, makingCharges: 500, barcode: "GLD001" },
+    { id: "2", name: "Gold Chain 18K", category: "Gold", weight: 12.2, purity: "18K", rate: 4800, makingCharges: 1200, barcode: "GLD002" },
+    { id: "9", name: "Diamond Earrings", category: "Diamond", weight: 2.1, purity: "VVS1", rate: 85000, makingCharges: 2000, barcode: "DMD001" },
   ];
+
+  const silverProducts = [
+    { id: "3", name: "Silver Bangles Set", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300, wastage: 5, barcode: "SLV001" },
+    { id: "4", name: "Silver Necklace Chain", category: "Silver", weight: 28.5, purity: "925", rate: 78, makingCharges: 250, wastage: 3, barcode: "SLV002" },
+    { id: "5", name: "Silver Earrings Studs", category: "Silver", weight: 8.2, purity: "925", rate: 80, makingCharges: 150, wastage: 2, barcode: "SLV003" },
+    { id: "6", name: "Silver Rings Collection", category: "Silver", weight: 12.0, purity: "925", rate: 82, makingCharges: 180, wastage: 2, barcode: "SLV004" },
+    { id: "7", name: "Silver Anklets Pair", category: "Silver", weight: 35.0, purity: "925", rate: 76, makingCharges: 280, wastage: 4, barcode: "SLV005" },
+    { id: "8", name: "Silver Bracelets", category: "Silver", weight: 22.5, purity: "925", rate: 79, makingCharges: 220, wastage: 3, barcode: "SLV006" },
+  ];
+
+  const allProducts = [...goldProducts, ...silverProducts];
 
   const mockBills: Bill[] = [
     {
@@ -130,10 +145,17 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
 
   const addToBill = (product: any) => {
     const existingItem = currentBill.find(item => item.id === product.id);
+    
+    // Calculate total based on product type (silver has wastage)
+    const wastageAmount = product.wastage ? (product.weight * product.wastage) / 100 : 0;
+    const totalWeight = product.weight + wastageAmount;
+    const basePrice = totalWeight * product.rate;
+    const itemTotal = basePrice + product.makingCharges;
+    
     if (existingItem) {
       setCurrentBill(currentBill.map(item =>
         item.id === product.id
-          ? { ...item, quantity: item.quantity + 1, total: (item.weight * item.rate + item.makingCharges) * (item.quantity + 1) }
+          ? { ...item, quantity: item.quantity + 1, total: itemTotal * (item.quantity + 1) }
           : item
       ));
     } else {
@@ -146,7 +168,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
         rate: product.rate,
         makingCharges: product.makingCharges,
         quantity: 1,
-        total: product.weight * product.rate + product.makingCharges
+        total: itemTotal
       };
       setCurrentBill([...currentBill, newItem]);
     }
@@ -154,6 +176,35 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
       title: "Item Added",
       description: `${product.name} added to bill`,
     });
+  };
+
+  const handleBarcodeScanned = (barcode: string) => {
+    setScannedBarcode(barcode);
+    setIsScannerOpen(false);
+    
+    // Clean and normalize barcode
+    const cleanBarcode = barcode.trim().toUpperCase();
+    
+    // Find product by barcode or product ID
+    const product = allProducts.find(p => 
+      p.barcode.toUpperCase() === cleanBarcode || 
+      p.id === cleanBarcode ||
+      p.name.toUpperCase().includes(cleanBarcode)
+    );
+    
+    if (product) {
+      addToBill(product);
+      toast({
+        title: "✅ Product Added",
+        description: `${product.name} (${product.barcode}) added to bill`,
+      });
+    } else {
+      toast({
+        title: "❌ Product Not Found",
+        description: `No product found with code: ${cleanBarcode}. Try manual search or check the barcode.`,
+        variant: "destructive"
+      });
+    }
   };
 
   const removeFromBill = (productId: string) => {
@@ -174,14 +225,15 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
 
   const calculateTotals = () => {
     const subtotal = currentBill.reduce((sum, item) => sum + item.total, 0);
+    const oldSilverValue = oldSilverExchange ? oldSilverWeight * oldSilverRate : 0;
     const discountAmount = discount;
-    const taxableAmount = subtotal - discountAmount;
-    const gstAmount = taxableAmount * 0.03; // 3% GST
-    const total = taxableAmount + gstAmount;
-    return { subtotal, discountAmount, gstAmount, total };
+    const taxableAmount = subtotal - discountAmount - oldSilverValue;
+    const gstAmount = gstEnabled ? taxableAmount * 0.03 : 0; // 3% GST
+    const total = Math.max(0, taxableAmount + gstAmount);
+    return { subtotal, discountAmount, gstAmount, total, oldSilverValue };
   };
 
-  const { subtotal, discountAmount, gstAmount, total } = calculateTotals();
+  const { subtotal, discountAmount, gstAmount, total, oldSilverValue } = calculateTotals();
 
   const processBill = () => {
     if (currentBill.length === 0) {
@@ -211,6 +263,8 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
     setCustomerName("");
     setCustomerPhone("");
     setDiscount(0);
+    setOldSilverExchange(false);
+    setOldSilverWeight(0);
     setIsNewBillOpen(false);
   };
 
@@ -232,12 +286,19 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
               New Sale
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Sale</DialogTitle>
-              <DialogDescription>Add items and process customer sale</DialogDescription>
+              <DialogDescription>Add items and process customer sale - Gold, Silver & Diamond jewelry</DialogDescription>
             </DialogHeader>
-            <div className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="general">General Items</TabsTrigger>
+                <TabsTrigger value="gold">Gold & Diamond</TabsTrigger>
+                <TabsTrigger value="silver">Silver Jewelry</TabsTrigger>
+              </TabsList>
+              
+              <div className="space-y-6">
               {/* Customer Details */}
               <Card>
                 <CardHeader>
@@ -265,32 +326,148 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                 </CardContent>
               </Card>
 
-              {/* Product Selection */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Add Products</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {mockProducts.map(product => (
-                      <Card key={product.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="space-y-2">
-                            <h4 className="font-medium">{product.name}</h4>
-                            <p className="text-sm text-muted-foreground">{product.category} • {product.purity}</p>
-                            <p className="text-sm">Weight: {product.weight}g • Rate: ₹{product.rate}/g</p>
-                            <p className="text-sm">Making Charges: ₹{product.makingCharges}</p>
-                            <p className="font-medium">Total: ₹{(product.weight * product.rate + product.makingCharges).toLocaleString()}</p>
-                            <Button size="sm" onClick={() => addToBill(product)} className="w-full">
-                              Add to Bill
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <TabsContent value="general" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">All Products</CardTitle>
+                      <div className="flex gap-2">
+                        {scannedBarcode && (
+                          <Badge variant="outline" className="text-xs">
+                            Last: {scannedBarcode}
+                          </Badge>
+                        )}
+                        <Button onClick={() => setIsScannerOpen(true)} variant="outline" size="sm">
+                          <Scan className="w-4 h-4 mr-2" />
+                          Scan Code
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <Input
+                        placeholder="Search products by name, category, or barcode..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {allProducts
+                        .filter(product => 
+                          searchQuery === "" ||
+                          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.barcode.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map(product => (
+                        <Card key={product.id} className="border hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium">{product.name}</h4>
+                                {product.category === 'Gold' && <Crown className="w-4 h-4 text-yellow-500" />}
+                                {product.category === 'Silver' && <Gem className="w-4 h-4 text-gray-400" />}
+                                {product.category === 'Diamond' && <Star className="w-4 h-4 text-blue-500" />}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{product.category} • {product.purity}</p>
+                              <p className="text-sm">Weight: {product.weight}g • Rate: ₹{product.rate}/g</p>
+                              <p className="text-sm">Making Charges: ₹{product.makingCharges}</p>
+                              {product.wastage && <p className="text-sm text-orange-600">Wastage: {product.wastage}%</p>}
+                              <p className="text-xs text-muted-foreground">Code: {product.barcode}</p>
+                              <p className="font-medium">Total: ₹{(
+                                product.wastage ? 
+                                (product.weight + (product.weight * product.wastage) / 100) * product.rate + product.makingCharges :
+                                product.weight * product.rate + product.makingCharges
+                              ).toLocaleString()}</p>
+                              <Button size="sm" onClick={() => addToBill(product)} className="w-full">
+                                Add to Bill
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="gold" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-yellow-500" />
+                      Gold & Diamond Jewelry
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {goldProducts.map(product => (
+                        <Card key={product.id} className="border hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium">{product.name}</h4>
+                                {product.category === 'Gold' && <Crown className="w-4 h-4 text-yellow-500" />}
+                                {product.category === 'Diamond' && <Star className="w-4 h-4 text-blue-500" />}
+                              </div>
+                              <Badge variant={product.category === 'Gold' ? 'default' : 'secondary'}>{product.category}</Badge>
+                              <p className="text-sm">Purity: {product.purity} • Weight: {product.weight}g</p>
+                              <p className="text-sm">Rate: ₹{product.rate}/g • Making: ₹{product.makingCharges}</p>
+                              <p className="text-xs text-muted-foreground">Code: {product.barcode}</p>
+                              <p className="font-medium text-lg">₹{(product.weight * product.rate + product.makingCharges).toLocaleString()}</p>
+                              <Button size="sm" onClick={() => addToBill(product)} className="w-full">
+                                Add to Bill
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="silver" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Gem className="w-5 h-5 text-gray-400" />
+                      Silver Jewelry Collection
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {silverProducts.map(product => (
+                        <Card key={product.id} className="border hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium">{product.name}</h4>
+                                <Gem className="w-4 h-4 text-gray-400" />
+                              </div>
+                              <Badge variant="outline">Silver {product.purity}</Badge>
+                              <p className="text-sm">Weight: {product.weight}g • Rate: ₹{product.rate}/g</p>
+                              <p className="text-sm">Making: ₹{product.makingCharges} • Wastage: {product.wastage}%</p>
+                              <p className="text-xs text-muted-foreground">Code: {product.barcode}</p>
+                              <p className="text-sm text-orange-600">
+                                Total Weight: {(product.weight + (product.weight * product.wastage) / 100).toFixed(1)}g
+                              </p>
+                              <p className="font-medium text-lg">
+                                ₹{((product.weight + (product.weight * product.wastage) / 100) * product.rate + product.makingCharges).toLocaleString()}
+                              </p>
+                              <Button size="sm" onClick={() => addToBill(product)} className="w-full">
+                                Add to Bill
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* Current Bill */}
               {currentBill.length > 0 && (
@@ -344,6 +521,43 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
 
                     {/* Bill Summary */}
                     <div className="space-y-4">
+                      {/* Silver Exchange Option */}
+                      <Card className="bg-muted/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <Switch
+                              id="old-silver"
+                              checked={oldSilverExchange}
+                              onCheckedChange={setOldSilverExchange}
+                            />
+                            <Label htmlFor="old-silver">Old Silver Exchange</Label>
+                          </div>
+                          
+                          {oldSilverExchange && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="oldWeight">Weight (grams)</Label>
+                                <Input
+                                  type="number"
+                                  value={oldSilverWeight}
+                                  onChange={(e) => setOldSilverWeight(Number(e.target.value))}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="oldRate">Rate (per gram)</Label>
+                                <Input
+                                  type="number"
+                                  value={oldSilverRate}
+                                  onChange={(e) => setOldSilverRate(Number(e.target.value))}
+                                  placeholder="70"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                      
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="discount">Discount (₹)</Label>
@@ -369,23 +583,40 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                           </Select>
                         </div>
                       </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="gst-enabled"
+                          checked={gstEnabled}
+                          onCheckedChange={setGstEnabled}
+                        />
+                        <Label htmlFor="gst-enabled">Include GST (3%)</Label>
+                      </div>
 
-                      <div className="bg-muted p-4 rounded-lg space-y-2">
+                      <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-lg space-y-2">
                         <div className="flex justify-between">
                           <span>Subtotal:</span>
                           <span>₹{subtotal.toLocaleString()}</span>
                         </div>
+                        {oldSilverExchange && oldSilverValue > 0 && (
+                          <div className="flex justify-between text-green-600">
+                            <span>Old Silver Credit ({oldSilverWeight}g @ ₹{oldSilverRate}):</span>
+                            <span>-₹{oldSilverValue.toLocaleString()}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span>Discount:</span>
                           <span>-₹{discountAmount.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>GST (3%):</span>
-                          <span>₹{gstAmount.toFixed(2)}</span>
-                        </div>
+                        {gstEnabled && (
+                          <div className="flex justify-between">
+                            <span>GST (3%):</span>
+                            <span>₹{gstAmount.toFixed(2)}</span>
+                          </div>
+                        )}
                         <Separator />
-                        <div className="flex justify-between font-bold text-lg">
-                          <span>Total:</span>
+                        <div className="flex justify-between font-bold text-xl">
+                          <span>Final Total:</span>
                           <span>₹{total.toFixed(2)}</span>
                         </div>
                       </div>
@@ -404,6 +635,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                 </Card>
               )}
             </div>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
@@ -508,6 +740,12 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
           </Table>
         </CardContent>
       </Card>
+      
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onScan={handleBarcodeScanned}
+        onClose={() => setIsScannerOpen(false)}
+      />
     </div>
   );
 };

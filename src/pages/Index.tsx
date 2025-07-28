@@ -8,6 +8,8 @@ import { SilverSpecialBilling } from "@/components/SilverSpecialBilling";
 import { PurchaseManagement } from "@/components/PurchaseManagement";
 import { FinancialModules } from "@/components/FinancialModules";
 import { AnalyticsReports } from "@/components/AnalyticsReports";
+import { BarcodeModule } from "@/components/BarcodeModule";
+import { LockerRoomManagement } from "@/components/LockerRoomManagement";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<"login" | "dashboard" | string>("login");
@@ -39,6 +41,11 @@ const Index = () => {
       case "Product Inventory":
       case "Stock Management":
       case "Barcode Generation":
+        setCurrentView("barcode-module");
+        break;
+      case "Locker Room Management":
+        setCurrentView("locker-room-management");
+        break;
       case "Stock Check":
         setCurrentView("inventory-management");
         break;
@@ -121,6 +128,14 @@ const Index = () => {
 
   if (currentView === "analytics-reports") {
     return <AnalyticsReports onBack={handleBack} />;
+  }
+
+  if (currentView === "barcode-module") {
+    return <BarcodeModule onBack={handleBack} />;
+  }
+
+  if (currentView === "locker-room-management") {
+    return <LockerRoomManagement onBack={handleBack} />;
   }
 
   return null;

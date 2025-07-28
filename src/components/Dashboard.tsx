@@ -18,7 +18,8 @@ import {
   Receipt,
   Calculator,
   PieChart,
-  LogOut
+  LogOut,
+  Lock
 } from "lucide-react";
 
 interface DashboardProps {
@@ -43,6 +44,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
         { name: "Inventory Management", icon: Package, description: "Category-wise inventory tracking", color: "bg-emerald-500" },
         { name: "Stock Tracking", icon: Warehouse, description: "Weight and purity-wise tracking", color: "bg-teal-500" },
         { name: "Barcode System", icon: Scale, description: "Barcode generation and scanning", color: "bg-indigo-500" },
+        { name: "Locker Room Management", icon: Lock, description: "Inside/outside locker product tracking", color: "bg-gray-600" },
         { name: "Real-time Updates", icon: BarChart3, description: "Live stock and valuation updates", color: "bg-cyan-500" }
       ]
     },

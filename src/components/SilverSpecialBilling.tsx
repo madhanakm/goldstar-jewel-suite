@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Minus, Calculator, Receipt, Gem, Star, Crown } from "lucide-react";
+import { Plus, Minus, Calculator, Receipt, Gem, Star, Crown, Scan } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 interface SilverSpecialBillingProps {
   onBack: () => void;
@@ -46,16 +47,18 @@ export const SilverSpecialBilling = ({ onBack }: SilverSpecialBillingProps) => {
   const [oldSilverWeight, setOldSilverWeight] = useState(0);
   const [oldSilverRate, setOldSilverRate] = useState(70);
   const [currentSilverRate, setCurrentSilverRate] = useState(75);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState("");
 
   const silverProducts = [
-    { id: "s1", name: "925 Silver Bangles Set (6 pieces)", category: "Bangles", weight: 45.0, purity: "925", rate: 75, makingCharges: 300, wastage: 5 },
-    { id: "s2", name: "925 Silver Chain Necklace", category: "Necklaces", weight: 28.5, purity: "925", rate: 78, makingCharges: 250, wastage: 3 },
-    { id: "s3", name: "925 Silver Stud Earrings", category: "Earrings", weight: 8.2, purity: "925", rate: 80, makingCharges: 150, wastage: 2 },
-    { id: "s4", name: "925 Silver Ring Collection", category: "Rings", weight: 12.0, purity: "925", rate: 82, makingCharges: 180, wastage: 2 },
-    { id: "s5", name: "925 Silver Anklets Pair", category: "Anklets", weight: 35.0, purity: "925", rate: 76, makingCharges: 280, wastage: 4 },
-    { id: "s6", name: "925 Silver Bracelets", category: "Bracelets", weight: 22.5, purity: "925", rate: 79, makingCharges: 220, wastage: 3 },
-    { id: "s7", name: "925 Silver Pendant Locket", category: "Pendants", weight: 15.8, purity: "925", rate: 85, makingCharges: 200, wastage: 2 },
-    { id: "s8", name: "925 Silver Toe Rings Set", category: "Toe Rings", weight: 6.5, purity: "925", rate: 77, makingCharges: 120, wastage: 1 },
+    { id: "s1", name: "925 Silver Bangles Set (6 pieces)", category: "Bangles", weight: 45.0, purity: "925", rate: 75, makingCharges: 300, wastage: 5, barcode: "SLV001" },
+    { id: "s2", name: "925 Silver Chain Necklace", category: "Necklaces", weight: 28.5, purity: "925", rate: 78, makingCharges: 250, wastage: 3, barcode: "SLV002" },
+    { id: "s3", name: "925 Silver Stud Earrings", category: "Earrings", weight: 8.2, purity: "925", rate: 80, makingCharges: 150, wastage: 2, barcode: "SLV003" },
+    { id: "s4", name: "925 Silver Ring Collection", category: "Rings", weight: 12.0, purity: "925", rate: 82, makingCharges: 180, wastage: 2, barcode: "SLV004" },
+    { id: "s5", name: "925 Silver Anklets Pair", category: "Anklets", weight: 35.0, purity: "925", rate: 76, makingCharges: 280, wastage: 4, barcode: "SLV005" },
+    { id: "s6", name: "925 Silver Bracelets", category: "Bracelets", weight: 22.5, purity: "925", rate: 79, makingCharges: 220, wastage: 3, barcode: "SLV006" },
+    { id: "s7", name: "925 Silver Pendant Locket", category: "Pendants", weight: 15.8, purity: "925", rate: 85, makingCharges: 200, wastage: 2, barcode: "SLV007" },
+    { id: "s8", name: "925 Silver Toe Rings Set", category: "Toe Rings", weight: 6.5, purity: "925", rate: 77, makingCharges: 120, wastage: 1, barcode: "SLV008" },
   ];
 
   const addToBill = (product: any) => {
@@ -90,6 +93,27 @@ export const SilverSpecialBilling = ({ onBack }: SilverSpecialBillingProps) => {
       title: "Silver Item Added",
       description: `${product.name} added to bill`,
     });
+  };
+
+  const handleBarcodeScanned = (barcode: string) => {
+    setScannedBarcode(barcode);
+    setIsScannerOpen(false);
+    
+    // Find product by barcode or product ID
+    const product = silverProducts.find(p => p.barcode === barcode || p.id === barcode);
+    if (product) {
+      addToBill(product);
+      toast({
+        title: "Product Scanned Successfully",
+        description: `${product.name} (${product.barcode}) added to bill`,
+      });
+    } else {
+      toast({
+        title: "Product Not Found",
+        description: `No silver product found with barcode: ${barcode}`,
+        variant: "destructive"
+      });
+    }
   };
 
   const removeFromBill = (productId: string) => {
@@ -244,8 +268,16 @@ export const SilverSpecialBilling = ({ onBack }: SilverSpecialBillingProps) => {
               <TabsContent value="products" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Silver Jewelry Collection</CardTitle>
-                    <CardDescription>Select from our premium silver jewelry range</CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Silver Jewelry Collection</CardTitle>
+                        <CardDescription>Select from our premium silver jewelry range</CardDescription>
+                      </div>
+                      <Button onClick={() => setIsScannerOpen(true)} variant="outline" size="sm">
+                        <Scan className="w-4 h-4 mr-2" />
+                        Scan Barcode
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -262,6 +294,7 @@ export const SilverSpecialBilling = ({ onBack }: SilverSpecialBillingProps) => {
                                 <p>Weight: {product.weight}g • Purity: {product.purity}</p>
                                 <p>Rate: ₹{product.rate}/g • Making: ₹{product.makingCharges}</p>
                                 <p>Wastage: {product.wastage}% ({((product.weight * product.wastage) / 100).toFixed(1)}g)</p>
+                                <p>Barcode: {product.barcode}</p>
                               </div>
                               <div className="flex justify-between items-center">
                                 <p className="font-medium text-sm">
@@ -539,6 +572,12 @@ export const SilverSpecialBilling = ({ onBack }: SilverSpecialBillingProps) => {
           </Table>
         </CardContent>
       </Card>
+      
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onScan={handleBarcodeScanned}
+        onClose={() => setIsScannerOpen(false)}
+      />
     </div>
   );
 };
