@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gem, Shield, User } from "lucide-react";
+import { Gem, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/auth";
 
@@ -99,21 +99,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
               </Button>
             </form>
 
-            <div className="mt-6 space-y-2">
-              <div className="text-sm text-muted-foreground text-center">Demo Credentials:</div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 bg-muted rounded text-center">
-                  <Shield className="w-3 h-3 mx-auto mb-1" />
-                  <div>Admin</div>
-                  <div className="text-muted-foreground">admin@demo.com</div>
-                </div>
-                <div className="p-2 bg-muted rounded text-center">
-                  <User className="w-3 h-3 mx-auto mb-1" />
-                  <div>Staff</div>
-                  <div className="text-muted-foreground">staff@demo.com</div>
-                </div>
-              </div>
-            </div>
+
           </CardContent>
         </Card>
 
