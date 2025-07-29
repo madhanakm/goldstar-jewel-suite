@@ -17,7 +17,7 @@ export const BarcodeLabel: React.FC<BarcodeLabelProps> = ({ item, barcodeData })
   return (
     <div className="bg-white p-4 border border-gray-300 w-80 mx-auto print:shadow-none">
       <div className="text-center mb-2">
-        <h3 className="font-bold text-lg">GOLDSTAR JEWELS</h3>
+        <h3 className="font-bold text-lg">SRI CASHWAY</h3>
       </div>
       
       <div className="mb-3">
