@@ -92,8 +92,12 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Gem className="w-8 h-8 text-primary mr-3" />
-              <h1 className="text-2xl font-bold text-luxury-dark">JewelCraft</h1>
+              <img 
+                src="https://jewelapi.sricashway.com/uploads/CASHWAY_FINAL_WORK_1_18740501ca_85998da533.png" 
+                alt="Sri Cashway Logo" 
+                className="w-8 h-8 object-contain mr-3"
+              />
+              <h1 className="text-2xl font-bold text-luxury-dark">Sri Cashway</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">

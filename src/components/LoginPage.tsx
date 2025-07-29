@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Gem, Shield, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/lib/auth";
 
 interface LoginPageProps {
   onLogin: (userType: string) => void;
@@ -13,22 +14,36 @@ interface LoginPageProps {
 export const LoginPage = ({ onLogin }: LoginPageProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
-      toast({
-        title: "Login Successful",
-        description: "Welcome to JewelCraft Management System",
-      });
-      onLogin("admin"); // For demo purposes
-    } else {
+    if (!email || !password) {
       toast({
         title: "Login Failed",
         description: "Please enter valid credentials",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authService.login({ identifier: email, password });
+      toast({
+        title: "Login Successful",
+        description: "Welcome to Cashway Jewelshop Management",
+      });
+      onLogin("admin");
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "Invalid credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -37,12 +52,14 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-              <Gem className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <img 
+              src="https://jewelapi.sricashway.com/uploads/CASHWAY_FINAL_WORK_1_18740501ca_85998da533.png" 
+              alt="Sri Cashway Logo" 
+              className="w-16 h-16 object-contain"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-luxury-dark">JewelCraft</h1>
-          <p className="text-muted-foreground mt-2">Jewelry Management System</p>
+          <h1 className="text-3xl font-bold text-luxury-dark">Sri Cashway</h1>
+          <p className="text-muted-foreground mt-2">Cashway Jewelshop Management</p>
         </div>
 
         <Card className="shadow-2xl border-luxury-gold/20">
@@ -59,7 +76,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@jewelcraft.com"
+                  placeholder="admin@cashway.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="border-luxury-gold/30 focus:border-luxury-gold"
@@ -76,9 +93,9 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
                   className="border-luxury-gold/30 focus:border-luxury-gold"
                 />
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
                 <User className="w-4 h-4 mr-2" />
-                Sign In
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 

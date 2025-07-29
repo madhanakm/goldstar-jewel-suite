@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoginPage } from "@/components/LoginPage";
 import { Dashboard } from "@/components/Dashboard";
+import { authService } from "@/lib/auth";
 import { CustomerManagement } from "@/components/CustomerManagement";
 import { InventoryManagement } from "@/components/InventoryManagement";
 import { SalesBilling } from "@/components/SalesBilling";
@@ -14,6 +15,16 @@ import { LockerRoomManagement } from "@/components/LockerRoomManagement";
 const Index = () => {
   const [currentView, setCurrentView] = useState<"login" | "dashboard" | string>("login");
   const [userType, setUserType] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is already authenticated on app load
+    if (authService.isAuthenticated()) {
+      setUserType("admin");
+      setCurrentView("dashboard");
+    }
+    setIsLoading(false);
+  }, []);
 
   const handleLogin = (type: string) => {
     setUserType(type);
@@ -21,6 +32,7 @@ const Index = () => {
   };
 
   const handleLogout = () => {
+    authService.logout();
     setCurrentView("login");
     setUserType("");
   };
@@ -93,6 +105,17 @@ const Index = () => {
   const handleBack = () => {
     setCurrentView("dashboard");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (currentView === "login") {
     return <LoginPage onLogin={handleLogin} />;
