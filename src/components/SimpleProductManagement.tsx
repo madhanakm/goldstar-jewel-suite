@@ -26,11 +26,7 @@ interface SimpleProduct {
 }
 
 export const SimpleProductManagement: React.FC<SimpleProductManagementProps> = ({ onBack }) => {
-  const [products, setProducts] = useState<SimpleProduct[]>([
-    { id: 1, name: 'Gold Ring', sku: 'GR001', category: 'Ring', price: 25000, stock: 5, status: 'active' },
-    { id: 2, name: 'Diamond Necklace', sku: 'DN001', category: 'Necklace', price: 85000, stock: 2, status: 'active' },
-    { id: 3, name: 'Silver Earrings', sku: 'SE001', category: 'Earring', price: 3500, stock: 0, status: 'out_of_stock' },
-  ]);
+  const [products, setProducts] = useState<SimpleProduct[]>([]);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');

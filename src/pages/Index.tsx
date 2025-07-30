@@ -13,6 +13,7 @@ import { BarcodeModule } from "@/components/BarcodeModule";
 import { ProductModuleWithBarcode } from "@/components/ProductModuleWithBarcode";
 import { ProductModule } from "@/components/ProductModule";
 import { SimpleProductManagement } from "@/components/SimpleProductManagement";
+import { ProductManagementModule } from "@/components/ProductManagementModule";
 import { LockerRoomManagement } from "@/components/LockerRoomManagement";
 
 const Index = () => {
@@ -173,7 +174,7 @@ const Index = () => {
   }
 
   if (currentView === "simple-product-management") {
-    return <SimpleProductManagement onBack={handleBack} />;
+    return <ProductManagementModule onBack={handleBack} />;
   }
 
   if (currentView === "add-product") {

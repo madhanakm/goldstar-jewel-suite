@@ -14,6 +14,7 @@ import { Plus, Search, Edit, Trash2, QrCode, Package, BarChart3, AlertTriangle }
 import { Product, ProductFormData } from '../types/product';
 import { productApiService } from '../lib/productApiService';
 import { barcodeService } from '../lib/barcodeService';
+import { authService } from '../lib/auth';
 import JsBarcode from 'jsbarcode';
 
 interface ProductModuleWithBarcodeProps {
@@ -54,8 +55,12 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
   });
 
   useEffect(() => {
-    loadProducts();
-    loadCategories();
+    if (authService.isAuthenticated()) {
+      loadProducts();
+      loadCategories();
+    } else {
+      toast.error('Please login to access products');
+    }
   }, []);
 
   const loadProducts = async () => {
@@ -65,9 +70,12 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
         search: searchTerm,
         category: selectedCategory || undefined
       });
-      setProducts(result.data);
+      setProducts(result.data || []);
+      console.log('Products loaded:', result.data?.length || 0);
     } catch (error) {
-      toast.error('Failed to load products');
+      console.error('Load products error:', error);
+      toast.error(`Failed to load products: ${error.message}`);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -425,8 +433,24 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+                      Loading products...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    No products found. {products.length === 0 ? 'Add your first product to get started.' : 'Try adjusting your search or filters.'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.sku}</TableCell>
                   <TableCell>{product.category}</TableCell>
@@ -479,7 +503,8 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

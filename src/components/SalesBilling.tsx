@@ -62,86 +62,11 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
   const [oldSilverRate, setOldSilverRate] = useState(70);
   const [gstEnabled, setGstEnabled] = useState(true);
 
-  const goldProducts = [
-    { id: "1", name: "Gold Ring 22K", category: "Gold", weight: 5.5, purity: "22K", rate: 5200, makingCharges: 500, barcode: "GLD001" },
-    { id: "2", name: "Gold Chain 18K", category: "Gold", weight: 12.2, purity: "18K", rate: 4800, makingCharges: 1200, barcode: "GLD002" },
-    { id: "9", name: "Diamond Earrings", category: "Diamond", weight: 2.1, purity: "VVS1", rate: 85000, makingCharges: 2000, barcode: "DMD001" },
-  ];
+  const [goldProducts, setGoldProducts] = useState([]);
+  const [silverProducts, setSilverProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
 
-  const silverProducts = [
-    { id: "3", name: "Silver Bangles Set", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300, wastage: 5, barcode: "SLV001" },
-    { id: "4", name: "Silver Necklace Chain", category: "Silver", weight: 28.5, purity: "925", rate: 78, makingCharges: 250, wastage: 3, barcode: "SLV002" },
-    { id: "5", name: "Silver Earrings Studs", category: "Silver", weight: 8.2, purity: "925", rate: 80, makingCharges: 150, wastage: 2, barcode: "SLV003" },
-    { id: "6", name: "Silver Rings Collection", category: "Silver", weight: 12.0, purity: "925", rate: 82, makingCharges: 180, wastage: 2, barcode: "SLV004" },
-    { id: "7", name: "Silver Anklets Pair", category: "Silver", weight: 35.0, purity: "925", rate: 76, makingCharges: 280, wastage: 4, barcode: "SLV005" },
-    { id: "8", name: "Silver Bracelets", category: "Silver", weight: 22.5, purity: "925", rate: 79, makingCharges: 220, wastage: 3, barcode: "SLV006" },
-  ];
-
-  const allProducts = [...goldProducts, ...silverProducts];
-
-  const mockBills: Bill[] = [
-    {
-      id: "INV001",
-      customerName: "Rajesh Kumar",
-      customerPhone: "+91 98765 43210",
-      date: "2024-01-15",
-      items: [
-        { id: "1", itemName: "Gold Ring 22K", category: "Gold", weight: 5.5, purity: "22K", rate: 5200, makingCharges: 500, quantity: 1, total: 29100 }
-      ],
-      subtotal: 29100,
-      discount: 1000,
-      gst: 847,
-      total: 28947,
-      paymentMethod: "UPI",
-      status: "Paid"
-    },
-    {
-      id: "INV002",
-      customerName: "Priya Sharma",
-      customerPhone: "+91 87654 32109",
-      date: "2024-01-14",
-      items: [
-        { id: "2", itemName: "Gold Chain 18K", category: "Gold", weight: 12.2, purity: "18K", rate: 4800, makingCharges: 1200, quantity: 1, total: 59760 }
-      ],
-      subtotal: 59760,
-      discount: 2000,
-      gst: 1739,
-      total: 59499,
-      paymentMethod: "Card",
-      status: "Paid"
-    },
-    {
-      id: "INV003",
-      customerName: "Meera Patel",
-      customerPhone: "+91 99887 76543",
-      date: "2024-01-16",
-      items: [
-        { id: "3", itemName: "Silver Bangles Set", category: "Silver", weight: 45.0, purity: "925", rate: 75, makingCharges: 300, quantity: 1, total: 3675 },
-        { id: "4", itemName: "Silver Necklace Chain", category: "Silver", weight: 28.5, purity: "925", rate: 78, makingCharges: 250, quantity: 1, total: 2473 }
-      ],
-      subtotal: 6148,
-      discount: 200,
-      gst: 178,
-      total: 6126,
-      paymentMethod: "Cash",
-      status: "Paid"
-    },
-    {
-      id: "INV004",
-      customerName: "Anita Singh",
-      customerPhone: "+91 88776 65432",
-      date: "2024-01-17",
-      items: [
-        { id: "5", itemName: "Silver Earrings Studs", category: "Silver", weight: 8.2, purity: "925", rate: 80, makingCharges: 150, quantity: 2, total: 1364 }
-      ],
-      subtotal: 1364,
-      discount: 50,
-      gst: 39,
-      total: 1353,
-      paymentMethod: "UPI",
-      status: "Paid"
-    }
-  ];
+  const [recentBills, setRecentBills] = useState<Bill[]>([]);
 
   const addToBill = (product: any) => {
     const existingItem = currentBill.find(item => item.id === product.id);
@@ -647,7 +572,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Today's Sales</p>
-                <p className="text-2xl font-bold">₹1.2L</p>
+                <p className="text-2xl font-bold">₹0</p>
               </div>
               <ShoppingCart className="w-8 h-8 text-primary" />
             </div>
@@ -658,7 +583,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Bills Generated</p>
-                <p className="text-2xl font-bold">24</p>
+                <p className="text-2xl font-bold">0</p>
               </div>
               <Receipt className="w-8 h-8 text-primary" />
             </div>
@@ -669,7 +594,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Avg Bill Value</p>
-                <p className="text-2xl font-bold">₹5,200</p>
+                <p className="text-2xl font-bold">₹0</p>
               </div>
               <Calculator className="w-8 h-8 text-primary" />
             </div>
@@ -680,7 +605,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Payment Pending</p>
-                <p className="text-2xl font-bold text-orange-600">₹15K</p>
+                <p className="text-2xl font-bold text-orange-600">₹0</p>
               </div>
               <CreditCard className="w-8 h-8 text-orange-500" />
             </div>
@@ -709,7 +634,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockBills.map(bill => (
+              {recentBills.map(bill => (
                 <TableRow key={bill.id}>
                   <TableCell className="font-medium">{bill.id}</TableCell>
                   <TableCell>

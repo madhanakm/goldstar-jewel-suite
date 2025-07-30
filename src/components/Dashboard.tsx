@@ -1,9 +1,11 @@
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ApiConnectionTest } from "@/components/ApiConnectionTest";
 import { ProductApiDebugger } from "@/components/ProductApiDebugger";
 import { ApiStatusChecker } from "@/components/ApiStatusChecker";
+import { ApiTest } from "@/components/ApiTest";
 import {
   Users,
   Package,
@@ -90,12 +92,12 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
     }
   ];
 
-  const stats = [
-    { label: "Total Customers", value: "2,456", icon: Users, change: "+12%" },
-    { label: "Monthly Sales", value: "₹45.2L", icon: ShoppingCart, change: "+8.5%" },
-    { label: "Stock Value", value: "₹1.2Cr", icon: Package, change: "+3.2%" },
-    { label: "Active Loans", value: "124", icon: DollarSign, change: "-2.1%" }
-  ];
+  const [stats, setStats] = useState([
+    { label: "Total Customers", value: "0", icon: Users, change: "0%" },
+    { label: "Monthly Sales", value: "₹0", icon: ShoppingCart, change: "0%" },
+    { label: "Stock Value", value: "₹0", icon: Package, change: "0%" },
+    { label: "Active Loans", value: "0", icon: DollarSign, change: "0%" }
+  ]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-luxury-cream via-background to-luxury-cream">
@@ -217,6 +219,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
           <div className="space-y-4">
             <ApiStatusChecker />
             <ApiConnectionTest />
+            <ApiTest />
           </div>
         </div>
         
