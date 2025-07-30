@@ -10,6 +10,9 @@ import { PurchaseManagement } from "@/components/PurchaseManagement";
 import { FinancialModules } from "@/components/FinancialModules";
 import { AnalyticsReports } from "@/components/AnalyticsReports";
 import { BarcodeModule } from "@/components/BarcodeModule";
+import { ProductModuleWithBarcode } from "@/components/ProductModuleWithBarcode";
+import { ProductModule } from "@/components/ProductModule";
+import { SimpleProductManagement } from "@/components/SimpleProductManagement";
 import { LockerRoomManagement } from "@/components/LockerRoomManagement";
 
 const Index = () => {
@@ -52,8 +55,16 @@ const Index = () => {
       case "Real-time Updates":
       case "Product Inventory":
       case "Stock Management":
+        setCurrentView("product-module");
+        break;
+      case "Product Catalog":
+      case "Product Categories":
+      case "Pricing Management":
+      case "Product Variants":
+      case "Add Product":
       case "Barcode Generation":
-        setCurrentView("barcode-module");
+      case "New Product":
+        setCurrentView("simple-product-management");
         break;
       case "Locker Room Management":
         setCurrentView("locker-room-management");
@@ -155,6 +166,18 @@ const Index = () => {
 
   if (currentView === "barcode-module") {
     return <BarcodeModule onBack={handleBack} />;
+  }
+
+  if (currentView === "product-module") {
+    return <ProductModuleWithBarcode onBack={handleBack} />;
+  }
+
+  if (currentView === "simple-product-management") {
+    return <SimpleProductManagement onBack={handleBack} />;
+  }
+
+  if (currentView === "add-product") {
+    return <ProductModule onBack={handleBack} />;
   }
 
   if (currentView === "locker-room-management") {

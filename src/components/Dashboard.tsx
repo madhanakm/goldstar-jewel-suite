@@ -1,6 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ApiConnectionTest } from "@/components/ApiConnectionTest";
+import { ProductApiDebugger } from "@/components/ProductApiDebugger";
+import { ApiStatusChecker } from "@/components/ApiStatusChecker";
 import {
   Users,
   Package,
@@ -36,6 +39,15 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
         { name: "KYC Management", icon: UserCheck, description: "Aadhar, PAN, and document verification", color: "bg-green-500" },
         { name: "Purchase History", icon: Receipt, description: "Customer purchase tracking and history", color: "bg-purple-500" },
         { name: "Loyalty & Referrals", icon: TrendingUp, description: "Points system and referral management", color: "bg-orange-500" }
+      ]
+    },
+    {
+      category: "Product Management",
+      items: [
+        { name: "Product Catalog", icon: Package, description: "Add, edit, and manage product listings", color: "bg-blue-500" },
+        { name: "Product Categories", icon: FileText, description: "Organize products by categories and types", color: "bg-green-500" },
+        { name: "Pricing Management", icon: DollarSign, description: "Set and update product pricing", color: "bg-yellow-500" },
+        { name: "Product Variants", icon: Settings, description: "Manage size, weight, and design variants", color: "bg-purple-500" }
       ]
     },
     {
@@ -166,33 +178,60 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
           </div>
         ))}
 
-        {/* Quick Actions */}
-        <Card className="mt-8 border-luxury-gold/20">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Frequently used features for daily operations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("New Sale")}>
-                <ShoppingCart className="w-5 h-5 mb-1" />
-                New Sale
-              </Button>
-              <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Add Customer")}>
-                <Users className="w-5 h-5 mb-1" />
-                Add Customer
-              </Button>
-              <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Stock Check")}>
-                <Package className="w-5 h-5 mb-1" />
-                Stock Check
-              </Button>
-              <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Daily Report")}>
-                <FileText className="w-5 h-5 mb-1" />
-                Daily Report
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+          {/* Quick Actions */}
+          <div className="lg:col-span-2">
+            <Card className="border-luxury-gold/20">
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Frequently used features for daily operations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("New Sale")}>
+                    <ShoppingCart className="w-5 h-5 mb-1" />
+                    New Sale
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Add Product")}>
+                    <Package className="w-5 h-5 mb-1" />
+                    Add Product
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Stock Check")}>
+                    <Package className="w-5 h-5 mb-1" />
+                    Stock Check
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Daily Report")}>
+                    <FileText className="w-5 h-5 mb-1" />
+                    Daily Report
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("API Debug")}>
+                    <Settings className="w-5 h-5 mb-1" />
+                    API Debug
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* API Connection Status */}
+          <div className="space-y-4">
+            <ApiStatusChecker />
+            <ApiConnectionTest />
+          </div>
+        </div>
+        
+        {/* API Debugger Section - Only show if needed */}
+        <div className="mt-8">
+          <Card className="border-luxury-gold/20">
+            <CardHeader>
+              <CardTitle>Product API Debugger</CardTitle>
+              <CardDescription>Debug product creation and API connectivity issues</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductApiDebugger />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
