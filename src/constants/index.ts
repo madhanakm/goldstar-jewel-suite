@@ -7,7 +7,7 @@ export const APP_CONFIG = {
 
 // API Configuration
 export const API_CONFIG = {
-  baseUrl: process.env.VITE_API_BASE_URL || 'https://jewelapi.sricashway.com/api',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://jewelapi.sricashway.com',
   timeout: 30000,
   retryAttempts: 3
 } as const;

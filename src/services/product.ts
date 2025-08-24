@@ -30,32 +30,32 @@ export class ProductService {
     if (filters.page) params.append('pagination[page]', filters.page.toString());
     if (filters.pageSize) params.append('pagination[pageSize]', filters.pageSize.toString());
 
-    const endpoint = `/products?${params.toString()}`;
+    const endpoint = `/api/products?${params.toString()}`;
     return apiService.get<Product[]>(endpoint);
   }
 
   async getProduct(id: number): Promise<ApiResponse<Product>> {
-    return apiService.get<Product>(`/products/${id}`);
+    return apiService.get<Product>(`/api/products/${id}`);
   }
 
   async createProduct(data: ProductFormData): Promise<ApiResponse<Product>> {
-    return apiService.post<Product>('/products', { data });
+    return apiService.post<Product>('/api/products', { data });
   }
 
   async updateProduct(id: number, data: Partial<ProductFormData>): Promise<ApiResponse<Product>> {
-    return apiService.put<Product>(`/products/${id}`, { data });
+    return apiService.put<Product>(`/api/products/${id}`, { data });
   }
 
   async deleteProduct(id: number): Promise<ApiResponse<null>> {
-    return apiService.delete<null>(`/products/${id}`);
+    return apiService.delete<null>(`/api/products/${id}`);
   }
 
   async generateBarcode(productId: number): Promise<ApiResponse<{ barcode: string }>> {
-    return apiService.post<{ barcode: string }>(`/products/${productId}/generate-barcode`);
+    return apiService.post<{ barcode: string }>(`/api/products/${productId}/generate-barcode`);
   }
 
   async bulkImport(products: ProductFormData[]): Promise<ApiResponse<Product[]>> {
-    return apiService.post<Product[]>('/products/bulk-import', { products });
+    return apiService.post<Product[]>('/api/products/bulk-import', { products });
   }
 
   async exportProducts(filters: ProductFilters = {}): Promise<Blob> {
@@ -63,7 +63,7 @@ export class ProductService {
     if (filters.category) params.append('category', filters.category);
     if (filters.search) params.append('search', filters.search);
 
-    const response = await apiService.get<Blob>(`/products/export?${params.toString()}`, {
+    const response = await apiService.get<Blob>(`/api/products/export?${params.toString()}`, {
       headers: { 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
     });
     

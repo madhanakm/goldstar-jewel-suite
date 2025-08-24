@@ -41,7 +41,7 @@ export class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const { apiService } = await import('./api');
-      const response = await apiService.publicPost<AuthResponse>('/auth/local', credentials);
+      const response = await apiService.publicPost<AuthResponse>('/api/auth/local', credentials);
       
       this.token = response.data.jwt;
       this.user = response.data.user;
@@ -63,7 +63,7 @@ export class AuthService {
   }): Promise<AuthResponse> {
     try {
       const { apiService } = await import('./api');
-      const response = await apiService.publicPost<AuthResponse>('/auth/local/register', userData);
+      const response = await apiService.publicPost<AuthResponse>('/api/auth/local/register', userData);
       
       this.token = response.data.jwt;
       this.user = response.data.user;
