@@ -1,45 +1,50 @@
-import React from 'react';
-
-interface JewelryItem {
-  id: string;
-  name: string;
-  weight: string;
-  purity: string;
-  price: string;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Printer, Download } from "lucide-react";
 
 interface BarcodeLabelProps {
-  item: JewelryItem;
-  barcodeData: string;
+  product?: {
+    name: string;
+    sku: string;
+    barcode: string;
+    price: number;
+  };
 }
 
-export const BarcodeLabel: React.FC<BarcodeLabelProps> = ({ item, barcodeData }) => {
+export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
+  if (!product) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-center text-muted-foreground">
+          No product selected for label generation
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="bg-white p-4 border border-gray-300 w-80 mx-auto print:shadow-none">
-      <div className="text-center mb-2">
-        <h3 className="font-bold text-lg">SRI CASHWAY</h3>
-      </div>
-      
-      <div className="mb-3">
-        <div className="text-sm font-semibold">{item.name}</div>
-        <div className="text-xs text-gray-600">ID: {item.id}</div>
-      </div>
-      
-      <div className="flex justify-center mb-3">
-        <img src={barcodeData} alt={`Barcode for ${item.id}`} className="max-w-full" />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <span className="font-semibold">Weight:</span> {item.weight}g
+    <Card>
+      <CardHeader>
+        <CardTitle>Barcode Label</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="border p-4 bg-white text-black text-center">
+          <h3 className="font-bold">{product.name}</h3>
+          <p className="text-sm">SKU: {product.sku}</p>
+          <div className="my-2 font-mono text-lg">||||| {product.barcode} |||||</div>
+          <p className="font-semibold">₹{product.price}</p>
         </div>
-        <div>
-          <span className="font-semibold">Purity:</span> {item.purity}
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline">
+            <Printer className="w-4 h-4 mr-2" />
+            Print
+          </Button>
+          <Button size="sm" variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Download
+          </Button>
         </div>
-        <div className="col-span-2">
-          <span className="font-semibold">Price:</span> ₹{item.price}
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

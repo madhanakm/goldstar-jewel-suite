@@ -10,9 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Plus, Search, Package, ArrowLeft, Edit, Trash2, Barcode } from 'lucide-react';
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from '@/components/common';
+import { sidebarConfig } from '@/lib/sidebarConfig';
 
 interface SimpleProductManagementProps {
   onBack?: () => void;
+  onNavigate?: (module: string) => void;
 }
 
 interface SimpleProduct {
@@ -25,7 +28,8 @@ interface SimpleProduct {
   status: 'active' | 'inactive' | 'out_of_stock';
 }
 
-export const SimpleProductManagement: React.FC<SimpleProductManagementProps> = ({ onBack }) => {
+export const SimpleProductManagement: React.FC<SimpleProductManagementProps> = ({ onBack, onNavigate }) => {
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
   const [products, setProducts] = useState<SimpleProduct[]>([]);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,18 +90,25 @@ export const SimpleProductManagement: React.FC<SimpleProductManagementProps> = (
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-luxury-cream via-background to-luxury-cream p-6">
+    <PageLayout>
+      <PageHeader 
+        title="Product Management"
+        description="Manage product catalog, categories, pricing, and variants"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        breadcrumbs={[
+          { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
+          { label: "Product Management" }
+        ]}
+        icon={<Package className="w-5 h-5 mr-2" />}
+      />
+      
+      <PageContent>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {onBack && (
-              <Button variant="outline" size="sm" onClick={onBack}>
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            )}
             <Package className="h-5 w-5" />
-            Product Management
+            Product Catalog
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -322,6 +333,14 @@ export const SimpleProductManagement: React.FC<SimpleProductManagementProps> = (
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate || (() => {})}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
+    </PageLayout>
   );
 };

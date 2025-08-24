@@ -1,73 +1,154 @@
-# Welcome to your Lovable project
+# Goldstar Jewel Suite
 
-## Project info
+A comprehensive jewelry management system built with React, TypeScript, and Tailwind CSS.
 
-**URL**: https://lovable.dev/projects/3f85e20f-0741-45de-ba0e-ff9a9bb3cca2
+## 🏗️ Project Structure
 
-## How can I edit this code?
+```
+src/
+├── components/           # Reusable UI components
+│   ├── common/          # Common components (PageHeader, Sidebar, etc.)
+│   ├── ui/              # Base UI components (shadcn/ui)
+│   └── index.ts         # Component exports
+├── features/            # Feature-based modules
+│   ├── auth/           # Authentication feature
+│   ├── dashboard/      # Dashboard feature
+│   ├── products/       # Product management
+│   ├── customers/      # Customer management
+│   ├── inventory/      # Inventory management
+│   ├── sales/          # Sales and billing
+│   └── analytics/      # Analytics and reports
+├── services/           # API and business logic services
+│   ├── api.ts          # Base API service
+│   ├── auth.ts         # Authentication service
+│   └── index.ts        # Service exports
+├── utils/              # Utility functions
+│   ├── formatters.ts   # Data formatting utilities
+│   ├── validators.ts   # Validation utilities
+│   ├── helpers.ts      # General helper functions
+│   └── index.ts        # Utility exports
+├── types/              # TypeScript type definitions
+├── constants/          # Application constants
+├── hooks/              # Custom React hooks
+├── pages/              # Page components
+└── lib/                # Third-party library configurations
+```
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+- **Product Management**: Complete product catalog with barcode generation
+- **Customer Management**: Customer profiles, KYC, and loyalty programs
+- **Inventory Management**: Real-time stock tracking and valuation
+- **Sales & Billing**: GST-compliant billing system
+- **Analytics & Reports**: Business insights and performance metrics
+- **Authentication**: Secure user authentication and authorization
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3f85e20f-0741-45de-ba0e-ff9a9bb3cca2) and start prompting.
+## 🛠️ Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Routing**: React Router v6
+- **State Management**: React hooks, Context API
+- **API**: RESTful API with Strapi backend
+- **Build Tool**: Vite with SWC
 
-**Use your preferred IDE**
+## 📦 Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```bash
+# Clone the repository
+git clone <repository-url>
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Navigate to project directory
+cd goldstar-jewel-suite
 
-Follow these steps:
+# Install dependencies
+npm install
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Development
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+# Development server
+npm run dev
 
-**Use GitHub Codespaces**
+# Build for production
+npm run build
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Preview production build
+npm run preview
 
-## What technologies are used for this project?
+# Lint code
+npm run lint
+```
 
-This project is built with:
+## 📁 Code Organization
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Components
+- **Common Components**: Reusable UI components used across features
+- **Feature Components**: Components specific to business features
+- **UI Components**: Base design system components (shadcn/ui)
 
-## How can I deploy this project?
+### Services
+- **API Service**: Centralized HTTP client with authentication
+- **Auth Service**: User authentication and session management
+- **Feature Services**: Business logic for specific features
 
-Simply open [Lovable](https://lovable.dev/projects/3f85e20f-0741-45de-ba0e-ff9a9bb3cca2) and click on Share -> Publish.
+### Utils
+- **Formatters**: Currency, date, and text formatting
+- **Validators**: Form and business rule validation
+- **Helpers**: General utility functions
 
-## Can I connect a custom domain to my Lovable project?
+### Types
+- Comprehensive TypeScript definitions for type safety
+- API response types and business entity types
 
-Yes, you can!
+## 🎯 Best Practices
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **Feature-based architecture** for scalability
+- **TypeScript** for type safety
+- **Consistent naming conventions**
+- **Centralized constants** and configuration
+- **Reusable components** and utilities
+- **Error handling** and loading states
+- **Responsive design** with Tailwind CSS
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🔐 Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_API_BASE_URL=https://jewelapi.sricashway.com
+```
+
+## 📱 Responsive Design
+
+The application is fully responsive and works on:
+- Desktop (1024px+)
+- Tablet (768px - 1023px)
+- Mobile (320px - 767px)
+
+## 🧪 Testing
+
+```bash
+# Run tests (when implemented)
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+## 🚀 Deployment
+
+```bash
+# Build for production
+npm run build:prod
+
+# The dist/ folder contains the production build
+```
+
+## 📄 License
+
+This project is proprietary software for Sri Cashway jewelry management.

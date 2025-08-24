@@ -10,12 +10,16 @@ import { Plus, Package, QrCode } from 'lucide-react';
 import { Product, ProductFormData } from '../types/product';
 import { productApiService } from '../lib/productApiService';
 import JsBarcode from 'jsbarcode';
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from './common';
+import { sidebarConfig } from '../lib/sidebarConfig';
 
 interface ProductModuleProps {
   onBack?: () => void;
+  onNavigate?: (module: string) => void;
 }
 
-export const ProductModule: React.FC<ProductModuleProps> = ({ onBack }) => {
+export const ProductModule: React.FC<ProductModuleProps> = ({ onBack, onNavigate }) => {
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [generatedProduct, setGeneratedProduct] = useState<Product | null>(null);
@@ -33,7 +37,6 @@ export const ProductModule: React.FC<ProductModuleProps> = ({ onBack }) => {
     stock_quantity: 1,
     min_stock_level: 5,
     supplier: '',
-    purchase_date: '',
     purchase_price: 0,
     selling_price: 0,
     discount_percentage: 0,
@@ -47,12 +50,7 @@ export const ProductModule: React.FC<ProductModuleProps> = ({ onBack }) => {
   }, []);
 
   const loadCategories = async () => {
-    try {
-      const cats = await productApiService.getCategories();
-      setCategories(cats);
-    } catch (error) {
-      console.error('Failed to load categories');
-    }
+    setCategories(['Ring', 'Necklace', 'Earring', 'Bracelet', 'Pendant', 'Chain']);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +83,6 @@ export const ProductModule: React.FC<ProductModuleProps> = ({ onBack }) => {
       stock_quantity: 1,
       min_stock_level: 5,
       supplier: '',
-      purchase_date: '',
       purchase_price: 0,
       selling_price: 0,
       discount_percentage: 0,
@@ -125,18 +122,21 @@ export const ProductModule: React.FC<ProductModuleProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center space-x-4">
-        {onBack && (
-          <Button onClick={onBack} variant="outline">
-            ← Back
-          </Button>
-        )}
-        <h2 className="text-3xl font-bold flex items-center">
-          <Package className="w-8 h-8 mr-3" />
-          Add New Product
-        </h2>
-      </div>
+    <PageLayout>
+      <PageHeader 
+        title="Add New Product"
+        description="Create a new product with barcode generation"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        breadcrumbs={[
+          { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
+          { label: "Product Management", onClick: () => onNavigate?.("Product Management") },
+          { label: "Add Product" }
+        ]}
+        icon={<Package className="w-5 h-5 mr-2" />}
+      />
+      
+      <PageContent>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Product Form */}
@@ -331,6 +331,14 @@ export const ProductModule: React.FC<ProductModuleProps> = ({ onBack }) => {
           </Card>
         )}
       </div>
-    </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate || (() => {})}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
+    </PageLayout>
   );
 };

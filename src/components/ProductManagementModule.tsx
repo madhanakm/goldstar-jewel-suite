@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { Plus, Search, Download, RefreshCw, Package, Barcode, Eye } from 'lucide-react';
 import { productService } from '@/lib/productService';
 import { Product, ProductFormData } from '@/types/product';
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from '@/components/common';
+import { sidebarConfig } from '@/lib/sidebarConfig';
 
 interface BarcodeConfig {
   format: string;
@@ -24,9 +26,11 @@ import JsBarcode from 'jsbarcode';
 interface ProductManagementModuleProps {
   onProductSelect?: (product: Product) => void;
   onBack?: () => void;
+  onNavigate?: (module: string) => void;
 }
 
-export const ProductManagementModule: React.FC<ProductManagementModuleProps> = ({ onProductSelect, onBack }) => {
+export const ProductManagementModule: React.FC<ProductManagementModuleProps> = ({ onProductSelect, onBack, onNavigate }) => {
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -185,17 +189,26 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
   };
 
   return (
-    <div className="space-y-6">
+    <PageLayout>
+      <PageHeader 
+        title="Product Management"
+        description="Manage your product catalog, categories, pricing, and variants"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        breadcrumbs={[
+          { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
+          { label: "Product Management" }
+        ]}
+        icon={<Package className="w-5 h-5 mr-2" />}
+      />
+      
+      <PageContent>
+        <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {onBack && (
-              <Button variant="outline" size="sm" onClick={onBack}>
-                ← Back
-              </Button>
-            )}
             <Package className="h-5 w-5" />
-            Product Management
+            Product Catalog
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -440,6 +453,15 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
           </Tabs>
         </CardContent>
       </Card>
+        </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate || (() => {})}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
 
       {/* Barcode Dialog */}
       <Dialog open={showBarcodeDialog} onOpenChange={setShowBarcodeDialog}>
@@ -475,6 +497,6 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 };

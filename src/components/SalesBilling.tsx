@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { StatCard, ProductCard, DataTable, FormField } from "@/components/common";
 import { ShoppingCart, Plus, Minus, Printer, Calculator, CreditCard, Banknote, Smartphone, Receipt, Scan, Gem, Crown, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarcodeScanner } from "./BarcodeScanner";
@@ -231,22 +230,20 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="customerName">Customer Name *</Label>
+                    <FormField label="Customer Name" required>
                       <Input
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
                         placeholder="Enter customer name"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="customerPhone">Phone Number</Label>
+                    </FormField>
+                    <FormField label="Phone Number">
                       <Input
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
                         placeholder="Enter phone number"
                       />
-                    </div>
+                    </FormField>
                   </div>
                 </CardContent>
               </Card>
@@ -287,32 +284,12 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                           product.barcode.toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .map(product => (
-                        <Card key={product.id} className="border hover:shadow-md transition-shadow">
-                          <CardContent className="p-4">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-medium">{product.name}</h4>
-                                {product.category === 'Gold' && <Crown className="w-4 h-4 text-yellow-500" />}
-                                {product.category === 'Silver' && <Gem className="w-4 h-4 text-gray-400" />}
-                                {product.category === 'Diamond' && <Star className="w-4 h-4 text-blue-500" />}
-                              </div>
-                              <p className="text-sm text-muted-foreground">{product.category} • {product.purity}</p>
-                              <p className="text-sm">Weight: {product.weight}g • Rate: ₹{product.rate}/g</p>
-                              <p className="text-sm">Making Charges: ₹{product.makingCharges}</p>
-                              {product.wastage && <p className="text-sm text-orange-600">Wastage: {product.wastage}%</p>}
-                              <p className="text-xs text-muted-foreground">Code: {product.barcode}</p>
-                              <p className="font-medium">Total: ₹{(
-                                product.wastage ? 
-                                (product.weight + (product.weight * product.wastage) / 100) * product.rate + product.makingCharges :
-                                product.weight * product.rate + product.makingCharges
-                              ).toLocaleString()}</p>
-                              <Button size="sm" onClick={() => addToBill(product)} className="w-full">
-                                Add to Bill
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                          <ProductCard
+                            key={product.id}
+                            product={product}
+                            onAddToBill={addToBill}
+                          />
+                        ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -567,50 +544,10 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
 
       {/* Sales Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Today's Sales</p>
-                <p className="text-2xl font-bold">₹0</p>
-              </div>
-              <ShoppingCart className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Bills Generated</p>
-                <p className="text-2xl font-bold">0</p>
-              </div>
-              <Receipt className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Bill Value</p>
-                <p className="text-2xl font-bold">₹0</p>
-              </div>
-              <Calculator className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Payment Pending</p>
-                <p className="text-2xl font-bold text-orange-600">₹0</p>
-              </div>
-              <CreditCard className="w-8 h-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard label="Today's Sales" value="₹0" icon={ShoppingCart} />
+        <StatCard label="Bills Generated" value="0" icon={Receipt} />
+        <StatCard label="Avg Bill Value" value="₹0" icon={Calculator} />
+        <StatCard label="Payment Pending" value="₹0" icon={CreditCard} color="text-orange-500" />
       </div>
 
       {/* Recent Bills */}

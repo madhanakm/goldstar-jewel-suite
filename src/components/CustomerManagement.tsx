@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper } from "@/components/common";
+import { sidebarConfig } from "@/lib/sidebarConfig";
 import {
   Users,
   Plus,
@@ -21,16 +21,19 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Star
+  Star,
+  Package
 } from "lucide-react";
 
 interface CustomerManagementProps {
   onBack: () => void;
+  onNavigate?: (module: string) => void;
 }
 
-export const CustomerManagement = ({ onBack }: CustomerManagementProps) => {
+export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementProps) => {
   const [selectedTab, setSelectedTab] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
+  const { sidebarOpen, toggleSidebar } = useSidebar();
 
   const customers = [
     {
@@ -78,22 +81,18 @@ export const CustomerManagement = ({ onBack }: CustomerManagementProps) => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-luxury-cream via-background to-luxury-cream">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b border-luxury-gold/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Button variant="ghost" onClick={onBack} className="mr-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Users className="w-6 h-6 text-primary mr-3" />
-            <h1 className="text-xl font-semibold text-luxury-dark">Customer Management</h1>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PageLayout>
+      <PageHeader
+        title="Customer Management"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        breadcrumbs={[
+          { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
+          { label: "Customer Management" }
+        ]}
+        icon={<Users className="w-6 h-6 text-primary mr-3" />}
+      />
+      <PageContent>
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="list">Customer List</TabsTrigger>
@@ -103,47 +102,35 @@ export const CustomerManagement = ({ onBack }: CustomerManagementProps) => {
           </TabsList>
 
           <TabsContent value="list" className="space-y-6 mt-6">
-            {/* Search and Filters */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Search className="w-5 h-5 mr-2" />
-                  Search Customers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Input
-                    placeholder="Search by name, phone, or ID..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="md:col-span-2"
-                  />
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="KYC Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="verified">Verified</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Member Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                      <SelectItem value="regular">Regular</SelectItem>
-                      <SelectItem value="vip">VIP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
+            <SearchFilter
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search by name, phone, or ID..."
+              filters={[
+                {
+                  label: "KYC Status",
+                  value: "all",
+                  options: [
+                    { value: "all", label: "All Status" },
+                    { value: "verified", label: "Verified" },
+                    { value: "pending", label: "Pending" },
+                    { value: "rejected", label: "Rejected" }
+                  ],
+                  onChange: () => {}
+                },
+                {
+                  label: "Member Type",
+                  value: "all",
+                  options: [
+                    { value: "all", label: "All Types" },
+                    { value: "premium", label: "Premium" },
+                    { value: "regular", label: "Regular" },
+                    { value: "vip", label: "VIP" }
+                  ],
+                  onChange: () => {}
+                }
+              ]}
+            />
 
             {/* Customer List */}
             <div className="grid gap-4">
@@ -205,67 +192,52 @@ export const CustomerManagement = ({ onBack }: CustomerManagementProps) => {
           </TabsContent>
 
           <TabsContent value="add" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Customer</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input id="firstName" placeholder="Enter first name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input id="lastName" placeholder="Enter last name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input id="phone" placeholder="+91 9876543210" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="customer@email.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth</Label>
-                    <Input id="dob" type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="anniversary">Anniversary Date</Label>
-                    <Input id="anniversary" type="date" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Textarea id="address" placeholder="Enter complete address" />
-                </div>
+            <FormSection title="Add New Customer">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="First Name" required>
+                  <Input placeholder="Enter first name" />
+                </FormField>
+                <FormField label="Last Name" required>
+                  <Input placeholder="Enter last name" />
+                </FormField>
+                <FormField label="Phone Number" required>
+                  <Input placeholder="+91 9876543210" />
+                </FormField>
+                <FormField label="Email Address">
+                  <Input type="email" placeholder="customer@email.com" />
+                </FormField>
+                <FormField label="Date of Birth">
+                  <Input type="date" />
+                </FormField>
+                <FormField label="Anniversary Date">
+                  <Input type="date" />
+                </FormField>
+              </div>
+              
+              <FormField label="Address">
+                <Textarea placeholder="Enter complete address" />
+              </FormField>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input id="city" placeholder="Enter city" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input id="state" placeholder="Enter state" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pincode">Pincode</Label>
-                    <Input id="pincode" placeholder="Enter pincode" />
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField label="City">
+                  <Input placeholder="Enter city" />
+                </FormField>
+                <FormField label="State">
+                  <Input placeholder="Enter state" />
+                </FormField>
+                <FormField label="Pincode">
+                  <Input placeholder="Enter pincode" />
+                </FormField>
+              </div>
 
-                <div className="flex justify-end space-x-4">
-                  <Button variant="outline">Cancel</Button>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Customer
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="flex justify-end space-x-4">
+                <Button variant="outline">Cancel</Button>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Customer
+                </Button>
+              </div>
+            </FormSection>
           </TabsContent>
 
           <TabsContent value="kyc" className="space-y-6 mt-6">
@@ -375,7 +347,14 @@ export const CustomerManagement = ({ onBack }: CustomerManagementProps) => {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate || (() => {})}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
+    </PageLayout>
   );
 };

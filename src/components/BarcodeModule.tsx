@@ -116,7 +116,12 @@ export const BarcodeModule: React.FC<BarcodeModuleProps> = ({ onBack }) => {
 
           {generatedBarcode && (
             <div ref={printRef}>
-              <BarcodeLabel item={item} barcodeData={generatedBarcode} />
+              <BarcodeLabel product={{
+                name: item.name,
+                sku: item.id,
+                barcode: generatedBarcode,
+                price: parseFloat(item.price) || 0
+              }} />
             </div>
           )}
         </CardContent>

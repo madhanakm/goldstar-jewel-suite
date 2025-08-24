@@ -13,15 +13,18 @@ import { toast } from 'sonner';
 import { Plus, Search, Edit, Trash2, QrCode, Package, BarChart3, AlertTriangle } from 'lucide-react';
 import { Product, ProductFormData } from '../types/product';
 import { productApiService } from '../lib/productApiService';
-import { barcodeService } from '../lib/barcodeService';
 import { authService } from '../lib/auth';
 import JsBarcode from 'jsbarcode';
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from './common';
+import { sidebarConfig } from '../lib/sidebarConfig';
 
 interface ProductModuleWithBarcodeProps {
   onBack?: () => void;
+  onNavigate?: (module: string) => void;
 }
 
-export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> = ({ onBack }) => {
+export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> = ({ onBack, onNavigate }) => {
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +48,6 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
     stock_quantity: 0,
     min_stock_level: 5,
     supplier: '',
-    purchase_date: '',
     purchase_price: 0,
     selling_price: 0,
     discount_percentage: 0,
@@ -82,12 +84,7 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
   };
 
   const loadCategories = async () => {
-    try {
-      const cats = await productApiService.getCategories();
-      setCategories(cats);
-    } catch (error) {
-      console.error('Failed to load categories');
-    }
+    setCategories(['Ring', 'Necklace', 'Earring', 'Bracelet', 'Pendant', 'Chain']);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,7 +123,7 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
 
   const generateNewBarcode = async (productId: number, type: 'CODE128' | 'EAN13' | 'QR' = 'CODE128') => {
     try {
-      const newBarcode = await productApiService.generateProductBarcode(productId, type);
+      const newBarcode = Date.now().toString();
       toast.success('New barcode generated');
       loadProducts();
       return newBarcode;
@@ -175,7 +172,6 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
       stock_quantity: 0,
       min_stock_level: 5,
       supplier: '',
-      purchase_date: '',
       purchase_price: 0,
       selling_price: 0,
       discount_percentage: 0,
@@ -201,7 +197,6 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
       stock_quantity: product.stock_quantity,
       min_stock_level: product.min_stock_level,
       supplier: product.supplier || '',
-      purchase_date: product.purchase_date || '',
       purchase_price: product.purchase_price,
       selling_price: product.selling_price,
       discount_percentage: product.discount_percentage || 0,
@@ -222,15 +217,24 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
   });
 
   return (
-    <div className="space-y-6">
+    <PageLayout>
+      <PageHeader 
+        title="Product & Inventory Management"
+        description="Manage products with barcode system and inventory tracking"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        breadcrumbs={[
+          { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
+          { label: "Product & Inventory" }
+        ]}
+        icon={<Package className="w-5 h-5 mr-2" />}
+      />
+      
+      <PageContent>
+        <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          {onBack && (
-            <Button onClick={onBack} variant="outline">
-              ← Back
-            </Button>
-          )}
-          <h2 className="text-3xl font-bold">Product Management</h2>
+          <h2 className="text-xl font-semibold">Product Catalog</h2>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
@@ -549,6 +553,15 @@ export const ProductModuleWithBarcode: React.FC<ProductModuleWithBarcodeProps> =
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate || (() => {})}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
+    </PageLayout>
   );
 };

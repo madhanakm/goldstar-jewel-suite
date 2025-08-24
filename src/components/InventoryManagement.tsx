@@ -11,9 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Package, Search, Plus, Edit, QrCode, AlertTriangle, TrendingUp, Gem } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from "@/components/common";
+import { sidebarConfig } from "@/lib/sidebarConfig";
 
 interface InventoryManagementProps {
   onBack: () => void;
+  onNavigate?: (module: string) => void;
 }
 
 interface InventoryItem {
@@ -30,8 +33,9 @@ interface InventoryItem {
   status: 'In Stock' | 'Low Stock' | 'Out of Stock';
 }
 
-export const InventoryManagement = ({ onBack }: InventoryManagementProps) => {
+export const InventoryManagement = ({ onBack, onNavigate }: InventoryManagementProps) => {
   const { toast } = useToast();
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
@@ -76,16 +80,19 @@ export const InventoryManagement = ({ onBack }: InventoryManagementProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Button variant="outline" onClick={onBack} className="mb-4">
-            ← Back to Dashboard
-          </Button>
-          <h1 className="text-3xl font-bold text-luxury-dark">Inventory Management</h1>
-          <p className="text-muted-foreground">Manage your jewelry inventory, stock levels, and valuations</p>
-        </div>
+    <PageLayout>
+      <PageHeader 
+        title="Inventory Management"
+        description="Manage your jewelry inventory, stock levels, and valuations"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        breadcrumbs={[
+          { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
+          { label: "Inventory Management" }
+        ]}
+        icon={<Package className="w-5 h-5 mr-2" />}
+        actions={
+          <div>
         <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary">
@@ -153,7 +160,12 @@ export const InventoryManagement = ({ onBack }: InventoryManagementProps) => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+          </div>
+        }
+      />
+      
+      <PageContent>
+        <div className="space-y-6">
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -288,6 +300,15 @@ export const InventoryManagement = ({ onBack }: InventoryManagementProps) => {
           </Table>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate || (() => {})}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
+    </PageLayout>
   );
 };

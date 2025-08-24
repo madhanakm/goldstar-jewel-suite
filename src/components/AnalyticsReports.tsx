@@ -5,12 +5,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, TrendingDown, Download, Calendar, Users, Package, DollarSign } from "lucide-react";
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from "@/components/common";
+import { sidebarConfig } from "@/lib/sidebarConfig";
 
 interface AnalyticsReportsProps {
   onBack: () => void;
+  onNavigate: (module: string) => void;
 }
 
-export const AnalyticsReports = ({ onBack }: AnalyticsReportsProps) => {
+export const AnalyticsReports = ({ onBack, onNavigate }: AnalyticsReportsProps) => {
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
   const [selectedPeriod, setSelectedPeriod] = useState("last30");
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -43,34 +47,35 @@ export const AnalyticsReports = ({ onBack }: AnalyticsReportsProps) => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Button variant="outline" onClick={onBack} className="mb-4">
-            ← Back to Dashboard
-          </Button>
-          <h1 className="text-3xl font-bold text-luxury-dark">Analytics & Reports</h1>
-          <p className="text-muted-foreground">Business insights, trends, and performance analytics</p>
-        </div>
-        <div className="flex space-x-2">
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last7">Last 7 Days</SelectItem>
-              <SelectItem value="last30">Last 30 Days</SelectItem>
-              <SelectItem value="last90">Last 90 Days</SelectItem>
-              <SelectItem value="thisyear">This Year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
-          </Button>
-        </div>
-      </div>
+    <PageLayout>
+      <PageHeader 
+        title="Analytics & Reports"
+        description="Business insights, trends, and performance analytics"
+        onBack={onBack}
+        onMenuClick={toggleSidebar}
+        actions={
+          <div className="flex space-x-2">
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="last7">Last 7 Days</SelectItem>
+                <SelectItem value="last30">Last 30 Days</SelectItem>
+                <SelectItem value="last90">Last 90 Days</SelectItem>
+                <SelectItem value="thisyear">This Year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
+        }
+      />
+      
+      <PageContent>
+        <div className="space-y-6">
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -542,6 +547,15 @@ export const AnalyticsReports = ({ onBack }: AnalyticsReportsProps) => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageContent>
+      
+      <SidebarWrapper
+        categories={sidebarConfig}
+        onNavigate={onNavigate}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
+    </PageLayout>
   );
 };
