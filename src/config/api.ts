@@ -9,6 +9,8 @@ export const API_CONFIG = {
     },
     LOGIN_DETAILS: '/api/logindetails',
     PRODUCTS: '/api/products',
-    CUSTOMERS: '/api/customers'
+    CUSTOMERS: '/api/customers',
+    PURCHASE_MASTERS: '/api/purchase-masters',
+    PURCHASES: '/api/purchases'
   }
 };

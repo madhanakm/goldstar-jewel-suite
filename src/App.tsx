@@ -6,6 +6,7 @@ import { InventoryManagement } from "./components/InventoryManagement";
 import { SalesBilling } from "./components/SalesBilling";
 import { SilverSpecialBilling } from "./components/SilverSpecialBilling";
 import { PurchaseManagement } from "./components/PurchaseManagement";
+import { PurchaseEntry } from "./components/PurchaseEntry";
 import { FinancialModules } from "./components/FinancialModules";
 import { AnalyticsReports } from "./components/AnalyticsReports";
 import { ProductManagementModule } from "./components/ProductManagementModule";
@@ -135,6 +136,9 @@ const AppContent = () => {
       case "Raw Material Inward":
         navigate('/purchase-management');
         break;
+      case "Purchase Entry":
+        navigate('/purchase-entry');
+        break;
       case "Gold Loan":
       case "Gold Loan Management":
       case "Advance Booking":
@@ -184,6 +188,7 @@ const AppContent = () => {
       <Route path="/sales-billing" element={<SalesBilling onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/silver-billing" element={<SilverSpecialBilling onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/purchase-management" element={<PurchaseManagement onBack={handleBack} onNavigate={handleNavigate} />} />
+      <Route path="/purchase-entry" element={<PurchaseEntry onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/financial-modules" element={<FinancialModules onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/analytics-reports" element={<AnalyticsReports onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/product-management" element={<ProductManagementModule onBack={handleBack} onNavigate={handleNavigate} />} />
