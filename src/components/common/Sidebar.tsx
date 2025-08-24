@@ -50,7 +50,7 @@ export const Sidebar = ({ categories, isOpen, onToggle }: SidebarProps) => {
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-yellow-500 p-4 shadow-lg z-99">
+        <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-yellow-500 p-4 shadow-lg z-[120]">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-white text-lg">Navigation Menu</h2>
             <Button variant="ghost" size="sm" onClick={onToggle} className="text-white hover:bg-white/20">
