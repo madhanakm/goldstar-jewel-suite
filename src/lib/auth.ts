@@ -100,12 +100,8 @@ export class AuthService {
       localStorage.setItem('user_data', JSON.stringify(data.user));
       localStorage.setItem('login_time', new Date().toISOString());
       
-      // Create/update login session after successful auth
-      try {
-        await this.createLoginSession(data.user.email);
-      } catch (sessionError) {
-        console.warn('Session creation failed:', sessionError);
-      }
+      // Session tracking disabled for now
+      // await this.createLoginSession(data.user.email);
       
       return data;
     } catch (error) {
@@ -259,32 +255,36 @@ export class AuthService {
   private async createLoginSession(email: string): Promise<void> {
     try {
       const now = new Date();
-      const expiry = new Date(now.getTime() + 10 * 60 * 60 * 1000); // 10 hours
-      
       const sessionData = {
         userid: email,
         logintime: now.toISOString()
       };
       
-      console.log('Creating session with data:', sessionData);
-      console.log('API URL:', `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}`);
+      // Check if session exists
+      const existingResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}?filters[userid][$eq]=${encodeURIComponent(email)}`);
       
-      // Try to create new session
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: sessionData })
-      });
-      
-      console.log('Session creation response status:', response.status);
-      const responseText = await response.text();
-      console.log('Session creation response:', responseText);
-      
-      if (!response.ok) {
-        console.error('Failed to create session:', responseText);
+      if (existingResponse.ok) {
+        const existingData = await existingResponse.json();
+        
+        if (existingData.data && existingData.data.length > 0) {
+          // Update existing session
+          const sessionId = existingData.data[0].id;
+          await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}/${sessionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: sessionData })
+          });
+        } else {
+          // Create new session
+          await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: sessionData })
+          });
+        }
       }
     } catch (error) {
-      console.error('Error creating login session:', error);
+      console.error('Error managing login session:', error);
     }
   }
 
