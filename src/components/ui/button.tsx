@@ -52,7 +52,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        <span className="relative z-10">{children}</span>
+        <span className="relative z-10  w-full inline-flex text-left">{children}</span>
       </Comp>
     )
   }

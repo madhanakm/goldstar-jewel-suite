@@ -50,7 +50,7 @@ export const Sidebar = ({ categories, isOpen, onToggle }: SidebarProps) => {
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-yellow-500 p-4 shadow-lg">
+        <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-yellow-500 p-4 shadow-lg z-99">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-white text-lg">Navigation Menu</h2>
             <Button variant="ghost" size="sm" onClick={onToggle} className="text-white hover:bg-white/20">
@@ -69,7 +69,7 @@ export const Sidebar = ({ categories, isOpen, onToggle }: SidebarProps) => {
                 onClick={() => toggleCategory(category.category)}
               >
                 <span className="text-sm sm:text-base flex-1">{category.category}</span>
-                <div className="w-6 h-6 rounded-full bg-amber-200/50 flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-amber-200/50 flex items-center justify-center flex-shrink-0">
                   {expandedCategories.includes(category.category) ? (
                     <ChevronDown className="w-4 h-4 text-amber-700" />
                   ) : (
