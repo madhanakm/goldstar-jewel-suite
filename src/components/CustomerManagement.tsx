@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper } from "@/components/common";
+import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper, GradientCard, ActionButton, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import {
   Users,
@@ -132,67 +132,93 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
               ]}
             />
 
-            {/* Customer List */}
-            <div className="grid gap-4">
-              {filteredCustomers.map((customer) => (
-                <Card key={customer.id} className="border-luxury-gold/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Users className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-luxury-dark">{customer.name}</h3>
-                          <p className="text-sm text-muted-foreground">{customer.id}</p>
-                          <div className="flex items-center space-x-4 mt-1">
-                            <span className="flex items-center text-xs text-muted-foreground">
-                              <Phone className="w-3 h-3 mr-1" />
-                              {customer.phone}
-                            </span>
-                            <span className="flex items-center text-xs text-muted-foreground">
-                              <Mail className="w-3 h-3 mr-1" />
-                              {customer.email}
-                            </span>
-                          </div>
-                        </div>
+            <DataGrid
+              data={filteredCustomers}
+              columns={[
+                {
+                  key: 'name',
+                  header: 'Customer',
+                  render: (_, customer) => (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-white" />
                       </div>
-                      
-                      <div className="flex items-center space-x-6">
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-luxury-dark">{customer.totalPurchases}</div>
-                          <div className="text-xs text-muted-foreground">Total Purchases</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-luxury-dark">{customer.loyaltyPoints}</div>
-                          <div className="text-xs text-muted-foreground">Loyalty Points</div>
-                        </div>
-                        <div className="text-center">
-                          <Badge 
-                            variant={customer.kycStatus === "Verified" ? "default" : "secondary"}
-                            className={customer.kycStatus === "Verified" ? "bg-green-500" : ""}
-                          >
-                            {customer.kycStatus}
-                          </Badge>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">{customer.name}</p>
+                        <p className="text-sm text-slate-600">{customer.id}</p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  )
+                },
+                {
+                  key: 'phone',
+                  header: 'Contact',
+                  render: (_, customer) => (
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-slate-700">
+                        <Phone className="w-3 h-3 mr-2 text-amber-600" />
+                        {customer.phone}
+                      </div>
+                      <div className="flex items-center text-sm text-slate-600">
+                        <Mail className="w-3 h-3 mr-2 text-amber-600" />
+                        {customer.email}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'totalPurchases',
+                  header: 'Purchases',
+                  render: (value) => (
+                    <div className="text-center">
+                      <div className="font-semibold text-slate-800">{value}</div>
+                      <div className="text-xs text-slate-600">Total</div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'loyaltyPoints',
+                  header: 'Points',
+                  render: (value) => (
+                    <div className="text-center">
+                      <div className="font-semibold text-amber-600">{value}</div>
+                      <div className="text-xs text-slate-600">Loyalty</div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'kycStatus',
+                  header: 'Status',
+                  render: (value) => (
+                    <Badge 
+                      variant={value === "Verified" ? "default" : "secondary"}
+                      className={value === "Verified" ? "bg-emerald-500 hover:bg-emerald-600" : ""}
+                    >
+                      {value}
+                    </Badge>
+                  )
+                },
+                {
+                  key: 'id',
+                  header: 'Actions',
+                  render: () => (
+                    <div className="flex space-x-2">
+                      <ActionButton size="sm" variant="ghost">
+                        <Eye className="w-4 h-4" />
+                      </ActionButton>
+                      <ActionButton size="sm" variant="ghost">
+                        <Edit className="w-4 h-4" />
+                      </ActionButton>
+                    </div>
+                  )
+                }
+              ]}
+              emptyMessage="No customers found. Add your first customer to get started."
+            />
           </TabsContent>
 
           <TabsContent value="add" className="space-y-6 mt-6">
-            <FormSection title="Add New Customer">
+            <GradientCard title="Add New Customer" icon={<Plus className="w-5 h-5 text-white" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label="First Name" required>
                   <Input placeholder="Enter first name" />
@@ -231,13 +257,10 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
               </div>
 
               <div className="flex justify-end space-x-4">
-                <Button variant="outline">Cancel</Button>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Customer
-                </Button>
+                <ActionButton variant="outline">Cancel</ActionButton>
+                <ActionButton variant="success" icon={Plus}>Add Customer</ActionButton>
               </div>
-            </FormSection>
+            </GradientCard>
           </TabsContent>
 
           <TabsContent value="kyc" className="space-y-6 mt-6">
@@ -273,7 +296,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                             <span className="text-yellow-600">⏳ Pending</span>
                           </div>
                         </div>
-                        <Button size="sm" variant="outline" className="w-full mt-3">
+                        <Button size="sm" variant="primary" className="w-full mt-3">
                           <FileText className="w-4 h-4 mr-2" />
                           Manage Documents
                         </Button>

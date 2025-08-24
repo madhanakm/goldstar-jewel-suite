@@ -7,3 +7,6 @@ export { FormField, FormSection } from './FormComponents';
 export { ProductCard } from './ProductCard';
 export { DataTable } from './DataTable';
 export { Sidebar } from './Sidebar';
+export { GradientCard } from './GradientCard';
+export { ActionButton } from './ActionButton';
+export { DataGrid } from './DataGrid';

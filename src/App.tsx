@@ -14,7 +14,7 @@ import { ProductModule } from "./components/ProductModule";
 import { ProductModuleWithBarcode } from "./components/ProductModuleWithBarcode";
 import { LockerRoomManagement } from "./components/LockerRoomManagement";
 import { useState, useEffect } from "react";
-import { authService } from "./services/auth";
+import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
 import { LoginPage } from "./features/auth/components/LoginPage";
 import { useNavigate } from "react-router-dom";
@@ -25,17 +25,43 @@ const AppContent = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsAuthenticated(authService.isAuthenticated());
-    setIsLoading(false);
+    const checkAuth = () => {
+      const isAuth = authService.isAuthenticated();
+      console.log('Final auth result:', isAuth);
+      setIsAuthenticated(isAuth);
+      setIsLoading(false);
+      
+      // Redirect to dashboard if authenticated and on root path
+      if (isAuth && window.location.pathname === '/') {
+        navigate(ROUTES.DASHBOARD, { replace: true });
+      }
+    };
+    
+    // Initial check
+    checkAuth();
+    
+    // Check session every minute
+    const interval = setInterval(() => {
+      const isAuth = authService.isAuthenticated();
+      if (!isAuth && isAuthenticated) {
+        setIsAuthenticated(false);
+        navigate(ROUTES.HOME);
+      }
+    }, 60000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogin = (type: string) => {
+    console.log('handleLogin called with type:', type);
+    console.log('Current auth state before:', isAuthenticated);
     setIsAuthenticated(true);
+    console.log('Authentication state set to true, navigating to dashboard');
     navigate(ROUTES.DASHBOARD);
   };
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     setIsAuthenticated(false);
     navigate(ROUTES.HOME);
   };

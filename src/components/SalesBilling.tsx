@@ -205,7 +205,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
         </div>
         <Dialog open={isNewBillOpen} onOpenChange={setIsNewBillOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary">
+            <Button variant="success">
               <Plus className="w-4 h-4 mr-2" />
               New Sale
             </Button>
@@ -259,7 +259,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                             Last: {scannedBarcode}
                           </Badge>
                         )}
-                        <Button onClick={() => setIsScannerOpen(true)} variant="outline" size="sm">
+                        <Button onClick={() => setIsScannerOpen(true)} variant="primary" size="sm">
                           <Scan className="w-4 h-4 mr-2" />
                           Scan Code
                         </Button>
@@ -319,7 +319,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                               <p className="text-sm">Rate: ₹{product.rate}/g • Making: ₹{product.makingCharges}</p>
                               <p className="text-xs text-muted-foreground">Code: {product.barcode}</p>
                               <p className="font-medium text-lg">₹{(product.weight * product.rate + product.makingCharges).toLocaleString()}</p>
-                              <Button size="sm" onClick={() => addToBill(product)} className="w-full">
+                              <Button variant="success" size="sm" onClick={() => addToBill(product)} className="w-full">
                                 Add to Bill
                               </Button>
                             </div>
@@ -359,7 +359,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                               <p className="font-medium text-lg">
                                 ₹{((product.weight + (product.weight * product.wastage) / 100) * product.rate + product.makingCharges).toLocaleString()}
                               </p>
-                              <Button size="sm" onClick={() => addToBill(product)} className="w-full">
+                              <Button variant="success" size="sm" onClick={() => addToBill(product)} className="w-full">
                                 Add to Bill
                               </Button>
                             </div>
@@ -524,11 +524,11 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                       </div>
 
                       <div className="flex space-x-4">
-                        <Button onClick={processBill} className="flex-1">
+                        <Button variant="success" onClick={processBill} className="flex-1">
                           <Receipt className="w-4 h-4 mr-2" />
                           Process Sale
                         </Button>
-                        <Button variant="outline" onClick={() => setCurrentBill([])}>
+                        <Button variant="danger" onClick={() => setCurrentBill([])}>
                           Clear Bill
                         </Button>
                       </div>
@@ -591,7 +591,7 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="primary">
                         <Printer className="w-4 h-4" />
                       </Button>
                     </div>

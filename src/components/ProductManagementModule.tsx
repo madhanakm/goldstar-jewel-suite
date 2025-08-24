@@ -241,12 +241,12 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={loadProducts} variant="outline" size="sm">
+                <Button onClick={loadProducts} variant="warning" size="sm">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
                 <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                   <DialogTrigger asChild>
-                    <Button>
+                    <Button variant="success">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Product
                     </Button>
@@ -339,7 +339,7 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
                       <Button variant="outline" onClick={() => setShowAddDialog(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={handleAddProduct} disabled={loading}>
+                      <Button variant="success" onClick={handleAddProduct} disabled={loading}>
                         {loading ? 'Adding...' : 'Add Product'}
                       </Button>
                     </div>
@@ -378,7 +378,7 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="primary"
                               onClick={() => {
                                 setSelectedProduct(product);
                                 setShowBarcodeDialog(true);
@@ -388,7 +388,7 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
                             </Button>
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="warning"
                               onClick={() => handleRegenerateBarcode(product.id)}
                             >
                               <RefreshCw className="h-4 w-4" />
@@ -404,11 +404,11 @@ export const ProductManagementModule: React.FC<ProductManagementModuleProps> = (
               {/* Pagination */}
               <div className="flex justify-between items-center">
                 <div className="flex gap-2">
-                  <Button onClick={() => handleExport('csv')} variant="outline" size="sm">
+                  <Button onClick={() => handleExport('csv')} variant="default" size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
-                  <Button onClick={() => handleExport('json')} variant="outline" size="sm">
+                  <Button onClick={() => handleExport('json')} variant="default" size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Export JSON
                   </Button>

@@ -21,8 +21,11 @@ interface PageLayoutProps {
 
 export const PageLayout = ({ children, sidebarCategories, onNavigate }: PageLayoutProps) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-luxury-cream via-background to-luxury-cream">
-      {children}
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-yellow-50/30 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-100/20 via-transparent to-yellow-100/20" />
+      <div className="relative z-10">
+        {children}
+      </div>
     </div>
   );
 };
@@ -33,8 +36,10 @@ interface PageContentProps {
 
 export const PageContent = ({ children }: PageContentProps) => {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {children}
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="space-y-4 sm:space-y-6">
+        {children}
+      </div>
     </div>
   );
 };

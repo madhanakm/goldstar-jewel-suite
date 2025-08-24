@@ -13,21 +13,23 @@ interface ModuleCardProps {
 export const ModuleCard = ({ name, description, icon: Icon, color, onClick }: ModuleCardProps) => {
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all duration-200 border-luxury-gold/20 hover:border-luxury-gold/40"
+      className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-slate-50/50 hover:from-amber-50/50 hover:to-yellow-50/50 transform hover:-translate-y-1"
       onClick={onClick}
     >
-      <CardHeader className="pb-4">
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 ${color} rounded-lg flex items-center justify-center`}>
-            <Icon className="w-5 h-5 text-white" />
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
+          <div className={`w-12 h-12 sm:w-16 sm:h-16 ${color} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+            <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <div>
-            <CardTitle className="text-sm font-medium">{name}</CardTitle>
+          <div className="space-y-1 sm:space-y-2">
+            <CardTitle className="text-sm sm:text-base font-semibold text-slate-800 group-hover:text-amber-700 transition-colors">
+              {name}
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm text-slate-600 line-clamp-2">
+              {description}
+            </CardDescription>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <CardDescription className="text-xs">{description}</CardDescription>
       </CardContent>
     </Card>
   );

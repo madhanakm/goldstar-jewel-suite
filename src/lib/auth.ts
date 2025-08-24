@@ -1,4 +1,4 @@
-const STRAPI_URL = 'https://jewelapi.sricashway.com';
+import { API_CONFIG } from '@/config/api';
 
 export interface User {
   id: number;
@@ -20,6 +20,14 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface LoginSession {
+  id?: number;
+  email: string;
+  loginTime: string;
+  expiryTime: string;
+  isActive: boolean;
+}
+
 export class AuthService {
   private static instance: AuthService;
   private token: string | null = null;
@@ -36,6 +44,29 @@ export class AuthService {
         this.clearAuth();
       }
     }
+    
+    // Validate session on initialization
+    if (this.token && this.user) {
+      const loginTime = localStorage.getItem('login_time');
+      if (loginTime) {
+        const loginDate = new Date(loginTime);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
+        
+        console.log('Session validation - Hours since login:', hoursDiff);
+        if (hoursDiff >= 10) {
+          console.log('Session expired, clearing auth');
+          this.clearAuth();
+        } else {
+          console.log('Session valid, keeping auth');
+        }
+      } else {
+        console.log('No login time found, clearing auth');
+        this.clearAuth();
+      }
+    } else {
+      console.log('No token or user found');
+    }
   }
 
   public static getInstance(): AuthService {
@@ -47,7 +78,7 @@ export class AuthService {
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${STRAPI_URL}/api/auth/local`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,6 +98,14 @@ export class AuthService {
       
       localStorage.setItem('auth_token', data.jwt);
       localStorage.setItem('user_data', JSON.stringify(data.user));
+      localStorage.setItem('login_time', new Date().toISOString());
+      
+      // Create/update login session after successful auth
+      try {
+        await this.createLoginSession(data.user.email);
+      } catch (sessionError) {
+        console.warn('Session creation failed:', sessionError);
+      }
       
       return data;
     } catch (error) {
@@ -81,7 +120,7 @@ export class AuthService {
     password: string;
   }): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${STRAPI_URL}/api/auth/local/register`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REGISTER}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +150,7 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     try {
-      const response = await fetch(`${STRAPI_URL}/api/auth/forgot-password`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +170,7 @@ export class AuthService {
 
   async resetPassword(code: string, password: string, passwordConfirmation: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${STRAPI_URL}/api/auth/reset-password`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.RESET_PASSWORD}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,15 +202,40 @@ export class AuthService {
     }
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.token = null;
     this.user = null;
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
+    localStorage.removeItem('login_time');
   }
 
   isAuthenticated(): boolean {
-    return !!this.token && !!this.user;
+    const token = localStorage.getItem('auth_token');
+    const userData = localStorage.getItem('user_data');
+    const loginTime = localStorage.getItem('login_time');
+    
+    if (!token || !userData || !loginTime) {
+      return false;
+    }
+    
+    const loginDate = new Date(loginTime);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDiff >= 10) {
+      this.clearAuth();
+      return false;
+    }
+    
+    this.token = token;
+    try {
+      this.user = JSON.parse(userData);
+      return true;
+    } catch (error) {
+      this.clearAuth();
+      return false;
+    }
   }
 
   getToken(): string | null {
@@ -187,6 +251,62 @@ export class AuthService {
     this.user = null;
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
+    localStorage.removeItem('login_time');
+  }
+
+
+
+  private async createLoginSession(email: string): Promise<void> {
+    try {
+      const now = new Date();
+      const expiry = new Date(now.getTime() + 10 * 60 * 60 * 1000); // 10 hours
+      
+      const sessionData = {
+        userid: email,
+        logintime: now.toISOString()
+      };
+      
+      console.log('Creating session with data:', sessionData);
+      console.log('API URL:', `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}`);
+      
+      // Try to create new session
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: sessionData })
+      });
+      
+      console.log('Session creation response status:', response.status);
+      const responseText = await response.text();
+      console.log('Session creation response:', responseText);
+      
+      if (!response.ok) {
+        console.error('Failed to create session:', responseText);
+      }
+    } catch (error) {
+      console.error('Error creating login session:', error);
+    }
+  }
+
+  private async endLoginSession(email: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}?filters[userid][$eq]=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          const sessionId = data.data[0].id;
+          await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}/${sessionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              data: { isActive: false }
+            })
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error ending login session:', error);
+    }
   }
 
   // Helper method for making authenticated API calls

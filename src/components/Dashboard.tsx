@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageLayout, PageContent, StatCard, ModuleCard, useSidebar, SidebarWrapper } from "@/components/common";
+import { PageLayout, PageContent, StatCard, ModuleCard, useSidebar, SidebarWrapper, GradientCard, ActionButton } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import {
   Users,
@@ -44,25 +44,27 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
   return (
     <PageLayout>
       {/* Header */}
-      <header className="bg-card shadow-sm border-b border-luxury-gold/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="relative bg-gradient-to-r from-amber-50 via-white to-amber-50 border-b border-amber-200/50 backdrop-blur-sm">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-yellow-500/5" />
+        <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Button variant="ghost" size="sm" onClick={toggleSidebar} className="mr-3">
+              <ActionButton variant="ghost" size="sm" onClick={toggleSidebar} className="mr-3">
                 <Menu className="w-5 h-5" />
-              </Button>
+              </ActionButton>
               <img 
                 src="https://jewelapi.sricashway.com/uploads/CASHWAY_FINAL_WORK_1_18740501ca_85998da533.png" 
                 alt="Sri Cashway Logo" 
-                className="w-8 h-8 object-contain mr-3"
+                className="w-8 h-8 object-contain mr-3 rounded-lg shadow-sm"
               />
-              <h1 className="text-2xl font-bold text-luxury-dark">Sri Cashway</h1>
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-700 to-yellow-700 bg-clip-text text-transparent">
+                Sri Cashway
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" onClick={onLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
+              <ActionButton variant="danger" size="sm" onClick={onLogout} icon={LogOut}>
+                <span className="hidden sm:inline">Logout</span>
+              </ActionButton>
             </div>
           </div>
         </div>
@@ -84,8 +86,13 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
 
         {/* Customer Management Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-luxury-dark mb-4">Customer Management</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Customer Management</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {customerModules.map((item, index) => (
               <ModuleCard
                 key={index}
@@ -102,48 +109,79 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           {/* Quick Actions */}
           <div className="lg:col-span-2">
-            <Card className="border-luxury-gold/20">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Frequently used features for daily operations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("New Sale")}>
-                    <ShoppingCart className="w-5 h-5 mb-1" />
-                    New Sale
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Add Product")}>
-                    <Package className="w-5 h-5 mb-1" />
-                    Add Product
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Stock Check")}>
-                    <Package className="w-5 h-5 mb-1" />
-                    Stock Check
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("Daily Report")}>
-                    <FileText className="w-5 h-5 mb-1" />
-                    Daily Report
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col" onClick={() => onNavigate("API Debug")}>
-                    <Settings className="w-5 h-5 mb-1" />
-                    API Debug
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <GradientCard 
+              title="Quick Actions" 
+              description="Frequently used features for daily operations"
+              icon={<TrendingUp className="w-5 h-5 text-white" />}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <ActionButton 
+                  variant="success" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("New Sale")}
+                >
+                  <ShoppingCart className="w-5 h-5 mb-1" />
+                  <span className="text-xs">New Sale</span>
+                </ActionButton>
+                <ActionButton 
+                  variant="primary" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Add Product")}
+                >
+                  <Package className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Add Product</span>
+                </ActionButton>
+                <ActionButton 
+                  variant="warning" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Stock Check")}
+                >
+                  <Package className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Stock Check</span>
+                </ActionButton>
+                <ActionButton 
+                  variant="default" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Daily Report")}
+                >
+                  <FileText className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Daily Report</span>
+                </ActionButton>
+                <ActionButton 
+                  variant="dark" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("API Debug")}
+                >
+                  <Settings className="w-5 h-5 mb-1" />
+                  <span className="text-xs">API Debug</span>
+                </ActionButton>
+              </div>
+            </GradientCard>
           </div>
 
           {/* API Connection Status */}
           <div className="space-y-4">
-            <Card className="border-luxury-gold/20">
-              <CardHeader>
-                <CardTitle>API Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">API connection monitoring will be displayed here</p>
-              </CardContent>
-            </Card>
+            <GradientCard 
+              title="System Status" 
+              icon={<Settings className="w-5 h-5 text-white" />}
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <span className="text-sm font-medium text-emerald-800">API Connection</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-emerald-600">Online</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <span className="text-sm font-medium text-blue-800">Database</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-blue-600">Connected</span>
+                  </div>
+                </div>
+              </div>
+            </GradientCard>
           </div>
         </div>
       </PageContent>
