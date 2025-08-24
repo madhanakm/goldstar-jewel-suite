@@ -39,14 +39,15 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
       console.log('User:', authService.getUser());
       
       toast({
-        title: "Login Successful",
-        description: "Welcome to Cashway Jewelshop Management",
+        title: "✅ Login Successful",
+        description: "Welcome to Sri Cashway Jewelry Management System",
       });
       onLogin("admin");
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
+        title: "❌ Login Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

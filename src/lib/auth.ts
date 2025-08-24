@@ -199,6 +199,25 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    // Clear session from API if user exists
+    if (this.user?.email) {
+      try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}?filters[userid][$eq]=${encodeURIComponent(this.user.email)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data && data.data.length > 0) {
+            const sessionId = data.data[0].id;
+            await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGIN_DETAILS}/${sessionId}`, {
+              method: 'DELETE'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error clearing session:', error);
+      }
+    }
+    
+    // Clear local storage and instance variables
     this.token = null;
     this.user = null;
     localStorage.removeItem('auth_token');

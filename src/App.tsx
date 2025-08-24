@@ -18,11 +18,13 @@ import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
 import { LoginPage } from "./features/auth/components/LoginPage";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const AppContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -61,9 +63,21 @@ const AppContent = () => {
   };
 
   const handleLogout = async () => {
-    await authService.logout();
-    setIsAuthenticated(false);
-    navigate(ROUTES.HOME);
+    try {
+      await authService.logout();
+      setIsAuthenticated(false);
+      toast({
+        title: "✅ Logout Successful",
+        description: "You have been logged out successfully",
+      });
+      navigate(ROUTES.HOME);
+    } catch (error) {
+      toast({
+        title: "❌ Logout Failed",
+        description: "There was an error logging out",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNavigate = (module: string) => {
@@ -182,9 +196,12 @@ const AppContent = () => {
   );
 };
 
+import { Toaster } from "@/components/ui/toaster";
+
 const App = () => (
   <BrowserRouter>
     <AppContent />
+    <Toaster />
   </BrowserRouter>
 );
 
