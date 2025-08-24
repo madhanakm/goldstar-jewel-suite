@@ -39,7 +39,7 @@ export function DataList<T>({
           </CardTitle>
           {onAdd && (
             <Button variant="success" onClick={onAdd} className="inline-flex items-center gap-2">
-              <Plus className="w-4 h-4 flex-shrink-0" />
+              <Plus className="w-4 h-4 flex-shrink-0 inline-flex" />
               <span>{addButtonText}</span>
             </Button>
           )}

@@ -16,6 +16,7 @@ interface PurchaseMaster extends BaseEntity {
   totalqty: string;
   date: string;
   suppliername: string;
+  modeofpayment: string;
 }
 
 interface Purchase extends BaseEntity {
@@ -48,8 +49,9 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
   const { page, hasMore, nextPage, resetPagination } = usePagination();
   const { loading, request } = useApi();
 
-  const [newPurchase, setNewPurchase] = useState<{ suppliername: string; products: ProductForm[] }>({
+  const [newPurchase, setNewPurchase] = useState<{ suppliername: string; modeofpayment: string; products: ProductForm[] }>({
     suppliername: "",
+    modeofpayment: "",
     products: [{ product: "", qty: "", rate: "", touch: "" }]
   });
 
@@ -137,6 +139,7 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
       const masterData = await request(endpoints.purchase.masters.create(), 'POST', {
         data: {
           suppliername: newPurchase.suppliername,
+          modeofpayment: newPurchase.modeofpayment,
           totalamount: totalAmount.toString(),
           totalqty: totalQty.toString(),
           date: new Date().toISOString()
@@ -167,7 +170,7 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
       });
 
       setShowAddDialog(false);
-      setNewPurchase({ suppliername: "", products: [{ product: "", qty: "", rate: "", touch: "" }] });
+      setNewPurchase({ suppliername: "", modeofpayment: "", products: [{ product: "", qty: "", rate: "", touch: "" }] });
       loadPurchaseMasters(1, searchTerm);
     } catch (error) {
       toast({
@@ -339,6 +342,16 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-100 rounded-xl border border-cyan-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <IndianRupee className="w-4 h-4 text-cyan-600" />
+                              <Label className="text-xs font-semibold text-cyan-700 uppercase tracking-wide">Payment Mode</Label>
+                            </div>
+                            <p className="text-lg font-bold text-cyan-800">{selectedPurchase.modeofpayment || 'N/A'}</p>
+                          </div>
+                        </div>
+
                         {/* Products Section */}
                         <div>
                           <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-200">
@@ -430,13 +443,27 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
           loading={loading}
         >
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-            <Label className="text-sm font-semibold text-blue-700 mb-2 block">Supplier Information</Label>
-            <Input
-              value={newPurchase.suppliername}
-              onChange={(e) => setNewPurchase(prev => ({ ...prev, suppliername: e.target.value }))}
-              placeholder="Enter supplier name"
-              className="bg-white border-blue-300 focus:border-blue-500 max-w-md"
-            />
+            <Label className="text-sm font-semibold text-blue-700 mb-3 block">Purchase Information</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-blue-600 mb-1 block">Supplier Name</Label>
+                <Input
+                  value={newPurchase.suppliername}
+                  onChange={(e) => setNewPurchase(prev => ({ ...prev, suppliername: e.target.value }))}
+                  placeholder="Enter supplier name"
+                  className="bg-white border-blue-300 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-blue-600 mb-1 block">Mode of Payment</Label>
+                <Input
+                  value={newPurchase.modeofpayment}
+                  onChange={(e) => setNewPurchase(prev => ({ ...prev, modeofpayment: e.target.value }))}
+                  placeholder="Cash, UPI, Card, etc."
+                  className="bg-white border-blue-300 focus:border-blue-500"
+                />
+              </div>
+            </div>
           </div>
           
           <div className="mb-4">
@@ -518,7 +545,7 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
           
           <div className="flex justify-between items-center pt-4 border-t border-gray-200">
             <Button variant="outline" onClick={addProductRow} className="inline-flex items-center gap-2 hover:bg-indigo-50 hover:border-indigo-300">
-              <Plus className="w-4 h-4 flex-shrink-0" />
+              <Plus className="w-4 h-4 flex-shrink-0 inline-flex" />
               <span>Add Another Product</span>
             </Button>
             
