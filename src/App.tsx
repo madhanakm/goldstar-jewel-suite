@@ -15,6 +15,9 @@ import { ProductModule } from "./components/ProductModule";
 import { ProductModuleWithBarcode } from "./components/ProductModuleWithBarcode";
 import { LockerRoomManagement } from "./components/LockerRoomManagement";
 import { BarcodeGenerator } from "./components/BarcodeGenerator";
+import { SalesEntry } from "./components/SalesEntry";
+import { SalesReport } from "./components/SalesReport";
+import { TrayManagement } from "./components/TrayManagement";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -127,8 +130,18 @@ const AppContent = () => {
       case "Making Charges":
       case "Old Gold Exchange":
       case "Payment Methods":
-      case "New Sale":
         navigate('/sales-billing');
+        break;
+      case "New Sale":
+      case "Sales Entry":
+        navigate('/sales-entry');
+        break;
+      case "Sales Reports":
+      case "Sales Report":
+        navigate('/sales-report');
+        break;
+      case "Tray Management":
+        navigate('/tray-management');
         break;
       case "Silver Billing":
       case "Silver Sales":
@@ -200,6 +213,9 @@ const AppContent = () => {
       <Route path="/product-module" element={<ProductModuleWithBarcode onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/add-product" element={<ProductModule onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/barcode-generator" element={<BarcodeGenerator onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/sales-entry" element={<SalesEntry onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/sales-report" element={<SalesReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/tray-management" element={<TrayManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>

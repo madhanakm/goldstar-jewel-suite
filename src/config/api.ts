@@ -11,6 +11,8 @@ export const API_CONFIG = {
     PRODUCTS: '/api/products',
     CUSTOMERS: '/api/customers',
     PURCHASE_MASTERS: '/api/purchase-masters',
-    PURCHASES: '/api/purchases'
+    PURCHASES: '/api/purchases',
+    SALES_MASTERS: '/api/sales-masters',
+    SALES: '/api/sales'
   }
 };

@@ -17,5 +17,20 @@ export const endpoints = {
   barcode: {
     list: (pageSize = 100) => `${API_CONFIG.ENDPOINTS.PURCHASES}?pagination[pageSize]=${pageSize}`,
     create: () => '/api/barcodes'
+  },
+  sales: {
+    masters: {
+      list: (page = 1, pageSize = 25) => `/api/sales-masters?pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+      create: () => '/api/sales-masters'
+    },
+    details: {
+      list: (invoiceId: string) => `/api/sales?filters[invoice_id][$eq]=${invoiceId}`,
+      create: () => '/api/sales'
+    }
+  },
+  customers: {
+    list: (pageSize = 100) => `/api/customers?pagination[pageSize]=${pageSize}`,
+    create: () => '/api/customers',
+    findByPhone: (phone: string) => `/api/customers?filters[phone][$eq]=${phone}`
   }
 };

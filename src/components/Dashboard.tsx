@@ -163,6 +163,22 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Barcode</span>
                 </ActionButton>
+                <ActionButton 
+                  variant="info" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Sales Entry")}
+                >
+                  <ShoppingCart className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Sales Entry</span>
+                </ActionButton>
+                <ActionButton 
+                  variant="secondary" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Tray Management")}
+                >
+                  <Package className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Tray Mgmt</span>
+                </ActionButton>
               </div>
             </GradientCard>
           </div>

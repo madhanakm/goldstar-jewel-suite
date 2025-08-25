@@ -34,6 +34,7 @@ export const sidebarConfig = [
       { name: "Inventory Management", icon: Package, description: "Category-wise inventory tracking", color: "bg-emerald-500" },
       { name: "Stock Tracking", icon: Warehouse, description: "Weight and purity-wise tracking", color: "bg-teal-500" },
       { name: "Barcode Generator", icon: Scale, description: "Barcode generation and scanning", color: "bg-indigo-500" },
+      { name: "Tray Management", icon: Package, description: "Track products in trays and sales status", color: "bg-purple-500" },
       { name: "Purchase Entry", icon: Receipt, description: "Record and manage purchase entries", color: "bg-orange-500" },
       { name: "Locker Room Management", icon: Lock, description: "Inside/outside locker product tracking", color: "bg-gray-600" },
       { name: "Real-time Updates", icon: BarChart3, description: "Live stock and valuation updates", color: "bg-cyan-500" }
@@ -42,6 +43,8 @@ export const sidebarConfig = [
   {
     category: "Sales & Billing",
     items: [
+      { name: "Sales Entry", icon: ShoppingCart, description: "Create new sales with barcode integration", color: "bg-green-500" },
+      { name: "Sales Report", icon: BarChart3, description: "View sales statistics and reports", color: "bg-blue-500" },
       { name: "Retail Billing", icon: ShoppingCart, description: "GST compliant billing system", color: "bg-rose-500" },
       { name: "Silver Billing", icon: Gem, description: "Specialized silver jewelry billing", color: "bg-slate-400" },
       { name: "Making Charges", icon: Calculator, description: "Configure charges and wastage", color: "bg-amber-500" },
