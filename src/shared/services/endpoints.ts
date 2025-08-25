@@ -13,5 +13,9 @@ export const endpoints = {
       list: (masterId: string) => `${API_CONFIG.ENDPOINTS.PURCHASES}?filters[pid][$eq]=${masterId}`,
       create: () => API_CONFIG.ENDPOINTS.PURCHASES,
     }
+  },
+  barcode: {
+    list: (pageSize = 100) => `${API_CONFIG.ENDPOINTS.PURCHASES}?pagination[pageSize]=${pageSize}`,
+    create: () => '/api/barcodes'
   }
 };

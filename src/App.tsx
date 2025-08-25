@@ -14,6 +14,7 @@ import { SimpleProductManagement } from "./components/SimpleProductManagement";
 import { ProductModule } from "./components/ProductModule";
 import { ProductModuleWithBarcode } from "./components/ProductModuleWithBarcode";
 import { LockerRoomManagement } from "./components/LockerRoomManagement";
+import { BarcodeGenerator } from "./components/BarcodeGenerator";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -106,9 +107,12 @@ const AppContent = () => {
       case "Pricing Management":
       case "Product Variants":
       case "Add Product":
-      case "Barcode Generation":
       case "New Product":
         navigate('/simple-product-management');
+        break;
+      case "Barcode Generation":
+      case "Barcode Generator":
+        navigate('/barcode-generator');
         break;
       case "Locker Room Management":
         navigate('/locker-room-management');
@@ -188,13 +192,14 @@ const AppContent = () => {
       <Route path="/sales-billing" element={<SalesBilling onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/silver-billing" element={<SilverSpecialBilling onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/purchase-management" element={<PurchaseManagement onBack={handleBack} onNavigate={handleNavigate} />} />
-      <Route path="/purchase-entry" element={<PurchaseEntry onBack={handleBack} onNavigate={handleNavigate} />} />
+      <Route path="/purchase-entry" element={<PurchaseEntry onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/financial-modules" element={<FinancialModules onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/analytics-reports" element={<AnalyticsReports onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/product-management" element={<ProductManagementModule onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/simple-product-management" element={<SimpleProductManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/product-module" element={<ProductModuleWithBarcode onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="/add-product" element={<ProductModule onBack={handleBack} onNavigate={handleNavigate} />} />
+      <Route path="/barcode-generator" element={<BarcodeGenerator onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>

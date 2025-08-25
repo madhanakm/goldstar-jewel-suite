@@ -114,7 +114,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
               description="Frequently used features for daily operations"
               icon={<TrendingUp className="w-5 h-5 text-white" />}
             >
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <ActionButton 
                   variant="success" 
                   className="h-16 flex-col p-3" 
@@ -130,6 +130,14 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                 >
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Add Product</span>
+                </ActionButton>
+                <ActionButton 
+                  variant="warning" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Purchase Entry")}
+                >
+                  <Package className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Purchase Entry</span>
                 </ActionButton>
                 <ActionButton 
                   variant="warning" 
@@ -150,10 +158,10 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                 <ActionButton 
                   variant="dark" 
                   className="h-16 flex-col p-3" 
-                  onClick={() => onNavigate("API Debug")}
+                  onClick={() => onNavigate("Barcode Generator")}
                 >
-                  <Settings className="w-5 h-5 mb-1" />
-                  <span className="text-xs">API Debug</span>
+                  <Package className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Barcode</span>
                 </ActionButton>
               </div>
             </GradientCard>

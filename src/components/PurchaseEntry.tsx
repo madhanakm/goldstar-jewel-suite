@@ -3,11 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper } from "@/components/common";
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { DataList, DetailPanel, FormDialog, useApi, usePagination, formatCurrency, formatDate, calculateTotal, BaseEntity, PageProps } from "@/shared";
 import { endpoints } from "@/shared";
-import { Package, Calendar, Hash, IndianRupee, Trash2, Plus, ShoppingBag, TrendingUp, Clock, Star } from "lucide-react";
+import { Package, Calendar, Hash, IndianRupee, Trash2, Plus, ShoppingBag, TrendingUp, Clock, Star, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import "@/styles/scrollbar.css";
 
@@ -35,9 +35,11 @@ interface ProductForm {
   touch: string;
 }
 
-interface PurchaseEntryProps extends PageProps {}
+interface PurchaseEntryProps extends PageProps {
+  onLogout?: () => void;
+}
 
-export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
+export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryProps) => {
   const [purchaseMasters, setPurchaseMasters] = useState<PurchaseMaster[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -255,6 +257,13 @@ export const PurchaseEntry = ({ onBack, onNavigate }: PurchaseEntryProps) => {
           { label: "Purchase Entry" }
         ]}
         icon={<Package className="w-6 h-6 text-primary mr-3" />}
+        actions={
+          onLogout && (
+            <ActionButton variant="danger" size="sm" onClick={onLogout} icon={LogOut}>
+              <span className="hidden sm:inline">Logout</span>
+            </ActionButton>
+          )
+        }
       />
       
       <PageContent>

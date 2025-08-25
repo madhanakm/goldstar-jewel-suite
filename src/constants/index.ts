@@ -46,5 +46,6 @@ export const ROUTES = {
   PURCHASE_MANAGEMENT: '/purchase-management',
   FINANCIAL_MODULES: '/financial-modules',
   ANALYTICS_REPORTS: '/analytics-reports',
-  LOCKER_ROOM_MANAGEMENT: '/locker-room-management'
+  LOCKER_ROOM_MANAGEMENT: '/locker-room-management',
+  BARCODE_GENERATOR: '/barcode-generator'
 } as const;
