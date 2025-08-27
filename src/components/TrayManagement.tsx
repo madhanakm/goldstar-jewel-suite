@@ -68,7 +68,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
 
   const loadSalesData = async () => {
     try {
-      const response = await request(endpoints.sales.details.list(''));
+      const response = await request('/api/sales?pagination[pageSize]=1000');
       setSalesData(response.data || []);
     } catch (error) {
       console.error("Failed to load sales data");
@@ -86,12 +86,13 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       );
     }
 
-    // Mark products as sold if they exist in sales data
+    // Mark products as sold based on barcode match in sales data
     filtered = filtered.map(product => {
       const isSold = salesData.some(sale => {
         const saleAttrs = sale.attributes || sale;
-        return saleAttrs.product === product.product || 
-               saleAttrs.code === product.code;
+        return saleAttrs.product === product.product && 
+               saleAttrs.touch === product.touch &&
+               saleAttrs.weight === product.weight;
       });
       return { ...product, status: isSold ? 'sold' as const : 'available' as const };
     });
@@ -106,6 +107,23 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
     const soldProducts = filteredProducts.filter(p => p.status === 'sold').length;
     
     return { trays: trays.length, totalProducts, availableProducts, soldProducts };
+  };
+
+  const getTrayWiseData = () => {
+    const trayMap = new Map();
+    filteredProducts.forEach(product => {
+      if (product.trayno) {
+        if (!trayMap.has(product.trayno)) {
+          trayMap.set(product.trayno, { total: 0, available: 0, sold: 0, products: [] });
+        }
+        const trayData = trayMap.get(product.trayno);
+        trayData.total++;
+        trayData.products.push(product);
+        if (product.status === 'available') trayData.available++;
+        if (product.status === 'sold') trayData.sold++;
+      }
+    });
+    return Array.from(trayMap.entries());
   };
 
   const stats = getTrayStats();
@@ -203,30 +221,57 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
           </div>
         </Card>
 
-        {/* Products List */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Tray Products</h2>
-            <div className="text-sm text-gray-500">
-              {filteredProducts.length} products found
+        {/* Tray-wise View */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-bold mb-4">Tray Overview</h2>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {getTrayWiseData().map(([trayNo, data]) => (
+                <Card key={trayNo} className="p-4 border-l-4 border-l-blue-500">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-bold">Tray {trayNo}</h3>
+                      <div className="text-sm text-gray-600">
+                        {data.total} products | {data.available} available | {data.sold} sold
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-lg font-bold ${
+                        data.available > data.sold ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {Math.round((data.available / data.total) * 100)}% Available
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-          </div>
-          
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2">Loading tray data...</p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">All Products</h2>
+              <div className="text-sm text-gray-500">
+                {filteredProducts.length} products found
               </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No products found
-              </div>
-            ) : (
-              filteredProducts.map(renderProductCard)
-            )}
-          </div>
-        </Card>
+            </div>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2">Loading tray data...</p>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No products found
+                </div>
+              ) : (
+                filteredProducts.map(renderProductCard)
+              )}
+            </div>
+          </Card>
+        </div>
       </PageContent>
       
       <SidebarWrapper

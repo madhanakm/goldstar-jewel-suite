@@ -19,20 +19,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  base: './',
   build: {
     target: 'esnext',
     minify: 'esbuild',
-    sourcemap: mode === 'development',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs'],
-          utils: ['clsx', 'tailwind-merge', 'class-variance-authority'],
-          barcode: ['jsbarcode', 'qrcode', '@zxing/library']
-        }
-      }
-    },
+    sourcemap: false,
+    outDir: 'dist',
+    assetsDir: 'assets',
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
