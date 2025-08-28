@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import { ErrorBoundary } from "./components/common";
 import { Dashboard } from "./components/Dashboard";
 import { CustomerManagement } from "./components/CustomerManagement";
 import { InventoryManagement } from "./components/InventoryManagement";
@@ -17,8 +18,11 @@ import { LockerRoomManagement } from "./components/LockerRoomManagement";
 import { BarcodeGenerator } from "./components/BarcodeGenerator";
 import { SalesEntry } from "./components/SalesEntry";
 import { SalesReport } from "./components/SalesReport";
+import { StockReport } from "./components/StockReport";
+import { PurchaseReport } from "./components/PurchaseReport";
 import { TrayManagement } from "./components/TrayManagement";
 import { TrayAdd } from "./components/TrayAdd";
+import { RateManagement } from "./components/RateManagement";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -35,7 +39,6 @@ const AppContent = () => {
   useEffect(() => {
     const checkAuth = () => {
       const isAuth = authService.isAuthenticated();
-      console.log('Final auth result:', isAuth);
       setIsAuthenticated(isAuth);
       setIsLoading(false);
       
@@ -61,10 +64,7 @@ const AppContent = () => {
   }, []);
 
   const handleLogin = (type: string) => {
-    console.log('handleLogin called with type:', type);
-    console.log('Current auth state before:', isAuthenticated);
     setIsAuthenticated(true);
-    console.log('Authentication state set to true, navigating to dashboard');
     navigate(ROUTES.DASHBOARD);
   };
 
@@ -141,11 +141,20 @@ const AppContent = () => {
       case "Sales Report":
         navigate('/sales-report');
         break;
+      case "Stock Report":
+        navigate('/stock-report');
+        break;
+      case "Purchase Report":
+        navigate('/purchase-report');
+        break;
       case "Tray Management":
         navigate('/tray-management');
         break;
       case "Add Tray":
         navigate('/tray-add');
+        break;
+      case "Rate Management":
+        navigate('/rate-management');
         break;
       case "Silver Billing":
       case "Silver Sales":
@@ -219,8 +228,11 @@ const AppContent = () => {
       <Route path="/barcode-generator" element={<BarcodeGenerator onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/sales-entry" element={<SalesEntry onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/sales-report" element={<SalesReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/stock-report" element={<StockReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/purchase-report" element={<PurchaseReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/tray-management" element={<TrayManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/tray-add" element={<TrayAdd onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/rate-management" element={<RateManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>
@@ -230,10 +242,12 @@ const AppContent = () => {
 import { Toaster } from "@/components/ui/toaster";
 
 const App = () => (
-  <BrowserRouter>
-    <AppContent />
-    <Toaster />
-  </BrowserRouter>
+  <ErrorBoundary>
+    <BrowserRouter>
+      <AppContent />
+      <Toaster />
+    </BrowserRouter>
+  </ErrorBoundary>
 );
 
 export default App;

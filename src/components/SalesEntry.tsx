@@ -54,7 +54,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const loadBarcodeProducts = async () => {
     try {
       const response = await request(endpoints.barcode.listBarcodes());
-      console.log('Barcode products loaded:', response.data);
+      // Barcode products loaded successfully
       setBarcodeProducts(response.data || []);
     } catch (error) {
       console.error("Failed to load barcode products");
@@ -69,10 +69,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const handleBarcodeSearch = async (barcode: string, index: number) => {
-    console.log('Searching for barcode:', barcode);
-    
     const foundProduct = barcodeProducts.find(p => p.code === barcode);
-    console.log('Found product:', foundProduct);
     
     if (foundProduct) {
       setProducts(prev => prev.map((product, i) => 

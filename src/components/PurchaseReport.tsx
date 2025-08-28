@@ -5,80 +5,83 @@ import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { TrendingUp, LogOut, Download, Calendar, DollarSign, ShoppingCart, Users } from "lucide-react";
+import { ShoppingBag, LogOut, Download, Calendar, DollarSign, Package, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface SalesReportProps {
+interface PurchaseReportProps {
   onNavigate?: (module: string) => void;
   onLogout?: () => void;
 }
 
-export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
-  const [salesData, setSalesData] = useState<any[]>([]);
+export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) => {
+  const [purchaseData, setPurchaseData] = useState<any[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [stats, setStats] = useState({
-    totalSales: 0,
+    totalPurchases: 0,
     totalAmount: 0,
-    totalCustomers: 0,
-    avgOrderValue: 0
+    totalWeight: 0,
+    avgPurchaseValue: 0
   });
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
 
   useEffect(() => {
-    loadSalesData();
+    loadPurchaseData();
   }, []);
 
-  const loadSalesData = async () => {
+  const loadPurchaseData = async () => {
     try {
-      const response = await request(endpoints.sales.list());
+      const response = await request(endpoints.barcode.listBarcodes());
       const data = response.data || [];
-      setSalesData(data);
+      setPurchaseData(data);
       calculateStats(data);
     } catch (error) {
       toast({
         title: "❌ Error",
-        description: "Failed to load sales data",
+        description: "Failed to load purchase data",
         variant: "destructive",
       });
     }
   };
 
   const calculateStats = (data: any[]) => {
-    const totalSales = data.length;
-    const totalAmount = data.reduce((sum, sale) => sum + (parseFloat(sale.total_amount) || 0), 0);
-    const uniqueCustomers = new Set(data.map(sale => sale.customer_phone)).size;
-    const avgOrderValue = totalSales > 0 ? totalAmount / totalSales : 0;
+    const totalPurchases = data.length;
+    const totalAmount = data.reduce((sum, purchase) => sum + (parseFloat(purchase.making_charges_or_wastages) || 0), 0);
+    const totalWeight = data.reduce((sum, purchase) => sum + (parseFloat(purchase.weight) || 0) * (parseFloat(purchase.qty) || 1), 0);
+    const avgPurchaseValue = totalPurchases > 0 ? totalAmount / totalPurchases : 0;
 
     setStats({
-      totalSales,
+      totalPurchases,
       totalAmount,
-      totalCustomers: uniqueCustomers,
-      avgOrderValue
+      totalWeight,
+      avgPurchaseValue
     });
   };
 
   const filterByDate = () => {
     if (!dateFrom || !dateTo) return;
     
-    const filtered = salesData.filter(sale => {
-      const saleDate = new Date(sale.createdAt).toISOString().split('T')[0];
-      return saleDate >= dateFrom && saleDate <= dateTo;
+    const filtered = purchaseData.filter(purchase => {
+      const purchaseDate = new Date(purchase.createdAt).toISOString().split('T')[0];
+      return purchaseDate >= dateFrom && purchaseDate <= dateTo;
     });
     calculateStats(filtered);
   };
 
   const exportReport = () => {
     const csvContent = [
-      ['Date', 'Customer', 'Phone', 'Amount', 'Items'],
-      ...salesData.map(sale => [
-        new Date(sale.createdAt).toLocaleDateString(),
-        sale.customer_name,
-        sale.customer_phone,
-        sale.total_amount,
-        sale.items_count || 1
+      ['Date', 'Product', 'Touch', 'Weight', 'Qty', 'Amount', 'Tray', 'Code'],
+      ...purchaseData.map(purchase => [
+        new Date(purchase.createdAt).toLocaleDateString(),
+        purchase.product,
+        purchase.touch,
+        purchase.weight,
+        purchase.qty,
+        purchase.making_charges_or_wastages || 0,
+        purchase.trayno || '',
+        purchase.code
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -86,20 +89,20 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sales-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `purchase-report-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
   return (
     <PageLayout>
       <PageHeader
-        title="Sales Report"
+        title="Purchase Report"
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
-          { label: "Sales Report" }
+          { label: "Purchase Report" }
         ]}
-        icon={<TrendingUp className="w-6 h-6 text-primary mr-3" />}
+        icon={<ShoppingBag className="w-6 h-6 text-primary mr-3" />}
         actions={
           onLogout && (
             <Button variant="outline" size="sm" onClick={onLogout}>
@@ -113,20 +116,20 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
       <PageContent>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <GradientCard title="Total Sales" icon={<ShoppingCart className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-blue-600">{stats.totalSales}</div>
+          <GradientCard title="Total Purchases" icon={<ShoppingBag className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-blue-600">{stats.totalPurchases}</div>
           </GradientCard>
           
-          <GradientCard title="Total Revenue" icon={<DollarSign className="w-5 h-5 text-white" />}>
+          <GradientCard title="Total Amount" icon={<DollarSign className="w-5 h-5 text-white" />}>
             <div className="text-3xl font-bold text-green-600">₹{stats.totalAmount.toLocaleString()}</div>
           </GradientCard>
           
-          <GradientCard title="Customers" icon={<Users className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-purple-600">{stats.totalCustomers}</div>
+          <GradientCard title="Total Weight" icon={<Package className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-purple-600">{stats.totalWeight.toFixed(1)}g</div>
           </GradientCard>
           
-          <GradientCard title="Avg Order Value" icon={<TrendingUp className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-orange-600">₹{stats.avgOrderValue.toFixed(0)}</div>
+          <GradientCard title="Avg Purchase Value" icon={<TrendingUp className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-orange-600">₹{stats.avgPurchaseValue.toFixed(0)}</div>
           </GradientCard>
         </div>
 
@@ -154,34 +157,37 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
           </div>
         </Card>
 
-        {/* Sales Data */}
+        {/* Purchase Data */}
         <Card>
           <CardHeader>
-            <CardTitle>Sales Transactions</CardTitle>
+            <CardTitle>Purchase Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             <DataGrid
-              data={salesData}
+              data={purchaseData}
               columns={[
                 {
                   key: 'createdAt',
                   header: 'Date',
                   render: (value) => new Date(value).toLocaleDateString()
                 },
-                { key: 'customer_name', header: 'Customer' },
-                { key: 'customer_phone', header: 'Phone' },
+                { key: 'product', header: 'Product' },
+                { key: 'touch', header: 'Touch' },
                 {
-                  key: 'total_amount',
-                  header: 'Amount',
-                  render: (value) => `₹${parseFloat(value).toLocaleString()}`
+                  key: 'weight',
+                  header: 'Weight',
+                  render: (value) => `${value}g`
                 },
+                { key: 'qty', header: 'Qty' },
                 {
-                  key: 'items_count',
-                  header: 'Items',
-                  render: (value) => value || 1
-                }
+                  key: 'making_charges_or_wastages',
+                  header: 'Amount',
+                  render: (value) => `₹${parseFloat(value || 0).toLocaleString()}`
+                },
+                { key: 'trayno', header: 'Tray' },
+                { key: 'code', header: 'Code' }
               ]}
-              emptyMessage="No sales data found"
+              emptyMessage="No purchase data found"
             />
           </CardContent>
         </Card>

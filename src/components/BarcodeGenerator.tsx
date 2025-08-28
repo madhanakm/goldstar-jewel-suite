@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
-import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List } from "lucide-react";
+import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import JsBarcode from "jsbarcode";
 
@@ -241,15 +241,56 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     generateCode();
   };
 
+  const generateBarcodeWithDetails = (product: any) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 160;
+    
+    if (ctx) {
+      // White background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Generate barcode without display value
+      const tempCanvas = document.createElement('canvas');
+      JsBarcode(tempCanvas, product.code, {
+        format: 'CODE128',
+        width: 2,
+        height: 60,
+        displayValue: false,
+        margin: 10
+      });
+      
+      // Add product details above barcode
+      ctx.fillStyle = 'black';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      
+      const centerX = canvas.width / 2;
+      ctx.fillText(`${product.product} | ${product.touch} | ${product.weight}g`, centerX, 22);
+      
+      // Draw barcode centered
+      const x = (canvas.width - tempCanvas.width) / 2;
+      ctx.drawImage(tempCanvas, x, 30);
+      
+      // Add code below barcode
+      ctx.fillText(product.code, centerX, 110);
+    }
+    
+    return canvas;
+  };
+
   const handlePrint = () => {
     if (barcodeCanvasRef.current) {
+      const canvas = generateBarcodeWithDetails(formData);
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
             <head><title>Barcode</title></head>
             <body style="text-align: center; padding: 20px;">
-              <img src="${barcodeCanvasRef.current?.toDataURL()}" />
+              <img src="${canvas.toDataURL()}" />
             </body>
           </html>
         `);
@@ -257,6 +298,14 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         printWindow.print();
       }
     }
+  };
+
+  const handleDownload = (barcode: any) => {
+    const canvas = generateBarcodeWithDetails(barcode);
+    const link = document.createElement('a');
+    link.download = `barcode_${barcode.code}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
   };
 
   return (
@@ -510,8 +559,29 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         Touch: {barcode.touch} | Qty: {barcode.qty}
                       </div>
                     </div>
-                    <div className="text-right text-sm text-gray-500">
-                      {new Date(barcode.createdAt).toLocaleDateString()}
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const canvas = generateBarcodeWithDetails(barcode);
+                        const printWindow = window.open('', '_blank');
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                              <head><title>Barcode</title></head>
+                              <body style="text-align: center; padding: 20px;">
+                                <img src="${canvas.toDataURL()}" />
+                              </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                          printWindow.print();
+                        }
+                      }}>
+                        <Printer className="w-3 h-3 mr-1" />
+                        Print
+                      </Button>
+                      <div className="text-right text-sm text-gray-500">
+                        {new Date(barcode.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
                 </Card>

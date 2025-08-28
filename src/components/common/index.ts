@@ -10,3 +10,4 @@ export { Sidebar } from './Sidebar';
 export { GradientCard } from './GradientCard';
 export { ActionButton } from './ActionButton';
 export { DataGrid } from './DataGrid';
+export { ErrorBoundary } from './ErrorBoundary';

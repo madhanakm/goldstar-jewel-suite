@@ -184,12 +184,11 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       }
     });
     
-    console.log('All trays initialized:', Array.from(trayMap.keys()));
-    console.log('Tray products:', trayProducts);
+    // Trays initialized and products loaded
     
     // Add products to their respective trays
     trayProducts.forEach(product => {
-      console.log('Processing product:', product.product, 'Tray:', product.trayno);
+      // Processing product for tray assignment
       if (product.trayno && trayMap.has(product.trayno)) {
         const trayData = trayMap.get(product.trayno);
         const soldQty = salesData.reduce((total, sale) => {
@@ -214,15 +213,11 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
         trayData.products.push({ ...product, availableQty, soldQty, status: availableQty > 0 ? 'available' : 'sold' });
         trayData.available += Math.max(0, availableQty);
         trayData.sold += soldQty;
-        console.log('Added to tray', product.trayno, '- Total products:', trayData.total);
-      } else {
-        console.log('Product not added - trayno:', product.trayno, 'exists in map:', trayMap.has(product.trayno));
+        // Product added to tray successfully
       }
     });
     
-    const result = Array.from(trayMap.entries());
-    console.log('Final tray data:', result);
-    return result;
+    return Array.from(trayMap.entries());
   };
 
   const stats = getTrayStats();
@@ -377,9 +372,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
                     selectedTray === trayNo ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'
                   }`}
                   onClick={() => {
-                    console.log('Tray clicked:', trayNo);
-                    console.log('Tray data:', data);
-                    console.log('Products in tray:', data.products);
+                    // Tray selected
                     setSelectedTray(trayNo);
                     const trayProductsWithStatus = data.products.map(product => {
                       const soldQty = salesData.reduce((total, sale) => {
@@ -398,7 +391,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
                       
                       return { ...product, status, availableQty, soldQty };
                     });
-                    console.log('Processed products:', trayProductsWithStatus);
+                    // Products processed for display
                     setFilteredProducts(trayProductsWithStatus);
                   }}
                 >

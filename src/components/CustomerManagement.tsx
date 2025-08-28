@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Textarea } from "@/components/ui/textarea";
 import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper, GradientCard, ActionButton, DataGrid } from "@/components/common";
+import { useApi, endpoints, usePagination } from "@/shared";
+import { useToast } from "@/hooks/use-toast";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import {
   Users,
@@ -31,54 +33,52 @@ interface CustomerManagementProps {
 }
 
 export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementProps) => {
-  const [selectedTab, setSelectedTab] = useState("list");
+
   const [searchTerm, setSearchTerm] = useState("");
+  const [customers, setCustomers] = useState<any[]>([]);
   const { sidebarOpen, toggleSidebar } = useSidebar();
+  const { toast } = useToast();
+  const { page, hasMore, nextPage, resetPagination } = usePagination();
+  const { loading, request } = useApi();
 
-  const customers = [
-    {
-      id: "CUST001",
-      name: "Priya Sharma",
-      phone: "+91 9876543210",
-      email: "priya.sharma@email.com",
-      address: "123 Main St, Mumbai",
-      kycStatus: "Verified",
-      loyaltyPoints: 2450,
-      totalPurchases: "₹2,45,000",
-      lastVisit: "2024-01-15",
-      memberSince: "2022-03-10"
-    },
-    {
-      id: "CUST002",
-      name: "Rajesh Kumar",
-      phone: "+91 9876543211",
-      email: "rajesh.kumar@email.com",
-      address: "456 Park Road, Delhi",
-      kycStatus: "Pending",
-      loyaltyPoints: 1200,
-      totalPurchases: "₹1,20,000",
-      lastVisit: "2024-01-12",
-      memberSince: "2023-01-20"
-    },
-    {
-      id: "CUST003",
-      name: "Anita Patel",
-      phone: "+91 9876543212",
-      email: "anita.patel@email.com",
-      address: "789 Central Ave, Ahmedabad",
-      kycStatus: "Verified",
-      loyaltyPoints: 3800,
-      totalPurchases: "₹3,80,000",
-      lastVisit: "2024-01-18",
-      memberSince: "2021-11-05"
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async (pageNum = 1, search = "") => {
+    try {
+      const data = await request(endpoints.customers.list(pageNum, 10, search));
+      if (pageNum === 1) {
+        setCustomers(data.data || []);
+      } else {
+        setCustomers(prev => [...prev, ...(data.data || [])]);
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to load customers",
+        variant: "destructive",
+      });
     }
-  ];
+  };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm) ||
-    customer.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop === clientHeight && hasMore && !loading) {
+      nextPage();
+      loadCustomers(page + 1, searchTerm);
+    }
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    resetPagination();
+    loadCustomers(1, value);
+  };
+
+
+
+  const filteredCustomers = customers;
 
   return (
     <PageLayout>
@@ -93,18 +93,10 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
         icon={<Users className="w-6 h-6 text-primary mr-3" />}
       />
       <PageContent>
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="list">Customer List</TabsTrigger>
-            <TabsTrigger value="add">Add Customer</TabsTrigger>
-            <TabsTrigger value="kyc">KYC Management</TabsTrigger>
-            <TabsTrigger value="loyalty">Loyalty Program</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="list" className="space-y-6 mt-6">
+        <div className="space-y-6">
             <SearchFilter
               searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
+              onSearchChange={handleSearch}
               searchPlaceholder="Search by name, phone, or ID..."
               filters={[
                 {
@@ -176,28 +168,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                     </div>
                   )
                 },
-                {
-                  key: 'loyaltyPoints',
-                  header: 'Points',
-                  render: (value) => (
-                    <div className="text-center">
-                      <div className="font-semibold text-amber-600">{value}</div>
-                      <div className="text-xs text-slate-600">Loyalty</div>
-                    </div>
-                  )
-                },
-                {
-                  key: 'kycStatus',
-                  header: 'Status',
-                  render: (value) => (
-                    <Badge 
-                      variant={value === "Verified" ? "default" : "secondary"}
-                      className={value === "Verified" ? "bg-emerald-500 hover:bg-emerald-600" : ""}
-                    >
-                      {value}
-                    </Badge>
-                  )
-                },
+
                 {
                   key: 'id',
                   header: 'Actions',
@@ -215,161 +186,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
               ]}
               emptyMessage="No customers found. Add your first customer to get started."
             />
-          </TabsContent>
-
-          <TabsContent value="add" className="space-y-6 mt-6">
-            <GradientCard title="Add New Customer" icon={<Plus className="w-5 h-5 text-white" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="First Name" required>
-                  <Input placeholder="Enter first name" />
-                </FormField>
-                <FormField label="Last Name" required>
-                  <Input placeholder="Enter last name" />
-                </FormField>
-                <FormField label="Phone Number" required>
-                  <Input placeholder="+91 9876543210" />
-                </FormField>
-                <FormField label="Email Address">
-                  <Input type="email" placeholder="customer@email.com" />
-                </FormField>
-                <FormField label="Date of Birth">
-                  <Input type="date" />
-                </FormField>
-                <FormField label="Anniversary Date">
-                  <Input type="date" />
-                </FormField>
-              </div>
-              
-              <FormField label="Address">
-                <Textarea placeholder="Enter complete address" />
-              </FormField>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField label="City">
-                  <Input placeholder="Enter city" />
-                </FormField>
-                <FormField label="State">
-                  <Input placeholder="Enter state" />
-                </FormField>
-                <FormField label="Pincode">
-                  <Input placeholder="Enter pincode" />
-                </FormField>
-              </div>
-
-              <div className="flex justify-end space-x-4">
-                <ActionButton variant="outline">Cancel</ActionButton>
-                <ActionButton variant="success" icon={Plus}>Add Customer</ActionButton>
-              </div>
-            </GradientCard>
-          </TabsContent>
-
-          <TabsContent value="kyc" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>KYC Document Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {customers.map((customer) => (
-                    <Card key={customer.id} className="border-luxury-gold/20">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium">{customer.name}</h4>
-                          <Badge 
-                            variant={customer.kycStatus === "Verified" ? "default" : "secondary"}
-                            className={customer.kycStatus === "Verified" ? "bg-green-500" : "bg-yellow-500"}
-                          >
-                            {customer.kycStatus}
-                          </Badge>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span>Aadhar Card:</span>
-                            <span className="text-green-600">✓ Verified</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>PAN Card:</span>
-                            <span className="text-green-600">✓ Verified</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Address Proof:</span>
-                            <span className="text-yellow-600">⏳ Pending</span>
-                          </div>
-                        </div>
-                        <Button size="sm" variant="primary" className="w-full mt-3">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Manage Documents
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="loyalty" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Star className="w-5 h-5 mr-2 text-yellow-500" />
-                    Loyalty Program Stats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span>Total Members:</span>
-                      <span className="font-semibold">2,456</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Active Members:</span>
-                      <span className="font-semibold">1,832</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Points Redeemed:</span>
-                      <span className="font-semibold">₹45,230</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Avg. Points/Customer:</span>
-                      <span className="font-semibold">2,150</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <CardTitle>Top Loyalty Members</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {customers
-                      .sort((a, b) => b.loyaltyPoints - a.loyaltyPoints)
-                      .map((customer, index) => (
-                        <div key={customer.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-semibold">{index + 1}</span>
-                            </div>
-                            <div>
-                              <p className="font-medium">{customer.name}</p>
-                              <p className="text-sm text-muted-foreground">{customer.id}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-primary">{customer.loyaltyPoints} pts</p>
-                            <p className="text-sm text-muted-foreground">₹{(customer.loyaltyPoints * 0.1).toFixed(0)} value</p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </PageContent>
       
       <SidebarWrapper

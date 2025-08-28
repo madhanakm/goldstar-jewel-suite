@@ -37,5 +37,10 @@ export const endpoints = {
   trays: {
     list: (pageSize = 100) => `/api/trays?pagination[pageSize]=${pageSize}`,
     create: () => '/api/trays'
+  },
+  rates: {
+    list: (pageSize = 100) => `/api/rates?pagination[pageSize]=${pageSize}`,
+    create: () => '/api/rates',
+    update: (id: number) => `/api/rates/${id}`
   }
 };

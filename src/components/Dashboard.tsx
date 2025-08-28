@@ -29,17 +29,15 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
 
 
   const customerModules = [
-    { name: "Customer Profiles", icon: Users, description: "Add/edit customer profiles, KYC details", color: "bg-blue-500" },
-    { name: "KYC Management", icon: UserCheck, description: "Aadhar, PAN, and document verification", color: "bg-green-500" },
-    { name: "Purchase History", icon: Receipt, description: "Customer purchase tracking and history", color: "bg-purple-500" },
-    { name: "Loyalty & Referrals", icon: TrendingUp, description: "Points system and referral management", color: "bg-orange-500" }
+    { name: "Customer Profiles", icon: Users, description: "Add/edit customer profiles and details", color: "bg-blue-500" },
+    { name: "Purchase History", icon: Receipt, description: "Customer purchase tracking and history", color: "bg-purple-500" }
   ];
 
   const [stats, setStats] = useState([
     { label: "Total Customers", value: "0", icon: Users, change: "0%" },
     { label: "Monthly Sales", value: "₹0", icon: ShoppingCart, change: "0%" },
-    { label: "Stock Value", value: "₹0", icon: Package, change: "0%" },
-    { label: "Active Loans", value: "0", icon: DollarSign, change: "0%" }
+    { label: "Total Products", value: "0", icon: Package, change: "0%" },
+    { label: "Daily Sales", value: "₹0", icon: TrendingUp, change: "0%" }
   ]);
 
   return (
@@ -85,25 +83,36 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
           ))}
         </div>
 
-        {/* Customer Management Section */}
+        {/* Business Modules */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center">
-              <Users className="w-4 h-4 text-white" />
+              <Package className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Customer Management</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Business Management</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {customerModules.map((item, index) => (
-              <ModuleCard
-                key={index}
-                name={item.name}
-                description={item.description}
-                icon={item.icon}
-                color={item.color}
-                onClick={() => onNavigate(item.name)}
-              />
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ModuleCard
+              name="Inventory Management"
+              description="Stock tracking and product management"
+              icon={Package}
+              color="bg-blue-500"
+              onClick={() => onNavigate("Product Module")}
+            />
+            <ModuleCard
+              name="Customer Profiles"
+              description="Customer information and purchase history"
+              icon={Users}
+              color="bg-green-500"
+              onClick={() => onNavigate("Customer Profiles")}
+            />
+            <ModuleCard
+              name="Sales Reports"
+              description="Business analytics and performance metrics"
+              icon={TrendingUp}
+              color="bg-purple-500"
+              onClick={() => onNavigate("Sales Reports")}
+            />
           </div>
         </div>
 
@@ -111,11 +120,11 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
           {/* Quick Actions */}
           <div className="lg:col-span-2">
             <GradientCard 
-              title="Quick Actions" 
-              description="Frequently used features for daily operations"
+              title="Daily Operations" 
+              description="Essential tools for jewelry business management"
               icon={<TrendingUp className="w-5 h-5 text-white" />}
             >
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <ActionButton 
                   variant="success" 
                   className="h-16 flex-col p-3" 
@@ -124,14 +133,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <ShoppingCart className="w-5 h-5 mb-1" />
                   <span className="text-xs">New Sale</span>
                 </ActionButton>
-                <ActionButton 
-                  variant="primary" 
-                  className="h-16 flex-col p-3" 
-                  onClick={() => onNavigate("Add Product")}
-                >
-                  <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Add Product</span>
-                </ActionButton>
+
                 <ActionButton 
                   variant="warning" 
                   className="h-16 flex-col p-3" 
@@ -140,14 +142,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Purchase Entry</span>
                 </ActionButton>
-                <ActionButton 
-                  variant="warning" 
-                  className="h-16 flex-col p-3" 
-                  onClick={() => onNavigate("Stock Check")}
-                >
-                  <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Stock Check</span>
-                </ActionButton>
+
                 <ActionButton 
                   variant="default" 
                   className="h-16 flex-col p-3" 

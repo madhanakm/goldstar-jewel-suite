@@ -1,6 +1,6 @@
 # Goldstar Jewel Suite
 
-A comprehensive jewelry management system built with React, TypeScript, and Tailwind CSS.
+A comprehensive billing, inventory management and reports application for jewelry shops built with React, TypeScript, and Tailwind CSS.
 
 ## 🏗️ Project Structure
 
@@ -36,12 +36,14 @@ src/
 
 ## 🚀 Features
 
-- **Product Management**: Complete product catalog with barcode generation
-- **Customer Management**: Customer profiles, KYC, and loyalty programs
-- **Inventory Management**: Real-time stock tracking and valuation
-- **Sales & Billing**: GST-compliant billing system
-- **Analytics & Reports**: Business insights and performance metrics
-- **Authentication**: Secure user authentication and authorization
+- **Sales & Billing**: GST-compliant billing system with invoice generation
+- **Inventory Management**: Real-time stock tracking with barcode system
+- **Product Management**: Complete product catalog with tray management
+- **Rate Management**: Dynamic pricing per gram for different purities
+- **Customer Management**: Customer profiles and purchase history
+- **Reports & Analytics**: Sales reports and business insights
+- **Barcode System**: Generate and print product barcodes
+- **Purchase Entry**: Vendor management and stock inward
 
 ## 🛠️ Tech Stack
 
