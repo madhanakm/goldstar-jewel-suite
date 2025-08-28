@@ -1,3 +1,5 @@
+import { sanitizeQueryParam, secureLogger, escapeHtml } from '@/utils/sanitizer';
+
 const STRAPI_URL = 'https://jewelapi.sricashway.com';
 
 class ApiService {
@@ -33,7 +35,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      console.error(`API Error (${endpoint}):`, error);
+      secureLogger.error(`API Error (${endpoint})`, error);
       throw error;
     }
   }
@@ -43,13 +45,14 @@ class ApiService {
     let endpoint = `/products?pagination[page]=${page}&pagination[pageSize]=${pageSize}&populate=*`;
     
     if (filters.category) {
-      endpoint += `&filters[category][$eq]=${filters.category}`;
+      endpoint += `&filters[category][$eq]=${encodeURIComponent(sanitizeQueryParam(filters.category))}`;
     }
     if (filters.status) {
-      endpoint += `&filters[product_status][$eq]=${filters.status}`;
+      endpoint += `&filters[product_status][$eq]=${encodeURIComponent(sanitizeQueryParam(filters.status))}`;
     }
     if (filters.search) {
-      endpoint += `&filters[$or][0][name][$containsi]=${filters.search}&filters[$or][1][sku][$containsi]=${filters.search}`;
+      const sanitizedSearch = encodeURIComponent(sanitizeQueryParam(filters.search));
+      endpoint += `&filters[$or][0][name][$containsi]=${sanitizedSearch}&filters[$or][1][sku][$containsi]=${sanitizedSearch}`;
     }
 
     return this.request(endpoint);
@@ -84,7 +87,8 @@ class ApiService {
     let endpoint = `/customers?pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
     
     if (search) {
-      endpoint += `&filters[$or][0][name][$containsi]=${search}&filters[$or][1][phone][$containsi]=${search}`;
+      const sanitizedSearch = encodeURIComponent(sanitizeQueryParam(search));
+      endpoint += `&filters[$or][0][name][$containsi]=${sanitizedSearch}&filters[$or][1][phone][$containsi]=${sanitizedSearch}`;
     }
 
     return this.request(endpoint);
@@ -102,13 +106,13 @@ class ApiService {
     let endpoint = `/sales?pagination[page]=${page}&pagination[pageSize]=${pageSize}&populate=*`;
     
     if (filters.status) {
-      endpoint += `&filters[payment_status][$eq]=${filters.status}`;
+      endpoint += `&filters[payment_status][$eq]=${encodeURIComponent(sanitizeQueryParam(filters.status))}`;
     }
     if (filters.date_from) {
-      endpoint += `&filters[date][$gte]=${filters.date_from}`;
+      endpoint += `&filters[date][$gte]=${encodeURIComponent(sanitizeQueryParam(filters.date_from))}`;
     }
     if (filters.date_to) {
-      endpoint += `&filters[date][$lte]=${filters.date_to}`;
+      endpoint += `&filters[date][$lte]=${encodeURIComponent(sanitizeQueryParam(filters.date_to))}`;
     }
 
     return this.request(endpoint);

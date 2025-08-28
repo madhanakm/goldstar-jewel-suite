@@ -1,4 +1,6 @@
 import { API_CONFIG } from '@/config/api';
+import { SecureCookieService } from '@/utils/secureCookies';
+import { secureLogger } from '@/utils/sanitizer';
 
 export interface User {
   id: number;
@@ -34,13 +36,13 @@ export class AuthService {
   private user: User | null = null;
 
   private constructor() {
-    this.token = localStorage.getItem('auth_token');
-    const userData = localStorage.getItem('user_data');
+    this.token = SecureCookieService.getAuthToken();
+    const userData = SecureCookieService.getUserData();
     if (userData) {
       try {
-        this.user = JSON.parse(userData);
+        this.user = userData;
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        secureLogger.error('Error parsing user data', error);
         this.clearAuth();
       }
     }
@@ -96,9 +98,8 @@ export class AuthService {
       this.token = data.jwt;
       this.user = data.user;
       
-      localStorage.setItem('auth_token', data.jwt);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
-      localStorage.setItem('login_time', new Date().toISOString());
+      SecureCookieService.setAuthToken(data.jwt);
+      SecureCookieService.setUserData(data.user);
       
       // Session tracking disabled for now
       // await this.createLoginSession(data.user.email);
@@ -134,12 +135,12 @@ export class AuthService {
       this.token = data.jwt;
       this.user = data.user;
       
-      localStorage.setItem('auth_token', data.jwt);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
+      SecureCookieService.setAuthToken(data.jwt);
+      SecureCookieService.setUserData(data.user);
       
       return data;
     } catch (error) {
-      console.error('Registration error:', error);
+      secureLogger.error('Registration error', error);
       throw error;
     }
   }
@@ -188,12 +189,12 @@ export class AuthService {
       this.token = data.jwt;
       this.user = data.user;
       
-      localStorage.setItem('auth_token', data.jwt);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
+      SecureCookieService.setAuthToken(data.jwt);
+      SecureCookieService.setUserData(data.user);
       
       return data;
     } catch (error) {
-      console.error('Reset password error:', error);
+      secureLogger.error('Reset password error', error);
       throw error;
     }
   }
@@ -217,40 +218,23 @@ export class AuthService {
       }
     }
     
-    // Clear local storage and instance variables
+    // Clear cookies and instance variables
     this.token = null;
     this.user = null;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('login_time');
+    SecureCookieService.clearAuth();
   }
 
   isAuthenticated(): boolean {
-    const token = localStorage.getItem('auth_token');
-    const userData = localStorage.getItem('user_data');
-    const loginTime = localStorage.getItem('login_time');
+    const token = SecureCookieService.getAuthToken();
+    const userData = SecureCookieService.getUserData();
     
-    if (!token || !userData || !loginTime) {
-      return false;
-    }
-    
-    const loginDate = new Date(loginTime);
-    const now = new Date();
-    const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
-    
-    if (hoursDiff >= 10) {
-      this.clearAuth();
+    if (!token || !userData) {
       return false;
     }
     
     this.token = token;
-    try {
-      this.user = JSON.parse(userData);
-      return true;
-    } catch (error) {
-      this.clearAuth();
-      return false;
-    }
+    this.user = userData;
+    return true;
   }
 
   getToken(): string | null {
@@ -264,9 +248,7 @@ export class AuthService {
   private clearAuth(): void {
     this.token = null;
     this.user = null;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('login_time');
+    SecureCookieService.clearAuth();
   }
 
 

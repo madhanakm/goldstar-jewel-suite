@@ -1,5 +1,6 @@
 import { authService } from './auth';
 import { Product, ProductFormData, ProductCategory } from '@/types/product';
+import { secureLogger, sanitizeQueryParam } from '@/utils/sanitizer';
 
 const STRAPI_URL = 'https://jewelapi.sricashway.com';
 
@@ -64,7 +65,7 @@ export class ProductService {
         }
       };
 
-      console.log('Creating product with payload:', payload);
+      secureLogger.log('Creating product with payload', 'Product creation initiated');
 
       const response = await authService.authenticatedFetch(
         `${STRAPI_URL}/api/products`,
@@ -76,7 +77,7 @@ export class ProductService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Create product API error:', response.status, errorText);
+        secureLogger.error('Create product API error', `Status: ${response.status}`);
         
         let errorMessage = `Failed to create product: ${response.status} - ${response.statusText}`;
         
@@ -95,7 +96,7 @@ export class ProductService {
       }
 
       const result = await response.json();
-      console.log('Product created successfully:', result);
+      secureLogger.log('Product created successfully', `Product ID: ${result.data?.id}`);
       
       if (!result.data || !result.data.id) {
         throw new Error('Product created but invalid data returned from API');
@@ -104,14 +105,14 @@ export class ProductService {
       // Verify the product was actually created by fetching it back
       try {
         const verifyProduct = await this.getProduct(result.data.id);
-        console.log('Product creation verified:', verifyProduct);
+        secureLogger.log('Product creation verified', `Product ID: ${verifyProduct.id}`);
         return verifyProduct;
       } catch (verifyError) {
-        console.warn('Could not verify product creation, returning original result:', verifyError);
+        secureLogger.error('Could not verify product creation', verifyError);
         return result.data;
       }
     } catch (error) {
-      console.error('Create product error:', error);
+      secureLogger.error('Create product error', error);
       throw error;
     }
   }
@@ -136,25 +137,26 @@ export class ProductService {
           endpoint += `&filters[status][$eq]=${filters.status}`;
         }
         if (filters.search) {
-          endpoint += `&filters[$or][0][name][$containsi]=${filters.search}&filters[$or][1][sku][$containsi]=${filters.search}&filters[$or][2][barcode][$containsi]=${filters.search}`;
+          const sanitizedSearch = encodeURIComponent(sanitizeQueryParam(filters.search));
+          endpoint += `&filters[$or][0][name][$containsi]=${sanitizedSearch}&filters[$or][1][sku][$containsi]=${sanitizedSearch}&filters[$or][2][barcode][$containsi]=${sanitizedSearch}`;
         }
       }
 
-      console.log('Fetching products from API:', `${STRAPI_URL}${endpoint}`);
+      secureLogger.log('Fetching products from API', 'Products fetch initiated');
       const response = await authService.authenticatedFetch(`${STRAPI_URL}${endpoint}`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Response Error:', response.status, errorText);
+        secureLogger.error('API Response Error', `Status: ${response.status}`);
         throw new Error(`Failed to fetch products from API: ${response.status} - ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log('API Response:', result);
+      secureLogger.log('API Response received', `Products count: ${result.data?.length || 0}`);
       
       // Ensure we return empty array if no data and validate data structure
       if (!result || !Array.isArray(result.data)) {
-        console.warn('Invalid API response structure:', result);
+        secureLogger.error('Invalid API response structure', 'Response validation failed');
         return { data: [], meta: { pagination: { total: 0, page: 1, pageSize: pageSize } } };
       }
       
@@ -167,14 +169,14 @@ export class ProductService {
         typeof product.id === 'number'
       );
       
-      console.log(`Filtered ${validProducts.length} valid products from ${result.data.length} total`);
+      secureLogger.log('Products filtered', `Valid: ${validProducts.length}, Total: ${result.data.length}`);
       
       return {
         data: validProducts,
         meta: result.meta || { pagination: { total: validProducts.length, page: page, pageSize: pageSize } }
       };
     } catch (error) {
-      console.error('Get products error:', error);
+      secureLogger.error('Get products error', error);
       throw error;
     }
   }
@@ -186,19 +188,19 @@ export class ProductService {
         throw new Error('Authentication required');
       }
 
-      console.log(`Fetching product ${id} from API`);
+      secureLogger.log('Fetching product from API', `Product ID: ${id}`);
       const response = await authService.authenticatedFetch(
         `${STRAPI_URL}/api/products/${id}?populate=*`
       );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Failed to fetch product ${id}:`, response.status, errorText);
+        secureLogger.error('Failed to fetch product', `ID: ${id}, Status: ${response.status}`);
         throw new Error(`Failed to fetch product: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log(`Product ${id} fetched successfully:`, result.data);
+      secureLogger.log('Product fetched successfully', `Product ID: ${id}`);
       
       if (!result.data || !result.data.id) {
         throw new Error('Invalid product data returned from API');
@@ -206,7 +208,7 @@ export class ProductService {
       
       return result.data;
     } catch (error) {
-      console.error('Get product error:', error);
+      secureLogger.error('Get product error', error);
       throw error;
     }
   }
@@ -251,7 +253,7 @@ export class ProductService {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      console.error('Update product error:', error);
+      secureLogger.error('Update product error', error);
       throw error;
     }
   }
@@ -274,7 +276,7 @@ export class ProductService {
         throw new Error(`Failed to delete product: ${response.status}`);
       }
     } catch (error) {
-      console.error('Delete product error:', error);
+      secureLogger.error('Delete product error', error);
       throw error;
     }
   }
@@ -298,7 +300,7 @@ export class ProductService {
       const categories = [...new Set(result.data.map((p: any) => p.category))];
       return categories.filter(Boolean);
     } catch (error) {
-      console.error('Get categories error:', error);
+      secureLogger.error('Get categories error', error);
       return ['rings', 'necklaces', 'earrings', 'bracelets', 'bangles', 'chains', 'pendants'];
     }
   }
@@ -311,7 +313,7 @@ export class ProductService {
       }
 
       const response = await authService.authenticatedFetch(
-        `${STRAPI_URL}/api/products?filters[barcode][$eq]=${barcode}&populate=*`
+        `${STRAPI_URL}/api/products?filters[barcode][$eq]=${encodeURIComponent(sanitizeQueryParam(barcode))}&populate=*`
       );
 
       if (!response.ok) {
@@ -321,7 +323,7 @@ export class ProductService {
       const result = await response.json();
       return result.data.length > 0 ? result.data[0] : null;
     } catch (error) {
-      console.error('Search by barcode error:', error);
+      secureLogger.error('Search by barcode error', error);
       throw error;
     }
   }
@@ -341,7 +343,7 @@ export class ProductService {
         status: status as any
       });
     } catch (error) {
-      console.error('Update stock error:', error);
+      secureLogger.error('Update stock error', error);
       throw error;
     }
   }
@@ -350,7 +352,7 @@ export class ProductService {
   async verifyConnection(): Promise<boolean> {
     try {
       if (!authService.isAuthenticated()) {
-        console.log('Not authenticated, cannot verify connection');
+        secureLogger.log('Not authenticated, cannot verify connection');
         return false;
       }
 
@@ -359,16 +361,16 @@ export class ProductService {
       );
 
       const isConnected = response.ok;
-      console.log('API connection test:', isConnected ? 'SUCCESS' : 'FAILED', response.status);
+      secureLogger.log('API connection test', isConnected ? 'SUCCESS' : 'FAILED');
       
       if (!isConnected) {
         const errorText = await response.text().catch(() => 'Unknown error');
-        console.error('API connection failed:', response.status, errorText);
+        secureLogger.error('API connection failed', `Status: ${response.status}`);
       }
 
       return isConnected;
     } catch (error) {
-      console.error('API connection error:', error);
+      secureLogger.error('API connection error', error);
       return false;
     }
   }

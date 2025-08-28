@@ -1,6 +1,7 @@
 import { API_CONFIG } from '@/constants';
 import { ApiResponse, ApiError } from '@/types';
 import { authService } from './auth';
+import { secureLogger, sanitizeInput } from '@/utils/sanitizer';
 
 interface RequestConfig extends RequestInit {
   timeout?: number;
@@ -63,7 +64,8 @@ export class ApiService {
         return { data: null as T };
       }
 
-      return await response.json();
+      const jsonData = await response.json();
+      return jsonData;
     } catch (error) {
       clearTimeout(timeoutId);
       this.abortControllers.delete(requestId);
@@ -115,7 +117,7 @@ export class ApiService {
     }
 
     const error: ApiError = {
-      message: errorData.error?.message || errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+      message: sanitizeInput(errorData.error?.message || errorData.message || `HTTP ${response.status}: ${response.statusText}`),
       status: response.status,
       details: errorData,
     };
@@ -137,9 +139,9 @@ export class ApiService {
     }
     
     return {
-      message: error instanceof Error ? error.message : 'Network error occurred',
+      message: sanitizeInput(error instanceof Error ? error.message : 'Network error occurred'),
       status: 0,
-      details: { originalError: error },
+      details: { originalError: 'Error details sanitized' },
     };
   }
 
