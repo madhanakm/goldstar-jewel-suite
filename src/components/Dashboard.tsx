@@ -14,7 +14,8 @@ import {
   Receipt,
   LogOut,
   Menu,
-  Settings
+  Settings,
+  Plus
 } from "lucide-react";
 
 interface DashboardProps {
@@ -179,6 +180,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Tray Mgmt</span>
                 </ActionButton>
+
               </div>
             </GradientCard>
           </div>

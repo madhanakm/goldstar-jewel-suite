@@ -53,7 +53,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const loadBarcodeProducts = async () => {
     try {
-      const response = await request(endpoints.barcode.list());
+      const response = await request(endpoints.barcode.listBarcodes());
+      console.log('Barcode products loaded:', response.data);
       setBarcodeProducts(response.data || []);
     } catch (error) {
       console.error("Failed to load barcode products");
@@ -68,17 +69,22 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const handleBarcodeSearch = async (barcode: string, index: number) => {
-    const foundProduct = barcodeProducts.find(p => 
-      p.attributes?.code === barcode || p.code === barcode
-    );
+    console.log('Searching for barcode:', barcode);
+    
+    const foundProduct = barcodeProducts.find(p => p.code === barcode);
+    console.log('Found product:', foundProduct);
     
     if (foundProduct) {
-      const attrs = foundProduct.attributes || foundProduct;
-      updateProduct(index, "product", attrs.product || "");
-      updateProduct(index, "touch", attrs.touch || "");
-      updateProduct(index, "weight", attrs.weight || "");
-      updateProduct(index, "qty", attrs.qty || "1");
-      updateProduct(index, "amount", attrs.making_charges_or_wastages || "0");
+      setProducts(prev => prev.map((product, i) => 
+        i === index ? {
+          ...product,
+          product: foundProduct.product || '',
+          touch: foundProduct.touch || '',
+          weight: foundProduct.weight || '',
+          qty: foundProduct.qty || '1',
+          amount: foundProduct.making_charges_or_wastages || '0'
+        } : product
+      ));
     }
   };
 
@@ -350,8 +356,13 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   <Input
                     value={product.product}
                     onChange={(e) => {
-                      updateProduct(index, "product", e.target.value);
-                      handleBarcodeSearch(e.target.value, index);
+                      const value = e.target.value;
+                      updateProduct(index, "product", value);
+                      
+                      // Only search if it's a complete barcode
+                      if (value.length === 14 && /^\d+$/.test(value)) {
+                        handleBarcodeSearch(value, index);
+                      }
                     }}
                     placeholder="Scan or enter barcode"
                   />

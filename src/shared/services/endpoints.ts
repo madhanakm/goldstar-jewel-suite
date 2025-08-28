@@ -16,6 +16,7 @@ export const endpoints = {
   },
   barcode: {
     list: (pageSize = 100) => `${API_CONFIG.ENDPOINTS.PURCHASES}?pagination[pageSize]=${pageSize}`,
+    listBarcodes: (pageSize = 1000) => `/api/barcodes?pagination[pageSize]=${pageSize}`,
     create: () => '/api/barcodes'
   },
   sales: {
@@ -32,5 +33,9 @@ export const endpoints = {
     list: (pageSize = 100) => `/api/customers?pagination[pageSize]=${pageSize}`,
     create: () => '/api/customers',
     findByPhone: (phone: string) => `/api/customers?filters[phone][$eq]=${phone}`
+  },
+  trays: {
+    list: (pageSize = 100) => `/api/trays?pagination[pageSize]=${pageSize}`,
+    create: () => '/api/trays'
   }
 };

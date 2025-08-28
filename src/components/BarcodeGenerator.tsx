@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
-import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut } from "lucide-react";
+import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import JsBarcode from "jsbarcode";
 
@@ -26,6 +28,7 @@ interface Product {
   product: string;
   touch: string;
   rate: string;
+  weight?: string;
 }
 
 interface BarcodeGeneratorProps extends PageProps {
@@ -45,6 +48,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [trays, setTrays] = useState<any[]>([]);
+  const [generatedBarcodes, setGeneratedBarcodes] = useState<any[]>([]);
+  const [showBarcodeList, setShowBarcodeList] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const { sidebarOpen, toggleSidebar } = useSidebar();
@@ -55,6 +61,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   useEffect(() => {
     loadProducts();
+    loadTrays();
+    loadGeneratedBarcodes();
     generateCode();
   }, []);
 
@@ -89,7 +97,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           if (productName) {
             const exists = acc.find(p => p.product === productName);
             if (!exists) {
-              acc.push({ product: productName, touch, rate });
+              acc.push({ 
+                product: productName, 
+                touch, 
+                rate, 
+                weight: item.weight || item.attributes?.weight || '' 
+              });
             }
           }
           return acc;
@@ -103,6 +116,24 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         description: "Could not load product suggestions. You can still enter products manually.",
         variant: "destructive",
       });
+    }
+  };
+
+  const loadTrays = async () => {
+    try {
+      const response = await request(endpoints.trays.list());
+      setTrays(response.data || []);
+    } catch (error) {
+      console.error("Failed to load trays");
+    }
+  };
+
+  const loadGeneratedBarcodes = async () => {
+    try {
+      const response = await request(endpoints.barcode.listBarcodes());
+      setGeneratedBarcodes(response.data || []);
+    } catch (error) {
+      console.error("Failed to load generated barcodes");
     }
   };
 
@@ -148,6 +179,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ...prev,
       product: product.product,
       touch: product.touch,
+      weight: product.weight || '',
       making_charges_or_wastages: product.rate
     }));
     setShowSuggestions(false);
@@ -180,6 +212,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         }
       });
       setIsConfirmed(true);
+      loadGeneratedBarcodes();
       toast({
         title: "✅ Success",
         description: "Barcode confirmed and saved to database",
@@ -244,6 +277,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                 Confirmed
               </Badge>
             )}
+            <ActionButton variant="outline" size="sm" onClick={() => setShowBarcodeList(true)} icon={List}>
+              <span className="hidden sm:inline">View Barcodes</span>
+            </ActionButton>
             {onLogout && (
               <ActionButton variant="danger" size="sm" onClick={onLogout} icon={LogOut}>
                 <span className="hidden sm:inline">Logout</span>
@@ -277,7 +313,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                             onClick={() => selectProduct(product)}
                           >
                             <div className="font-medium">{product.product}</div>
-                            <div className="text-xs text-gray-500">Touch: {product.touch} | Rate: ₹{product.rate}</div>
+                            <div className="text-xs text-gray-500">Touch: {product.touch} | Weight: {product.weight}g | Rate: ₹{product.rate}</div>
                           </div>
                         ))}
                       </div>
@@ -314,11 +350,21 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                     />
                   </FormField>
                   <FormField label="Tray Number">
-                    <Input
-                      value={formData.trayno}
-                      onChange={(e) => setFormData(prev => ({ ...prev, trayno: e.target.value }))}
-                      placeholder="T001"
-                    />
+                    <Select value={formData.trayno} onValueChange={(value) => setFormData(prev => ({ ...prev, trayno: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tray" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {trays.map((tray) => {
+                          const trayNo = tray.attributes?.trayno || tray.trayno;
+                          return (
+                            <SelectItem key={tray.id} value={trayNo}>
+                              {trayNo}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </FormField>
                 </div>
 
@@ -444,6 +490,35 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
         {/* Hidden canvas for printing */}
         <canvas ref={barcodeCanvasRef} style={{ display: 'none' }} />
+
+        {/* Barcode List Dialog */}
+        <Dialog open={showBarcodeList} onOpenChange={setShowBarcodeList}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Generated Barcodes ({generatedBarcodes.length})</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-4">
+              {generatedBarcodes.map((barcode) => (
+                <Card key={barcode.id} className="p-4 border-l-4 border-l-blue-500">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-bold">{barcode.product}</h3>
+                      <div className="text-sm text-gray-600">
+                        Code: {barcode.code} | Weight: {barcode.weight}g | Tray: {barcode.trayno}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Touch: {barcode.touch} | Qty: {barcode.qty}
+                      </div>
+                    </div>
+                    <div className="text-right text-sm text-gray-500">
+                      {new Date(barcode.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </PageContent>
 
       <SidebarWrapper

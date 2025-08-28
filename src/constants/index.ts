@@ -50,5 +50,6 @@ export const ROUTES = {
   BARCODE_GENERATOR: '/barcode-generator',
   SALES_ENTRY: '/sales-entry',
   SALES_REPORT: '/sales-report',
-  TRAY_MANAGEMENT: '/tray-management'
+  TRAY_MANAGEMENT: '/tray-management',
+  TRAY_ADD: '/tray-add'
 } as const;

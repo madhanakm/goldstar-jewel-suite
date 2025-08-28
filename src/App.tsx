@@ -18,6 +18,7 @@ import { BarcodeGenerator } from "./components/BarcodeGenerator";
 import { SalesEntry } from "./components/SalesEntry";
 import { SalesReport } from "./components/SalesReport";
 import { TrayManagement } from "./components/TrayManagement";
+import { TrayAdd } from "./components/TrayAdd";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -143,6 +144,9 @@ const AppContent = () => {
       case "Tray Management":
         navigate('/tray-management');
         break;
+      case "Add Tray":
+        navigate('/tray-add');
+        break;
       case "Silver Billing":
       case "Silver Sales":
       case "Silver Exchange":
@@ -216,6 +220,7 @@ const AppContent = () => {
       <Route path="/sales-entry" element={<SalesEntry onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/sales-report" element={<SalesReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/tray-management" element={<TrayManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/tray-add" element={<TrayAdd onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>

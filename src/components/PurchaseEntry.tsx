@@ -33,6 +33,7 @@ interface ProductForm {
   qty: string;
   rate: string;
   touch: string;
+  weight: string;
 }
 
 interface PurchaseEntryProps extends PageProps {
@@ -54,7 +55,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const [newPurchase, setNewPurchase] = useState<{ suppliername: string; modeofpayment: string; products: ProductForm[] }>({
     suppliername: "",
     modeofpayment: "",
-    products: [{ product: "", qty: "", rate: "", touch: "" }]
+    products: [{ product: "", qty: "", rate: "", touch: "", weight: "" }]
   });
 
   const loadPurchaseMasters = async (pageNum = 1, search = "") => {
@@ -110,7 +111,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const addProductRow = () => {
     setNewPurchase(prev => ({
       ...prev,
-      products: [...prev.products, { product: "", qty: "", rate: "", touch: "" }]
+      products: [...prev.products, { product: "", qty: "", rate: "", touch: "", weight: "" }]
     }));
   };
 
@@ -160,6 +161,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
               qty: product.qty,
               rate: product.rate,
               touch: product.touch,
+              weight: product.weight,
               total_amount: parseFloat(product.qty) * parseFloat(product.rate)
             }
           });
@@ -172,7 +174,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       });
 
       setShowAddDialog(false);
-      setNewPurchase({ suppliername: "", modeofpayment: "", products: [{ product: "", qty: "", rate: "", touch: "" }] });
+      setNewPurchase({ suppliername: "", modeofpayment: "", products: [{ product: "", qty: "", rate: "", touch: "", weight: "" }] });
       loadPurchaseMasters(1, searchTerm);
     } catch (error) {
       toast({
@@ -502,7 +504,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-gray-700">Product Name</Label>
                   <Input
@@ -518,6 +520,17 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                     value={product.touch}
                     onChange={(e) => updateProduct(index, 'touch', e.target.value)}
                     placeholder="Enter touch/quality"
+                    className="border-gray-300 focus:border-indigo-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-gray-700">Weight (g)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={product.weight}
+                    onChange={(e) => updateProduct(index, 'weight', e.target.value)}
+                    placeholder="Enter weight"
                     className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>
