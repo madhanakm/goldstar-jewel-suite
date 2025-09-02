@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper, GradientCard, ActionButton, DataGrid } from "@/components/common";
 import { useApi, endpoints, usePagination } from "@/shared";
 import { useToast } from "@/hooks/use-toast";
 import { sidebarConfig } from "@/lib/sidebarConfig";
+import { Customer, CustomerFormData } from "@/types/customer";
 import {
   Users,
   Plus,
@@ -24,7 +25,8 @@ import {
   MapPin,
   Calendar,
   Star,
-  Package
+  Package,
+  IdCard
 } from "lucide-react";
 
 interface CustomerManagementProps {
@@ -35,7 +37,16 @@ interface CustomerManagementProps {
 export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementProps) => {
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [formData, setFormData] = useState<CustomerFormData>({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    aadhar: '',
+    gstin: ''
+  });
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { page, hasMore, nextPage, resetPagination } = usePagination();
@@ -76,7 +87,24 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     loadCustomers(1, value);
   };
 
-
+  const handleAddCustomer = async () => {
+    try {
+      await request(endpoints.customers.create(formData));
+      toast({
+        title: "✅ Success",
+        description: "Customer added successfully",
+      });
+      setIsAddCustomerOpen(false);
+      setFormData({ name: '', phone: '', email: '', address: '', aadhar: '', gstin: '' });
+      loadCustomers();
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to add customer",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredCustomers = customers;
 
@@ -94,7 +122,8 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
       />
       <PageContent>
         <div className="space-y-6">
-            <SearchFilter
+            <div className="flex justify-between items-center">
+              <SearchFilter
               searchTerm={searchTerm}
               onSearchChange={handleSearch}
               searchPlaceholder="Search by name, phone, or ID..."
@@ -122,7 +151,75 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                   onChange: () => {}
                 }
               ]}
-            />
+              />
+              <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Customer
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Customer</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <FormField label="Customer Name" required>
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        placeholder="Enter customer name"
+                      />
+                    </FormField>
+                    <FormField label="Phone Number" required>
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        placeholder="Enter phone number"
+                      />
+                    </FormField>
+                    <FormField label="Email">
+                      <Input
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        placeholder="Enter email address"
+                      />
+                    </FormField>
+                    <FormField label="Address">
+                      <Textarea
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        placeholder="Enter address"
+                      />
+                    </FormField>
+                    <FormField label="Aadhar Number">
+                      <Input
+                        value={formData.aadhar}
+                        onChange={(e) => setFormData({...formData, aadhar: e.target.value})}
+                        placeholder="Enter Aadhar number"
+                        maxLength={12}
+                      />
+                    </FormField>
+                    <FormField label="GSTIN">
+                      <Input
+                        value={formData.gstin}
+                        onChange={(e) => setFormData({...formData, gstin: e.target.value})}
+                        placeholder="Enter GSTIN"
+                        maxLength={15}
+                      />
+                    </FormField>
+                    <div className="flex space-x-2">
+                      <Button onClick={handleAddCustomer} className="flex-1">
+                        Add Customer
+                      </Button>
+                      <Button variant="outline" onClick={() => setIsAddCustomerOpen(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
 
             <DataGrid
               data={filteredCustomers}
@@ -154,6 +251,22 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                       <div className="flex items-center text-sm text-slate-600">
                         <Mail className="w-3 h-3 mr-2 text-amber-600" />
                         {customer.email}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'gstin',
+                  header: 'GST Details',
+                  render: (_, customer) => (
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-slate-700">
+                        <FileText className="w-3 h-3 mr-2 text-amber-600" />
+                        {customer.gstin || 'N/A'}
+                      </div>
+                      <div className="flex items-center text-sm text-slate-600">
+                        <IdCard className="w-3 h-3 mr-2 text-amber-600" />
+                        {customer.aadhar || 'N/A'}
                       </div>
                     </div>
                   )

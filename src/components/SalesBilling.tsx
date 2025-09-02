@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { StatCard, ProductCard, DataTable, FormField } from "@/components/common";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ShoppingCart, Plus, Minus, Printer, Calculator, CreditCard, Banknote, Smartphone, Receipt, Scan, Gem, Crown, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { Customer } from "@/types/customer";
+import { Invoice } from "@/types/invoice";
+import { InvoiceService } from "@/services/invoice";
+import { useApi, endpoints } from "@/shared";
 
 interface SalesBillingProps {
   onBack: () => void;
@@ -46,9 +51,18 @@ interface Bill {
 
 export const SalesBilling = ({ onBack }: SalesBillingProps) => {
   const { toast } = useToast();
+  const { request } = useApi();
   const [currentBill, setCurrentBill] = useState<BillItem[]>([]);
-  const [customerName, setCustomerName] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerForm, setCustomerForm] = useState({
+    name: '',
+    email: '',
+    address: '',
+    aadhar: '',
+    gstin: ''
+  });
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [isNewBillOpen, setIsNewBillOpen] = useState(false);
@@ -66,6 +80,50 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
   const [allProducts, setAllProducts] = useState([]);
 
   const [recentBills, setRecentBills] = useState<Bill[]>([]);
+
+  const handlePhoneChange = async (phone: string) => {
+    setCustomerPhone(phone);
+    if (phone.length >= 10) {
+      try {
+        const data = await request(endpoints.customers.getByPhone(phone));
+        if (data) {
+          setSelectedCustomer(data);
+          setIsNewCustomer(false);
+        } else {
+          setSelectedCustomer(null);
+          setIsNewCustomer(true);
+        }
+      } catch (error) {
+        setSelectedCustomer(null);
+        setIsNewCustomer(true);
+      }
+    } else {
+      setSelectedCustomer(null);
+      setIsNewCustomer(false);
+    }
+  };
+
+  const createCustomer = async () => {
+    try {
+      const customerData = {
+        ...customerForm,
+        phone: customerPhone
+      };
+      const newCustomer = await request(endpoints.customers.create(customerData));
+      setSelectedCustomer(newCustomer);
+      setIsNewCustomer(false);
+      toast({
+        title: "✅ Customer Created",
+        description: "New customer added successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to create customer",
+        variant: "destructive"
+      });
+    }
+  };
 
   const addToBill = (product: any) => {
     const existingItem = currentBill.find(item => item.id === product.id);
@@ -168,24 +226,60 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
       });
       return;
     }
-    if (!customerName) {
+    if (!selectedCustomer) {
       toast({
         title: "Error",
-        description: "Please enter customer name",
+        description: "Please select a customer",
         variant: "destructive"
       });
       return;
     }
 
-    toast({
-      title: "Bill Processed",
-      description: `Invoice generated successfully for ₹${total.toFixed(2)}`,
-    });
+    const invoice: Invoice = {
+      id: Date.now(),
+      invoiceNumber: `INV-${Date.now()}`,
+      customer: selectedCustomer,
+      date: new Date().toISOString(),
+      items: currentBill,
+      subtotal,
+      discount,
+      oldSilverExchange: oldSilverExchange ? {
+        weight: oldSilverWeight,
+        rate: oldSilverRate,
+        value: oldSilverValue
+      } : undefined,
+      gst: {
+        sgst: gstAmount / 2,
+        cgst: gstAmount / 2,
+        total: gstAmount
+      },
+      total,
+      paymentMethod,
+      status: 'paid',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      InvoiceService.printInvoice(invoice);
+      toast({
+        title: "Bill Processed",
+        description: `Invoice generated successfully for ₹${total.toFixed(2)}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate invoice",
+        variant: "destructive"
+      });
+    }
     
     // Reset bill
     setCurrentBill([]);
-    setCustomerName("");
+    setSelectedCustomer(null);
     setCustomerPhone("");
+    setCustomerForm({ name: '', email: '', address: '', aadhar: '', gstin: '' });
+    setIsNewCustomer(false);
     setDiscount(0);
     setOldSilverExchange(false);
     setOldSilverWeight(0);
@@ -229,22 +323,83 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                   <CardTitle className="text-lg">Customer Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Customer Name" required>
-                      <Input
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Enter customer name"
-                      />
-                    </FormField>
-                    <FormField label="Phone Number">
-                      <Input
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="Enter phone number"
-                      />
-                    </FormField>
-                  </div>
+                  <FormField label="Mobile Number" required>
+                    <Input
+                      value={customerPhone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      placeholder="Enter mobile number"
+                      maxLength={10}
+                    />
+                  </FormField>
+                  
+                  {selectedCustomer && (
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                      <div className="flex items-center mb-2">
+                        <Badge variant="default" className="bg-green-600">Existing Customer</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Name:</strong> {selectedCustomer.name}</div>
+                        <div><strong>Phone:</strong> {selectedCustomer.phone}</div>
+                        <div><strong>GSTIN:</strong> {selectedCustomer.gstin || 'N/A'}</div>
+                        <div><strong>Aadhar:</strong> {selectedCustomer.aadhar || 'N/A'}</div>
+                      </div>
+                      {selectedCustomer.address && (
+                        <div className="text-sm mt-2"><strong>Address:</strong> {selectedCustomer.address}</div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {isNewCustomer && (
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline" className="border-blue-600 text-blue-600">New Customer</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField label="Name" required>
+                          <Input
+                            value={customerForm.name}
+                            onChange={(e) => setCustomerForm({...customerForm, name: e.target.value})}
+                            placeholder="Customer name"
+                          />
+                        </FormField>
+                        <FormField label="Email">
+                          <Input
+                            value={customerForm.email}
+                            onChange={(e) => setCustomerForm({...customerForm, email: e.target.value})}
+                            placeholder="Email address"
+                          />
+                        </FormField>
+                      </div>
+                      <FormField label="Address">
+                        <Input
+                          value={customerForm.address}
+                          onChange={(e) => setCustomerForm({...customerForm, address: e.target.value})}
+                          placeholder="Address"
+                        />
+                      </FormField>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField label="Aadhar Number">
+                          <Input
+                            value={customerForm.aadhar}
+                            onChange={(e) => setCustomerForm({...customerForm, aadhar: e.target.value})}
+                            placeholder="Enter Aadhar number"
+                            maxLength={12}
+                          />
+                        </FormField>
+                        <FormField label="GSTIN">
+                          <Input
+                            value={customerForm.gstin}
+                            onChange={(e) => setCustomerForm({...customerForm, gstin: e.target.value})}
+                            placeholder="Enter GSTIN"
+                            maxLength={15}
+                          />
+                        </FormField>
+                      </div>
+                      <Button onClick={createCustomer} size="sm" className="w-full">
+                        Create Customer
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

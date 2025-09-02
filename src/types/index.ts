@@ -59,3 +59,5 @@ export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
 // Re-export existing types
 export * from './product';
 export * from './api';
+export * from './customer';
+export * from './invoice';

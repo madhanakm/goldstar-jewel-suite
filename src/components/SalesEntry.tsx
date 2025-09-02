@@ -7,6 +7,7 @@ import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, Action
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
 import { ShoppingCart, User, Plus, Trash2, LogOut, QrCode, FileText, Printer } from "lucide-react";
+import { InvoiceService } from "@/services/invoice";
 import { useToast } from "@/hooks/use-toast";
 
 interface Customer {
@@ -15,6 +16,8 @@ interface Customer {
   phone: string;
   email: string;
   address: string;
+  aadhar?: string;
+  gstin?: string;
 }
 
 interface Product {
@@ -30,7 +33,7 @@ interface SalesEntryProps extends PageProps {
 }
 
 export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
-  const [customer, setCustomer] = useState<Customer>({ id: 0, name: "", phone: "", email: "", address: "" });
+  const [customer, setCustomer] = useState<Customer>({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
   const [products, setProducts] = useState<Product[]>([{ product: "", touch: "", weight: "", qty: "", amount: "" }]);
   const [barcodeProducts, setBarcodeProducts] = useState<any[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -96,7 +99,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
             name: customerData.name || "",
             phone: customerData.phone || "",
             email: customerData.email || "",
-            address: customerData.address || ""
+            address: customerData.address || "",
+            aadhar: customerData.aadhar || "",
+            gstin: customerData.gstin || ""
           });
         }
       } catch (error) {
@@ -129,7 +134,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
             name: customer.name,
             phone: customer.phone,
             email: customer.email,
-            address: customer.address
+            address: customer.address,
+            aadhar: customer.aadhar,
+            gstin: customer.gstin
           }
         });
         customerId = customerResponse.data.id;
@@ -184,56 +191,48 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const handlePrintInvoice = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.amount) || 0), 0);
-      const wastageAmount = parseFloat(wastage) || 0;
-      const taxableAmount = productTotal + wastageAmount;
-      const taxAmount = (taxableAmount * parseFloat(taxPercentage)) / 100;
-      
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>GST Invoice - ${lastInvoiceId}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-              th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-              th { background-color: #f0f0f0; }
-              .totals { text-align: right; margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>Sri Cashway - GST Invoice</h1>
-              <p>Invoice: ${lastInvoiceId} | Date: ${new Date().toLocaleDateString()}</p>
-            </div>
-            
-            <div><strong>Customer:</strong> ${customer.name} | ${customer.phone}</div>
-            
-            <table>
-              <tr><th>Product</th><th>Touch</th><th>Weight</th><th>Qty</th><th>Amount</th></tr>
-              ${products.map(p => `<tr><td>${p.product}</td><td>${p.touch}</td><td>${p.weight}g</td><td>${p.qty}</td><td>₹${p.amount}</td></tr>`).join('')}
-            </table>
-            
-            <div class="totals">
-              <p>Subtotal: ₹${productTotal.toFixed(2)}</p>
-              <p>Wastage: ₹${wastageAmount.toFixed(2)}</p>
-              <p>GST (${taxPercentage}%): ₹${taxAmount.toFixed(2)}</p>
-              <h3>Total: ₹${totalAmount.toFixed(2)}</h3>
-              <p>Payment: ${modeOfPayment}</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.amount) || 0), 0);
+    const wastageAmount = parseFloat(wastage) || 0;
+    const taxableAmount = productTotal + wastageAmount;
+    const taxAmount = (taxableAmount * parseFloat(taxPercentage)) / 100;
+    const sgst = taxAmount / 2;
+    const cgst = taxAmount / 2;
+    
+    const invoice = {
+      id: Date.now(),
+      invoiceNumber: lastInvoiceId,
+      customer: customer,
+      date: new Date().toISOString(),
+      items: products.map(p => ({
+        id: p.product,
+        itemName: p.product,
+        category: 'Jewelry',
+        weight: parseFloat(p.weight) || 0,
+        purity: p.touch,
+        rate: 0,
+        makingCharges: parseFloat(p.amount) || 0,
+        quantity: parseFloat(p.qty) || 1,
+        total: parseFloat(p.amount) || 0
+      })),
+      subtotal: productTotal,
+      discount: 0,
+      gst: {
+        sgst,
+        cgst,
+        total: taxAmount
+      },
+      total: totalAmount,
+      paymentMethod: modeOfPayment,
+      status: 'paid' as const,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    InvoiceService.printInvoice(invoice);
   };
 
   const handleNewSale = () => {
-    setCustomer({ id: 0, name: "", phone: "", email: "", address: "" });
+    setCustomer({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
     setProducts([{ product: "", touch: "", weight: "", qty: "", amount: "" }]);
     setWastage("");
     setShowInvoice(false);
@@ -293,6 +292,22 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   value={customer.address}
                   onChange={(e) => setCustomer(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="Enter address"
+                />
+              </FormField>
+              <FormField label="Aadhar Number">
+                <Input
+                  value={customer.aadhar}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, aadhar: e.target.value }))}
+                  placeholder="Enter Aadhar number"
+                  maxLength={12}
+                />
+              </FormField>
+              <FormField label="GSTIN">
+                <Input
+                  value={customer.gstin}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, gstin: e.target.value }))}
+                  placeholder="Enter GSTIN"
+                  maxLength={15}
                 />
               </FormField>
             </div>
