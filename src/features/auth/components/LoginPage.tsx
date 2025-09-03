@@ -40,7 +40,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
       
       toast({
         title: "✅ Login Successful",
-        description: "Welcome to Sri Cashway Jewelry Management System",
+        description: "Welcome to PRABANJAM JWELLERY LIMITED Management System",
       });
       onLogin("admin");
     } catch (error) {
@@ -72,14 +72,14 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
               <div className="absolute -inset-2 bg-gradient-to-r from-yellow-400/30 to-orange-500/30 rounded-full blur-xl animate-pulse"></div>
               <div className="relative w-16 h-16 bg-gradient-to-br from-white via-yellow-50 to-orange-50 rounded-full flex items-center justify-center shadow-2xl border-2 border-white/30">
                 <img 
-                  src="https://jewelapi.sricashway.com/uploads/CASHWAY_FINAL_WORK_1_18740501ca_85998da533.png" 
-                  alt="Sri Cashway Logo" 
+                  src="https://jewelapi.sricashway.com/uploads/logo_bc65c5102f.jpg" 
+                  alt="PRABANJAM JWELLERY LIMITED Logo" 
                   className="w-10 h-10 object-contain drop-shadow-sm"
                 />
               </div>
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-yellow-200 to-orange-300 bg-clip-text text-transparent mb-2 tracking-tight">
-              Sri Cashway
+              PRABANJAM JWELLERY LIMITED
             </h1>
             <p className="text-white/70 text-sm font-medium tracking-wide">Premium Jewelry Management System</p>
           </div>

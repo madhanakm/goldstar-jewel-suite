@@ -9,6 +9,7 @@ import { useApi, endpoints, PageProps } from "@/shared";
 import { ShoppingCart, User, Plus, Trash2, LogOut, QrCode, FileText, Printer } from "lucide-react";
 import { InvoiceService } from "@/services/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { CustomerAutocomplete } from "@/components/ui/customer-autocomplete";
 
 interface Customer {
   id: number;
@@ -128,18 +129,19 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     try {
       // Create or update customer
       let customerId = customer.id;
-      if (!customerId && customer.phone) {
+      if (!customerId && (customer.name || customer.phone)) {
         const customerResponse = await request(endpoints.customers.create(), 'POST', {
           data: {
-            name: customer.name,
-            phone: customer.phone,
-            email: customer.email,
-            address: customer.address,
-            aadhar: customer.aadhar,
-            gstin: customer.gstin
+            name: customer.name || 'Unknown Customer',
+            phone: customer.phone || '',
+            email: customer.email || '',
+            address: customer.address || '',
+            aadhar: customer.aadhar || '',
+            gstin: customer.gstin || ''
           }
         });
         customerId = customerResponse.data.id;
+        setCustomer(prev => ({ ...prev, id: customerId }));
       }
 
       // Create sales master
@@ -274,9 +276,11 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                 />
               </FormField>
               <FormField label="Customer Name">
-                <Input
+                <CustomerAutocomplete
                   value={customer.name}
-                  onChange={(e) => setCustomer(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(value) => setCustomer(prev => ({ ...prev, name: value }))}
+                  onCustomerSelect={(selectedCustomer) => setCustomer(selectedCustomer)}
+                  onCreateNew={(name) => setCustomer(prev => ({ ...prev, name, id: 0 }))}
                   placeholder="Enter customer name"
                 />
               </FormField>

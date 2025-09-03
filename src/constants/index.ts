@@ -1,6 +1,6 @@
 // Application Constants
 export const APP_CONFIG = {
-  name: 'Sri Cashway',
+  name: 'PRABANJAM JWELLERY LIMITED',
   version: '1.0.0',
   description: 'Goldstar Jewel Suite - Complete Jewelry Management System'
 } as const;

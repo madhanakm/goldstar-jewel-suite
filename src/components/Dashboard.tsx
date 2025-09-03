@@ -52,12 +52,12 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                 <Menu className="w-5 h-5" />
               </ActionButton>
               <img 
-                src="https://jewelapi.sricashway.com/uploads/CASHWAY_FINAL_WORK_1_18740501ca_85998da533.png" 
-                alt="Sri Cashway Logo" 
+                src="https://jewelapi.sricashway.com/uploads/logo_dark_cf76e8978d.png" 
+                alt="PRABANJAM JWELLERY LIMITED Logo" 
                 className="w-8 h-8 object-contain mr-3 rounded-lg shadow-sm"
               />
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-700 to-yellow-700 bg-clip-text text-transparent">
-                Sri Cashway
+                PRABANJAM JWELLERY LIMITED
               </h1>
             </div>
             <div className="flex items-center space-x-4">
