@@ -15,6 +15,7 @@ interface SalesReportProps {
 
 export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
   const [salesData, setSalesData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [stats, setStats] = useState({
@@ -33,10 +34,42 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
 
   const loadSalesData = async () => {
     try {
-      const response = await request(endpoints.sales.list());
-      const data = response.data || [];
-      setSalesData(data);
-      calculateStats(data);
+      const response = await request(endpoints.sales.masters.list());
+      console.log('Sales Masters:', response);
+      const salesMasters = response.data || response || [];
+      
+      // Fetch customer and product details for each sale
+      const enrichedData = await Promise.all(
+        salesMasters.map(async (sale: any) => {
+          try {
+            const [customerRes, salesDetailsRes] = await Promise.all([
+              request(endpoints.customers.list()).then(res => 
+                res.data?.find((c: any) => c.id == sale.cid)
+              ),
+              request(endpoints.sales.details.list(sale.invoice))
+            ]);
+            
+            console.log('Customer:', customerRes, 'Sales Details:', salesDetailsRes);
+            
+            return {
+              ...sale,
+              customerName: customerRes?.name || customerRes?.customername || 'Unknown',
+              salesDetails: salesDetailsRes?.data || []
+            };
+          } catch (err) {
+            console.error('Error fetching details:', err);
+            return {
+              ...sale,
+              customerName: 'Unknown',
+              salesDetails: []
+            };
+          }
+        })
+      );
+      
+      setSalesData(enrichedData);
+      setFilteredData(enrichedData);
+      calculateStats(enrichedData);
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -48,8 +81,8 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
 
   const calculateStats = (data: any[]) => {
     const totalSales = data.length;
-    const totalAmount = data.reduce((sum, sale) => sum + (parseFloat(sale.total_amount) || 0), 0);
-    const uniqueCustomers = new Set(data.map(sale => sale.customer_phone)).size;
+    const totalAmount = data.reduce((sum, sale) => sum + (parseFloat(sale.totalamount) || 0), 0);
+    const uniqueCustomers = new Set(data.map(sale => sale.cid)).size;
     const avgOrderValue = totalSales > 0 ? totalAmount / totalSales : 0;
 
     setStats({
@@ -61,12 +94,20 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
   };
 
   const filterByDate = () => {
-    if (!dateFrom || !dateTo) return;
+    console.log('Filter clicked:', { dateFrom, dateTo, salesData });
+    if (!dateFrom || !dateTo) {
+      setFilteredData(salesData);
+      calculateStats(salesData);
+      return;
+    }
     
     const filtered = salesData.filter(sale => {
-      const saleDate = new Date(sale.createdAt).toISOString().split('T')[0];
+      const saleDate = sale.date.split('T')[0];
+      console.log('Comparing:', saleDate, 'between', dateFrom, 'and', dateTo);
       return saleDate >= dateFrom && saleDate <= dateTo;
     });
+    console.log('Filtered result:', filtered);
+    setFilteredData(filtered);
     calculateStats(filtered);
   };
 
@@ -161,25 +202,45 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
           </CardHeader>
           <CardContent>
             <DataGrid
-              data={salesData}
+              data={filteredData}
               columns={[
                 {
-                  key: 'createdAt',
+                  key: 'date',
                   header: 'Date',
                   render: (value) => new Date(value).toLocaleDateString()
                 },
-                { key: 'customer_name', header: 'Customer' },
-                { key: 'customer_phone', header: 'Phone' },
+                { key: 'invoice', header: 'Invoice' },
+                { key: 'customerName', header: 'Customer' },
                 {
-                  key: 'total_amount',
+                  key: 'salesDetails',
+                  header: 'Products',
+                  render: (value) => value?.map((p: any) => p.productname || p.name || p.product).join(', ') || 'N/A'
+                },
+                { key: 'totalqty', header: 'Quantity' },
+                {
+                  key: 'salesDetails',
+                  header: 'Weight',
+                  render: (value) => {
+                    const totalWeight = value?.reduce((sum: number, item: any) => 
+                      sum + (parseFloat(item.weight || item.grossweight || 0)), 0
+                    ) || 0;
+                    return totalWeight > 0 ? `${totalWeight}g` : 'N/A';
+                  }
+                },
+                {
+                  key: 'salesDetails',
+                  header: 'Touch',
+                  render: (value) => {
+                    const touches = value?.map((item: any) => item.touch || item.purity).filter(Boolean) || [];
+                    return touches.length > 0 ? touches.join(', ') : 'N/A';
+                  }
+                },
+                {
+                  key: 'totalamount',
                   header: 'Amount',
                   render: (value) => `₹${parseFloat(value).toLocaleString()}`
                 },
-                {
-                  key: 'items_count',
-                  header: 'Items',
-                  render: (value) => value || 1
-                }
+                { key: 'modeofpayment', header: 'Payment Mode' }
               ]}
               emptyMessage="No sales data found"
             />
