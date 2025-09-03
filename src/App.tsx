@@ -22,6 +22,7 @@ import { StockReport } from "./components/StockReport";
 import { PurchaseReport } from "./components/PurchaseReport";
 import { TrayManagement } from "./components/TrayManagement";
 import { TrayAdd } from "./components/TrayAdd";
+import { TrayReport } from "./components/TrayReport";
 import { RateManagement } from "./components/RateManagement";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
@@ -150,6 +151,9 @@ const AppContent = () => {
       case "Tray Management":
         navigate('/tray-management');
         break;
+      case "Tray Report":
+        navigate('/tray-report');
+        break;
       case "Add Tray":
         navigate('/tray-add');
         break;
@@ -231,6 +235,7 @@ const AppContent = () => {
       <Route path="/stock-report" element={<StockReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/purchase-report" element={<PurchaseReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/tray-management" element={<TrayManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/tray-report" element={<TrayReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/tray-add" element={<TrayAdd onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/rate-management" element={<RateManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />

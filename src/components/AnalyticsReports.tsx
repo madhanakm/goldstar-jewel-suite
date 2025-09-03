@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { BarChart3, LogOut, TrendingUp, Package, ShoppingCart, ShoppingBag, Users, DollarSign } from "lucide-react";
+import { BarChart3, LogOut, TrendingUp, Package, ShoppingCart, ShoppingBag, Users, DollarSign, FileText } from "lucide-react";
 
 interface AnalyticsReportsProps {
   onNavigate?: (module: string) => void;
@@ -34,6 +34,13 @@ export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps
       icon: ShoppingBag,
       color: "bg-purple-500",
       onClick: () => onNavigate?.("Purchase Report")
+    },
+    {
+      name: "Tray Report",
+      description: "Daily tray stock report and inventory tracking",
+      icon: FileText,
+      color: "bg-indigo-500",
+      onClick: () => onNavigate?.("Tray Report")
     }
   ];
 

@@ -235,6 +235,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     };
     
     InvoiceService.printInvoice(invoice);
+    
+    // Reset form after printing
+    handleNewSale();
   };
 
   const handleNewSale = () => {

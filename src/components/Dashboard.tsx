@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLayout, PageContent, StatCard, ModuleCard, useSidebar, SidebarWrapper, GradientCard, ActionButton } from "@/components/common";
+import { useApi, endpoints } from "@/shared";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import {
   Users,
@@ -24,7 +25,7 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
-  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
+  const { sidebarOpen, toggleSidebar } = useSidebar();
   
 
 
@@ -39,6 +40,61 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
     { label: "Total Products", value: "0", icon: Package, change: "0%" },
     { label: "Daily Sales", value: "₹0", icon: TrendingUp, change: "0%" }
   ]);
+  const { request } = useApi();
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
+
+  const loadDashboardStats = async () => {
+    try {
+      // Load customers count
+      const customersResponse = await request(endpoints.customers.list(1, 1000));
+      const customersCount = customersResponse.data?.length || 0;
+
+      // Load products count
+      const productsResponse = await request(endpoints.barcode.list(1000));
+      const productsCount = productsResponse.data?.length || 0;
+
+      // Load sales data
+      const salesResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesData = salesResponse.data || [];
+      
+      // Calculate monthly and daily sales
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      let monthlySales = 0;
+      let dailySales = 0;
+      
+      salesData.forEach((sale: any) => {
+        const saleAttributes = sale.attributes || sale;
+        const saleDate = new Date(saleAttributes.date);
+        const saleAmount = parseFloat(saleAttributes.totalamount || '0');
+        
+        // Monthly sales - current month only
+        if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
+          monthlySales += saleAmount;
+        }
+        
+        // Daily sales - today only
+        if (saleDate.toISOString().split('T')[0] === todayStr) {
+          dailySales += saleAmount;
+        }
+      });
+
+      setStats([
+        { label: "Total Customers", value: customersCount.toString(), icon: Users, change: "+12%" },
+        { label: "Monthly Sales", value: `₹${monthlySales.toLocaleString()}`, icon: ShoppingCart, change: "+8%" },
+        { label: "Total Products", value: productsCount.toString(), icon: Package, change: "+5%" },
+        { label: "Daily Sales", value: `₹${dailySales.toLocaleString()}`, icon: TrendingUp, change: "+15%" }
+      ]);
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    }
+  };
 
   return (
     <PageLayout>

@@ -46,29 +46,6 @@ export class AuthService {
         this.clearAuth();
       }
     }
-    
-    // Validate session on initialization
-    if (this.token && this.user) {
-      const loginTime = localStorage.getItem('login_time');
-      if (loginTime) {
-        const loginDate = new Date(loginTime);
-        const now = new Date();
-        const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
-        
-        console.log('Session validation - Hours since login:', hoursDiff);
-        if (hoursDiff >= 10) {
-          console.log('Session expired, clearing auth');
-          this.clearAuth();
-        } else {
-          console.log('Session valid, keeping auth');
-        }
-      } else {
-        console.log('No login time found, clearing auth');
-        this.clearAuth();
-      }
-    } else {
-      console.log('No token or user found');
-    }
   }
 
   public static getInstance(): AuthService {
@@ -100,6 +77,7 @@ export class AuthService {
       
       SecureCookieService.setAuthToken(data.jwt);
       SecureCookieService.setUserData(data.user);
+      localStorage.setItem('login_time', new Date().toISOString());
       
       // Session tracking disabled for now
       // await this.createLoginSession(data.user.email);
@@ -222,6 +200,7 @@ export class AuthService {
     this.token = null;
     this.user = null;
     SecureCookieService.clearAuth();
+    localStorage.removeItem('login_time');
   }
 
   isAuthenticated(): boolean {
@@ -230,6 +209,19 @@ export class AuthService {
     
     if (!token || !userData) {
       return false;
+    }
+    
+    // Check session expiry
+    const loginTime = localStorage.getItem('login_time');
+    if (loginTime) {
+      const loginDate = new Date(loginTime);
+      const now = new Date();
+      const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursDiff >= 10) {
+        this.clearAuth();
+        return false;
+      }
     }
     
     this.token = token;
@@ -249,6 +241,7 @@ export class AuthService {
     this.token = null;
     this.user = null;
     SecureCookieService.clearAuth();
+    localStorage.removeItem('login_time');
   }
 
 

@@ -5,7 +5,8 @@ import {
   TrendingUp,
   Scale,
   Receipt,
-  ShoppingBag
+  ShoppingBag,
+  FileText
 } from "lucide-react";
 
 export const sidebarConfig = [

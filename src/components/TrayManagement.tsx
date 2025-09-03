@@ -165,12 +165,10 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
   };
 
   const getTrayStats = () => {
-    const trays = [...new Set(filteredProducts.map(p => p.trayno))].filter(Boolean);
     const totalProducts = filteredProducts.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
     const availableProducts = filteredProducts.filter(p => p.status === 'available').reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
-    const soldProducts = filteredProducts.filter(p => p.status === 'sold').reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
     
-    return { trays: trays.length, totalProducts, availableProducts, soldProducts };
+    return { trays: allTrays.length, totalProducts, availableProducts };
   };
 
   const getTrayWiseData = () => {
@@ -242,7 +240,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
               <div>Touch: {product.touch}</div>
-              <div>Weight: {product.weight}g</div>
+              <div>Weight: {parseFloat(product.weight) >= 1000 ? `${(parseFloat(product.weight) / 1000).toFixed(2)}kg` : `${product.weight}g`}</div>
               <div>Qty: {product.qty}</div>
               <div>Tray: {product.trayno}</div>
             </div>
@@ -267,6 +265,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
     <PageLayout>
       <PageHeader
         title="Tray Management"
+        onBack={() => onNavigate?.("Dashboard")}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
@@ -284,7 +283,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       
       <PageContent>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <GradientCard title="Total Trays" icon={<Package className="w-5 h-5 text-white" />}>
             <div className="text-3xl font-bold text-blue-600">{stats.trays}</div>
           </GradientCard>
@@ -295,10 +294,6 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
           
           <GradientCard title="Available" icon={<Package className="w-5 h-5 text-white" />}>
             <div className="text-3xl font-bold text-green-600">{stats.availableProducts}</div>
-          </GradientCard>
-          
-          <GradientCard title="Sold" icon={<ShoppingCart className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-red-600">{stats.soldProducts}</div>
           </GradientCard>
         </div>
 
@@ -397,13 +392,12 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
                 >
                   <div className="text-center">
                     <div className="text-lg font-bold text-blue-600">{trayNo}</div>
-                    <div className="text-sm text-gray-600">{data.productCount} products ({data.total} qty)</div>
-                    <div className="text-xs text-gray-500">{data.totalWeight.toFixed(1)}g</div>
+                    <div className="text-sm text-gray-600">{data.available} available</div>
+                    <div className="text-xs text-gray-500">{data.totalWeight >= 1000 ? `${(data.totalWeight / 1000).toFixed(2)}kg` : `${data.totalWeight.toFixed(1)}g`}</div>
                     <div className={`text-xs font-medium mt-1 ${
-                      data.total === 0 ? 'text-gray-400' :
-                      data.available > data.sold ? 'text-green-600' : 'text-red-600'
+                      data.available === 0 ? 'text-red-600' : 'text-green-600'
                     }`}>
-                      {data.total > 0 ? Math.round((data.available / data.total) * 100) : 0}%
+                      {data.available > 0 ? 'In Stock' : 'Out of Stock'}
                     </div>
                   </div>
                 </Card>
