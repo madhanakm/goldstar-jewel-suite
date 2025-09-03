@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     products: [{ product: "", qty: "", rate: "", touch: "", weight: "" }]
   });
 
-  const loadPurchaseMasters = async (pageNum = 1, search = "") => {
+  const loadPurchaseMasters = useCallback(async (pageNum = 1, search = "") => {
     try {
       const data = await request(endpoints.purchase.masters.list(pageNum, 10, search));
       if (pageNum === 1) {
@@ -73,7 +73,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
         variant: "destructive",
       });
     }
-  };
+  }, [request, toast]);
 
   const loadPurchaseDetails = async (masterId: string) => {
     try {
@@ -96,11 +96,11 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     }
   };
 
-  const handleSearch = (value: string) => {
+  const handleSearch = useCallback((value: string) => {
     setSearchTerm(value);
     resetPagination();
     loadPurchaseMasters(1, value);
-  };
+  }, [resetPagination, loadPurchaseMasters]);
 
   const handlePurchaseClick = (purchase: PurchaseMaster) => {
     setSelectedPurchase(purchase);
@@ -187,9 +187,9 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
 
   useEffect(() => {
     loadPurchaseMasters();
-  }, []);
+  }, [loadPurchaseMasters]);
 
-  const renderPurchaseItem = (purchase: PurchaseMaster) => {
+  const renderPurchaseItem = useCallback((purchase: PurchaseMaster) => {
     const isRecent = new Date(purchase.date) > new Date(Date.now() - 24 * 60 * 60 * 1000);
     const amount = parseFloat(purchase.totalamount);
     const isHighValue = amount > 10000;
@@ -246,7 +246,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
         </CardContent>
       </Card>
     );
-  };
+  }, []);
 
   return (
     <PageLayout>
@@ -377,12 +377,9 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                           
                           <div className="space-y-3">
                             {purchases.length === 0 ? (
-                              <div className="text-center py-12">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                  <Package className="w-8 h-8 text-gray-400" />
-                                </div>
-                                <p className="text-gray-500 font-medium">Loading products...</p>
-                                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mt-3"></div>
+                              <div className="text-center py-8">
+                                <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                <p className="text-gray-500">Loading products...</p>
                               </div>
                             ) : (
                               purchases.map((purchase, index) => {

@@ -73,8 +73,15 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
   };
 
   const calculateStats = (data: any[]) => {
-    const totalProducts = data.reduce((sum, item) => sum + (parseFloat(item.availableQty) || 0), 0);
-    const totalWeight = data.reduce((sum, item) => sum + (parseFloat(item.weight) || 0) * (parseFloat(item.availableQty) || 0), 0);
+    const totalProducts = data.reduce((sum, item) => {
+      const availableQty = parseFloat(item.availableQty) || 0;
+      return sum + (availableQty > 0 ? availableQty : 0);
+    }, 0);
+    const totalWeight = data.reduce((sum, item) => {
+      const weight = parseFloat(item.weight) || 0;
+      const availableQty = parseFloat(item.availableQty) || 0;
+      return sum + (availableQty > 0 ? weight * availableQty : 0);
+    }, 0);
     const lowStock = data.filter(item => item.status === 'low_stock').length;
     const outOfStock = data.filter(item => item.status === 'out_of_stock').length;
 
@@ -143,7 +150,7 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
           </GradientCard>
           
           <GradientCard title="Total Weight" icon={<TrendingUp className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-green-600">{stats.totalWeight.toFixed(1)}g</div>
+            <div className="text-3xl font-bold text-green-600">{stats.totalWeight >= 1000 ? `${(stats.totalWeight / 1000).toFixed(2)}kg` : `${stats.totalWeight.toFixed(1)}g`}</div>
           </GradientCard>
           
           <GradientCard title="Low Stock" icon={<AlertTriangle className="w-5 h-5 text-white" />}>
@@ -187,16 +194,29 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
                 {
                   key: 'weight',
                   header: 'Weight',
-                  render: (value) => `${value}g`
+                  render: (value) => {
+                    const weight = parseFloat(value) || 0;
+                    return weight >= 1000 ? `${(weight / 1000).toFixed(2)}kg` : `${weight.toFixed(1)}g`;
+                  }
                 },
                 {
                   key: 'availableQty',
-                  header: 'Available',
+                  header: 'Qty',
                   render: (value) => (
                     <span className={value <= 0 ? 'text-red-600' : value <= 2 ? 'text-yellow-600' : 'text-green-600'}>
                       {value}
                     </span>
                   )
+                },
+                {
+                  key: 'totalWeight',
+                  header: 'Total Weight',
+                  render: (value, row) => {
+                    const weight = parseFloat(row.weight) || 0;
+                    const qty = parseFloat(row.availableQty) || 0;
+                    const totalWeight = weight * qty;
+                    return totalWeight >= 1000 ? `${(totalWeight / 1000).toFixed(2)}kg` : `${totalWeight.toFixed(1)}g`;
+                  }
                 },
                 { key: 'soldQty', header: 'Sold' },
                 { key: 'trayno', header: 'Tray' },
@@ -216,6 +236,28 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
               ]}
               emptyMessage="No stock data found"
             />
+            
+            {/* Summary Totals */}
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border-t">
+              <div className="flex justify-between items-center">
+                <div className="text-sm font-medium text-gray-600">
+                  Total Items: <span className="text-blue-600 font-bold">{filteredData.reduce((sum, item) => {
+                    const availableQty = parseFloat(item.availableQty) || 0;
+                    return sum + (availableQty > 0 ? availableQty : 0);
+                  }, 0)}</span>
+                </div>
+                <div className="text-sm font-medium text-gray-600">
+                  Total Weight: <span className="text-green-600 font-bold">{(() => {
+                    const totalWeight = filteredData.reduce((sum, item) => {
+                      const weight = parseFloat(item.weight) || 0;
+                      const availableQty = parseFloat(item.availableQty) || 0;
+                      return sum + (availableQty > 0 ? weight * availableQty : 0);
+                    }, 0);
+                    return totalWeight >= 1000 ? `${(totalWeight / 1000).toFixed(2)}kg` : `${totalWeight.toFixed(1)}g`;
+                  })()}</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </PageContent>
