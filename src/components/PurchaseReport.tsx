@@ -15,6 +15,7 @@ interface PurchaseReportProps {
 
 export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) => {
   const [purchaseData, setPurchaseData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [stats, setStats] = useState({
@@ -36,6 +37,7 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
       const response = await request(endpoints.barcode.listBarcodes());
       const data = response.data || [];
       setPurchaseData(data);
+      setFilteredData(data);
       calculateStats(data);
     } catch (error) {
       toast({
@@ -61,12 +63,17 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
   };
 
   const filterByDate = () => {
-    if (!dateFrom || !dateTo) return;
+    if (!dateFrom || !dateTo) {
+      setFilteredData(purchaseData);
+      calculateStats(purchaseData);
+      return;
+    }
     
     const filtered = purchaseData.filter(purchase => {
-      const purchaseDate = new Date(purchase.createdAt).toISOString().split('T')[0];
+      const purchaseDate = purchase.createdAt.split('T')[0];
       return purchaseDate >= dateFrom && purchaseDate <= dateTo;
     });
+    setFilteredData(filtered);
     calculateStats(filtered);
   };
 
@@ -164,7 +171,7 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
           </CardHeader>
           <CardContent>
             <DataGrid
-              data={purchaseData}
+              data={filteredData}
               columns={[
                 {
                   key: 'createdAt',

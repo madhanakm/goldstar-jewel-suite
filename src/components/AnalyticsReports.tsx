@@ -100,52 +100,7 @@ export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps
           </div>
         </div>
 
-        {/* Report Features */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Report Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold mb-3">Sales Analytics</h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Daily, weekly, monthly sales reports</li>
-                  <li>• Customer purchase history</li>
-                  <li>• Revenue tracking and trends</li>
-                  <li>• Top-selling products analysis</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">Inventory Management</h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Real-time stock levels</li>
-                  <li>• Low stock alerts</li>
-                  <li>• Product movement tracking</li>
-                  <li>• Tray-wise inventory reports</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">Purchase Analysis</h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Purchase cost analysis</li>
-                  <li>• Vendor performance tracking</li>
-                  <li>• Purchase trends and patterns</li>
-                  <li>• Cost optimization insights</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">Export Options</h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• CSV export for all reports</li>
-                  <li>• Date range filtering</li>
-                  <li>• Custom report generation</li>
-                  <li>• Print-friendly formats</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
       </PageContent>
       
       <SidebarWrapper
