@@ -39,14 +39,14 @@ export const Sidebar = ({ categories, isOpen, onToggle }: SidebarProps) => {
     <>
       {/* Mobile overlay */}
       <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-all duration-300 ${
+        className={`fixed inset-0 bg-black/60 z-[100] transition-opacity duration-150 ${
           isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
         onClick={onToggle}
       />
       
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-screen w-80 sm:w-96 bg-gradient-to-b from-white to-amber-50/30 border-r border-amber-200/50 shadow-2xl z-[110] overflow-y-auto transition-transform duration-300 ease-in-out ${
+      <div className={`fixed top-0 left-0 h-screen w-80 sm:w-96 bg-white border-r border-amber-200/50 shadow-xl z-[110] overflow-y-auto transition-transform duration-200 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Header */}
@@ -83,15 +83,15 @@ export const Sidebar = ({ categories, isOpen, onToggle }: SidebarProps) => {
                   {category.items.map((item, index) => (
                     <div 
                       key={index}
-                      className="group cursor-pointer hover:bg-gradient-to-r hover:from-amber-50 hover:to-yellow-50 p-3 rounded-xl transition-all duration-200 border border-transparent hover:border-amber-200/50"
+                      className="group cursor-pointer hover:bg-amber-50 p-3 rounded-xl transition-colors duration-100"
                       onClick={item.onClick}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 ${item.color} rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-200`}>
+                        <div className={`w-8 h-8 ${item.color} rounded-xl flex items-center justify-center shadow-sm`}>
                           <item.icon className="w-4 h-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-amber-700 transition-colors">
+                          <p className="text-sm font-semibold text-slate-800 truncate">
                             {item.name}
                           </p>
                           <p className="text-xs text-slate-600 truncate mt-0.5">

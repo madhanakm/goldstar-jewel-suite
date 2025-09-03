@@ -12,7 +12,7 @@ export const sidebarConfig = [
   {
     category: "Inventory Management",
     items: [
-      { name: "Product Module", icon: Package, description: "Manage product inventory and stock", color: "bg-blue-500" },
+
       { name: "Barcode Generator", icon: Scale, description: "Generate and print product barcodes", color: "bg-indigo-500" },
       { name: "Tray Management", icon: Package, description: "Track products in trays", color: "bg-purple-500" },
       { name: "Purchase Entry", icon: Receipt, description: "Record purchase entries", color: "bg-orange-500" }

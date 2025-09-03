@@ -30,8 +30,11 @@ export const endpoints = {
     }
   },
   customers: {
-    list: (pageSize = 100) => `/api/customers?pagination[pageSize]=${pageSize}`,
-    create: () => '/api/customers',
+    list: (page = 1, pageSize = 100, search = '') => {
+      const searchQuery = search ? `&filters[name][$contains]=${encodeURIComponent(search)}` : '';
+      return `/api/customers?pagination[page]=${page}&pagination[pageSize]=${pageSize}${searchQuery}`;
+    },
+    create: (data?: any) => '/api/customers',
     findByPhone: (phone: string) => `/api/customers?filters[phone][$eq]=${phone}`
   },
   trays: {

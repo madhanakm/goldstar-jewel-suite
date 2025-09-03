@@ -7,6 +7,7 @@ import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
 import { ShoppingBag, LogOut, Download, Calendar, DollarSign, Package, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 
 interface PurchaseReportProps {
   onNavigate?: (module: string) => void;
@@ -27,6 +28,7 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
+  const { goBack } = useNavigation();
 
   useEffect(() => {
     loadPurchaseData();
@@ -104,6 +106,7 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
     <PageLayout>
       <PageHeader
         title="Purchase Report"
+        onBack={goBack}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },

@@ -30,7 +30,7 @@ export const PageHeader = ({ title, description, onBack, onMenuClick, breadcrumb
                 <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             )}
-            {onBack && !onMenuClick && (
+            {onBack && (
               <Button variant="ghost" onClick={onBack} className="mr-2 sm:mr-4 hover:bg-amber-100/50 text-xs sm:text-sm">
                 <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Back</span>

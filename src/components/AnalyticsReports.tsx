@@ -48,6 +48,7 @@ export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps
     <PageLayout>
       <PageHeader
         title="Analytics & Reports"
+        onBack={() => onNavigate?.("Dashboard")}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },

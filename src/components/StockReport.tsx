@@ -7,6 +7,7 @@ import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
 import { Package, LogOut, Download, Search, AlertTriangle, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 
 interface StockReportProps {
   onNavigate?: (module: string) => void;
@@ -25,6 +26,7 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
+  const { goBack } = useNavigation();
 
   useEffect(() => {
     loadStockData();
@@ -126,6 +128,7 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
     <PageLayout>
       <PageHeader
         title="Stock Report"
+        onBack={goBack}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper, GradientCard, ActionButton, DataGrid } from "@/components/common";
 import { useApi, endpoints, usePagination } from "@/shared";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { Customer, CustomerFormData } from "@/types/customer";
 import {
@@ -51,6 +52,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
   const { toast } = useToast();
   const { page, hasMore, nextPage, resetPagination } = usePagination();
   const { loading, request } = useApi();
+  const { goBack } = useNavigation();
 
   useEffect(() => {
     loadCustomers();
@@ -89,7 +91,11 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
 
   const handleAddCustomer = async () => {
     try {
-      await request(endpoints.customers.create(formData));
+      await request(endpoints.customers.create(), 'POST', {
+        data: {
+          attributes: formData
+        }
+      });
       toast({
         title: "✅ Success",
         description: "Customer added successfully",
@@ -112,7 +118,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     <PageLayout>
       <PageHeader
         title="Customer Management"
-        onBack={onBack}
+        onBack={goBack}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
@@ -234,7 +240,6 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800">{customer.name}</p>
-                        <p className="text-sm text-slate-600">{customer.id}</p>
                       </div>
                     </div>
                   )

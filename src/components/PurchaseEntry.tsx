@@ -9,6 +9,7 @@ import { DataList, DetailPanel, FormDialog, useApi, usePagination, formatCurrenc
 import { endpoints } from "@/shared";
 import { Package, Calendar, Hash, IndianRupee, Trash2, Plus, ShoppingBag, TrendingUp, Clock, Star, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import "@/styles/scrollbar.css";
 
 interface PurchaseMaster extends BaseEntity {
@@ -51,6 +52,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const { toast } = useToast();
   const { page, hasMore, nextPage, resetPagination } = usePagination();
   const { loading, request } = useApi();
+  const { goBack } = useNavigation();
 
   const [newPurchase, setNewPurchase] = useState<{ suppliername: string; modeofpayment: string; products: ProductForm[] }>({
     suppliername: "",
@@ -252,7 +254,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     <PageLayout>
       <PageHeader
         title="Purchase Entry"
-        onBack={onBack}
+        onBack={goBack}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },

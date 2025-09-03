@@ -9,6 +9,7 @@ import { useApi, endpoints, PageProps } from "@/shared";
 import { ShoppingCart, User, Plus, Trash2, LogOut, QrCode, FileText, Printer } from "lucide-react";
 import { InvoiceService } from "@/services/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import { CustomerAutocomplete } from "@/components/ui/customer-autocomplete";
 
 interface Customer {
@@ -46,6 +47,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
+  const { goBack } = useNavigation();
 
   useEffect(() => {
     loadBarcodeProducts();
@@ -132,12 +134,14 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       if (!customerId && (customer.name || customer.phone)) {
         const customerResponse = await request(endpoints.customers.create(), 'POST', {
           data: {
-            name: customer.name || 'Unknown Customer',
-            phone: customer.phone || '',
-            email: customer.email || '',
-            address: customer.address || '',
-            aadhar: customer.aadhar || '',
-            gstin: customer.gstin || ''
+            attributes: {
+              name: customer.name || 'Unknown Customer',
+              phone: customer.phone || '',
+              email: customer.email || '',
+              address: customer.address || '',
+              aadhar: customer.aadhar || '',
+              gstin: customer.gstin || ''
+            }
           }
         });
         customerId = customerResponse.data.id;
@@ -245,6 +249,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     <PageLayout>
       <PageHeader
         title="Sales Entry"
+        onBack={goBack}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
