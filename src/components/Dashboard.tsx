@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageLayout, PageContent, StatCard, ModuleCard, useSidebar, SidebarWrapper, GradientCard, ActionButton } from "@/components/common";
 import { useApi, endpoints } from "@/shared";
 import { sidebarConfig } from "@/lib/sidebarConfig";
+import { RateManagement } from "./RateManagement";
 import {
   Users,
   Package,
@@ -16,7 +18,8 @@ import {
   LogOut,
   Menu,
   Settings,
-  Plus
+  Plus,
+  Calculator
 } from "lucide-react";
 
 interface DashboardProps {
@@ -117,6 +120,19 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <ActionButton variant="secondary" size="sm" icon={Calculator}>
+                    <span className="hidden sm:inline">Rates</span>
+                  </ActionButton>
+                </DialogTrigger>
+                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Rate Management</DialogTitle>
+                  </DialogHeader>
+                  <RateManagement onNavigate={onNavigate} />
+                </DialogContent>
+              </Dialog>
               <ActionButton variant="danger" size="sm" onClick={onLogout} icon={LogOut}>
                 <span className="hidden sm:inline">Logout</span>
               </ActionButton>
@@ -153,7 +169,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
               description="Stock tracking and product management"
               icon={Package}
               color="bg-blue-500"
-              onClick={() => onNavigate("Product Module")}
+              onClick={() => onNavigate("Stock Report")}
             />
             <ModuleCard
               name="Customer Profiles"
@@ -236,27 +252,22 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
             </GradientCard>
           </div>
 
-          {/* API Connection Status */}
+          {/* Tray Report */}
           <div className="space-y-4">
             <GradientCard 
-              title="System Status" 
-              icon={<Settings className="w-5 h-5 text-white" />}
+              title="Tray Report" 
+              icon={<FileText className="w-5 h-5 text-white" />}
             >
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <span className="text-sm font-medium text-emerald-800">API Connection</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-emerald-600">Online</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <span className="text-sm font-medium text-blue-800">Database</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-blue-600">Connected</span>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-600 mb-4">View detailed tray-wise stock reports and inventory tracking</p>
+                <ActionButton 
+                  variant="primary" 
+                  className="w-full" 
+                  onClick={() => onNavigate("Tray Report")}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  View Tray Report
+                </ActionButton>
               </div>
             </GradientCard>
           </div>

@@ -27,7 +27,9 @@ interface Product {
   touch: string;
   weight: string;
   qty: string;
-  amount: string;
+  price: string;
+  wastage: string;
+  total: string;
 }
 
 interface SalesEntryProps extends PageProps {
@@ -36,11 +38,12 @@ interface SalesEntryProps extends PageProps {
 
 export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [customer, setCustomer] = useState<Customer>({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
-  const [products, setProducts] = useState<Product[]>([{ product: "", touch: "", weight: "", qty: "", amount: "" }]);
+  const [products, setProducts] = useState<Product[]>([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
   const [barcodeProducts, setBarcodeProducts] = useState<any[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [wastage, setWastage] = useState("");
-  const [taxPercentage, setTaxPercentage] = useState("5");
+
+  const [taxPercentage, setTaxPercentage] = useState("3");
+  const [silverRate, setSilverRate] = useState(0);
   const [modeOfPayment, setModeOfPayment] = useState("Cash");
   const [lastInvoiceId, setLastInvoiceId] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
@@ -51,11 +54,12 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   useEffect(() => {
     loadBarcodeProducts();
+    loadSilverRate();
   }, []);
 
   useEffect(() => {
     calculateTotal();
-  }, [products, wastage, taxPercentage]);
+  }, [products, taxPercentage]);
 
   const loadBarcodeProducts = async () => {
     try {
@@ -67,17 +71,33 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     }
   };
 
+  const loadSilverRate = async () => {
+    try {
+      const response = await request(endpoints.rates.list());
+      if (response.data && response.data.length > 0) {
+        const latestRate = response.data[0];
+        setSilverRate(parseFloat(latestRate.price) || 0);
+      }
+    } catch (error) {
+      console.error("Failed to load silver rate");
+    }
+  };
+
   const calculateTotal = () => {
-    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.amount) || 0), 0);
-    const wastageAmount = parseFloat(wastage) || 0;
-    const taxAmount = ((productTotal + wastageAmount) * parseFloat(taxPercentage)) / 100;
-    setTotalAmount(productTotal + wastageAmount + taxAmount);
+    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
+    const taxAmount = (productTotal * parseFloat(taxPercentage)) / 100;
+    setTotalAmount(productTotal + taxAmount);
   };
 
   const handleBarcodeSearch = async (barcode: string, index: number) => {
     const foundProduct = barcodeProducts.find(p => p.code === barcode);
     
     if (foundProduct) {
+      const weight = parseFloat(foundProduct.weight) || 0;
+      const price = weight * silverRate;
+      const wastage = parseFloat(foundProduct.making_charges_or_wastages) || 0;
+      const total = price + wastage;
+      
       setProducts(prev => prev.map((product, i) => 
         i === index ? {
           ...product,
@@ -85,7 +105,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           touch: foundProduct.touch || '',
           weight: foundProduct.weight || '',
           qty: foundProduct.qty || '1',
-          amount: foundProduct.making_charges_or_wastages || '0'
+          price: price.toFixed(2),
+          wastage: wastage.toFixed(2),
+          total: total.toFixed(2)
         } : product
       ));
     }
@@ -114,7 +136,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const addProduct = () => {
-    setProducts([...products, { product: "", touch: "", weight: "", qty: "", amount: "" }]);
+    setProducts([...products, { product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
   };
 
   const removeProduct = (index: number) => {
@@ -122,9 +144,27 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const updateProduct = (index: number, field: string, value: string) => {
-    setProducts(products.map((product, i) => 
-      i === index ? { ...product, [field]: value } : product
-    ));
+    const updatedProducts = products.map((product, i) => {
+      if (i === index) {
+        const updatedProduct = { ...product, [field]: value };
+        
+        // Auto-calculate price and total when weight or wastage changes
+        if ((field === 'weight' || field === 'wastage') && silverRate > 0) {
+          const weight = parseFloat(field === 'weight' ? value : product.weight) || 0;
+          const wastage = parseFloat(field === 'wastage' ? value : product.wastage) || 0;
+          const price = weight * silverRate;
+          const total = price + wastage;
+          
+          updatedProduct.price = price.toFixed(2);
+          updatedProduct.total = total.toFixed(2);
+        }
+        
+        return updatedProduct;
+      }
+      return product;
+    });
+    
+    setProducts(updatedProducts);
   };
 
   const handleSubmit = async () => {
@@ -157,7 +197,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           invoice: invoiceId,
           totalamount: totalAmount.toString(),
           totalqty: products.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0).toString(),
-          wastage: wastage,
+
           taxpercentage: taxPercentage,
           modeofpayment: modeOfPayment
         }
@@ -173,8 +213,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
               touch: product.touch,
               weight: product.weight,
               qty: product.qty,
-              amount: product.amount,
-              total: parseFloat(product.amount) * parseFloat(product.qty || "1")
+              amount: product.total,
+              total: parseFloat(product.total) * parseFloat(product.qty || "1")
             }
           });
         }
@@ -197,9 +237,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const handlePrintInvoice = () => {
-    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.amount) || 0), 0);
-    const wastageAmount = parseFloat(wastage) || 0;
-    const taxableAmount = productTotal + wastageAmount;
+    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
+    const taxableAmount = productTotal;
     const taxAmount = (taxableAmount * parseFloat(taxPercentage)) / 100;
     const sgst = taxAmount / 2;
     const cgst = taxAmount / 2;
@@ -216,9 +255,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         weight: parseFloat(p.weight) || 0,
         purity: p.touch,
         rate: 0,
-        makingCharges: parseFloat(p.amount) || 0,
+        makingCharges: parseFloat(p.wastage) || 0,
         quantity: parseFloat(p.qty) || 1,
-        total: parseFloat(p.amount) || 0
+        total: parseFloat(p.total) || 0
       })),
       subtotal: productTotal,
       discount: 0,
@@ -242,8 +281,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const handleNewSale = () => {
     setCustomer({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
-    setProducts([{ product: "", touch: "", weight: "", qty: "", amount: "" }]);
-    setWastage("");
+    setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
     setShowInvoice(false);
     setLastInvoiceId("");
   };
@@ -328,24 +366,14 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           {/* Summary Section */}
           <GradientCard title="Sale Summary" icon={<ShoppingCart className="w-5 h-5 text-white" />}>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField label="Wastage Amount">
-                  <Input
-                    value={wastage}
-                    onChange={(e) => setWastage(e.target.value)}
-                    placeholder="0"
-                    type="number"
-                  />
-                </FormField>
-                <FormField label="Tax %">
-                  <Input
-                    value={taxPercentage}
-                    onChange={(e) => setTaxPercentage(e.target.value)}
-                    placeholder="5"
-                    type="number"
-                  />
-                </FormField>
-              </div>
+              <FormField label="Tax %">
+                <Input
+                  value={taxPercentage}
+                  onChange={(e) => setTaxPercentage(e.target.value)}
+                  placeholder="3"
+                  type="number"
+                />
+              </FormField>
               <FormField label="Payment Mode">
                 <Input
                   value={modeOfPayment}
@@ -375,7 +403,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
                 <FormField label="Barcode/Product">
                   <Input
                     value={product.product}
@@ -398,14 +426,6 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                     placeholder="Touch/Purity"
                   />
                 </FormField>
-                <FormField label="Weight">
-                  <Input
-                    value={product.weight}
-                    onChange={(e) => updateProduct(index, "weight", e.target.value)}
-                    placeholder="Weight"
-                    type="number"
-                  />
-                </FormField>
                 <FormField label="Quantity">
                   <Input
                     value={product.qty}
@@ -414,12 +434,36 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                     type="number"
                   />
                 </FormField>
-                <FormField label="Amount">
+                <FormField label={`Weight (₹${silverRate}/g)`}>
                   <Input
-                    value={product.amount}
-                    onChange={(e) => updateProduct(index, "amount", e.target.value)}
-                    placeholder="Amount"
+                    value={product.weight}
+                    onChange={(e) => updateProduct(index, "weight", e.target.value)}
+                    placeholder="Weight"
                     type="number"
+                  />
+                </FormField>
+                <FormField label="Price">
+                  <Input
+                    value={product.price}
+                    readOnly
+                    placeholder="Auto calculated"
+                    className="bg-gray-50"
+                  />
+                </FormField>
+                <FormField label="Wastage & Making">
+                  <Input
+                    value={product.wastage}
+                    onChange={(e) => updateProduct(index, "wastage", e.target.value)}
+                    placeholder="Wastage amount"
+                    type="number"
+                  />
+                </FormField>
+                <FormField label="Total">
+                  <Input
+                    value={product.total}
+                    readOnly
+                    placeholder="Auto calculated"
+                    className="bg-gray-50 font-bold"
                   />
                 </FormField>
               </div>

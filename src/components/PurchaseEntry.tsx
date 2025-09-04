@@ -31,10 +31,11 @@ interface Purchase extends BaseEntity {
 
 interface ProductForm {
   product: string;
-  qty: string;
-  rate: string;
   touch: string;
   weight: string;
+  qty: string;
+  totalWeight: string;
+  rate: string;
 }
 
 interface PurchaseEntryProps extends PageProps {
@@ -57,17 +58,21 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const [newPurchase, setNewPurchase] = useState<{ suppliername: string; modeofpayment: string; products: ProductForm[] }>({
     suppliername: "",
     modeofpayment: "",
-    products: [{ product: "", qty: "", rate: "", touch: "", weight: "" }]
+    products: [{ product: "", touch: "", weight: "", qty: "", totalWeight: "", rate: "" }]
   });
+  
+  const [existingProducts, setExistingProducts] = useState<string[]>([]);
+  const [existingSuppliers, setExistingSuppliers] = useState<string[]>([]);
+  const [productSuggestions, setProductSuggestions] = useState<{ [key: number]: string[] }>({});
+  const [supplierSuggestions, setSupplierSuggestions] = useState<string[]>([]);
+  const [showProductSuggestions, setShowProductSuggestions] = useState<{ [key: number]: boolean }>({});
+  const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
 
   const loadPurchaseMasters = useCallback(async (pageNum = 1, search = "") => {
     try {
-      const data = await request(endpoints.purchase.masters.list(pageNum, 10, search));
-      if (pageNum === 1) {
-        setPurchaseMasters(data.data);
-      } else {
-        setPurchaseMasters(prev => [...prev, ...data.data]);
-      }
+      const data = await request(endpoints.purchase.masters.list(1, 1000, search));
+      const sortedData = (data.data || []).sort((a, b) => b.id - a.id);
+      setPurchaseMasters(sortedData);
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -91,18 +96,13 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   };
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop === clientHeight && hasMore && !loading) {
-      nextPage();
-      loadPurchaseMasters(page + 1, searchTerm);
-    }
+    // Removed pagination scroll logic
   };
 
   const handleSearch = useCallback((value: string) => {
     setSearchTerm(value);
-    resetPagination();
     loadPurchaseMasters(1, value);
-  }, [resetPagination, loadPurchaseMasters]);
+  }, [loadPurchaseMasters]);
 
   const handlePurchaseClick = (purchase: PurchaseMaster) => {
     setSelectedPurchase(purchase);
@@ -113,7 +113,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const addProductRow = () => {
     setNewPurchase(prev => ({
       ...prev,
-      products: [...prev.products, { product: "", qty: "", rate: "", touch: "", weight: "" }]
+      products: [...prev.products, { product: "", touch: "", weight: "", qty: "", totalWeight: "", rate: "" }]
     }));
   };
 
@@ -127,10 +127,57 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const updateProduct = (index: number, field: string, value: string) => {
     setNewPurchase(prev => ({
       ...prev,
-      products: prev.products.map((product, i) => 
-        i === index ? { ...product, [field]: value } : product
-      )
+      products: prev.products.map((product, i) => {
+        if (i === index) {
+          const updatedProduct = { ...product, [field]: value };
+          
+          // Auto-calculate total weight when weight or quantity changes
+          if (field === 'weight' || field === 'qty') {
+            const weight = parseFloat(field === 'weight' ? value : product.weight) || 0;
+            const qty = parseFloat(field === 'qty' ? value : product.qty) || 0;
+            updatedProduct.totalWeight = (weight * qty).toFixed(2);
+          }
+          
+          return updatedProduct;
+        }
+        return product;
+      })
     }));
+    
+    // Handle product autocomplete
+    if (field === 'product' && value.length > 0) {
+      const filtered = existingProducts.filter(p => 
+        p.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 10);
+      setProductSuggestions(prev => ({ ...prev, [index]: filtered }));
+      setShowProductSuggestions(prev => ({ ...prev, [index]: filtered.length > 0 }));
+    } else if (field === 'product') {
+      setShowProductSuggestions(prev => ({ ...prev, [index]: false }));
+    }
+  };
+  
+  const handleSupplierChange = (value: string) => {
+    setNewPurchase(prev => ({ ...prev, suppliername: value }));
+    
+    if (value) {
+      const filtered = existingSuppliers.filter(s => 
+        s.toLowerCase().includes(value.toLowerCase())
+      );
+      setSupplierSuggestions(filtered);
+      setShowSupplierSuggestions(true);
+    } else {
+      setShowSupplierSuggestions(false);
+    }
+  };
+  
+  const selectProduct = (index: number, product: string) => {
+    updateProduct(index, 'product', product);
+    setShowProductSuggestions(prev => ({ ...prev, [index]: false }));
+  };
+  
+  const selectSupplier = (supplier: string) => {
+    setNewPurchase(prev => ({ ...prev, suppliername: supplier }));
+    setShowSupplierSuggestions(false);
   };
 
   const handleSubmit = async () => {
@@ -176,7 +223,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       });
 
       setShowAddDialog(false);
-      setNewPurchase({ suppliername: "", modeofpayment: "", products: [{ product: "", qty: "", rate: "", touch: "", weight: "" }] });
+      setNewPurchase({ suppliername: "", modeofpayment: "", products: [{ product: "", touch: "", weight: "", qty: "", totalWeight: "", rate: "" }] });
       loadPurchaseMasters(1, searchTerm);
     } catch (error) {
       toast({
@@ -189,7 +236,31 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
 
   useEffect(() => {
     loadPurchaseMasters();
+    loadExistingData();
   }, [loadPurchaseMasters]);
+  
+  const loadExistingData = async () => {
+    try {
+      // Load from barcode products
+      const barcodeData = await request('/api/barcodes?pagination[pageSize]=1000');
+      const barcodeProducts = barcodeData.data?.map((p: any) => p.product).filter(Boolean) || [];
+      
+      // Load from purchases
+      const purchaseData = await request('/api/purchases?pagination[pageSize]=1000');
+      const purchaseProducts = purchaseData.data?.map((p: any) => p.product).filter(Boolean) || [];
+      
+      // Combine and deduplicate
+      const allProducts = [...new Set([...barcodeProducts, ...purchaseProducts])];
+      setExistingProducts(allProducts);
+      
+      // Load suppliers
+      const masterData = await request('/api/purchase-masters?pagination[pageSize]=100');
+      const suppliers = [...new Set(masterData.data?.map((p: any) => p.suppliername).filter(Boolean) || [])];
+      setExistingSuppliers(suppliers);
+    } catch (error) {
+      console.error('Failed to load existing data:', error);
+    }
+  };
 
   const renderPurchaseItem = useCallback((purchase: PurchaseMaster) => {
     const isRecent = new Date(purchase.date) > new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -228,6 +299,9 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                     <Clock className="w-3 h-3" />
                     {formatDate(purchase.date)}
+                  </div>
+                  <div className="text-sm font-medium text-gray-700 mt-1">
+                    Supplier: {purchase.suppliername || 'N/A'}
                   </div>
                 </div>
               </div>
@@ -414,10 +488,17 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                                         </div>
                                       </div>
                                       
-                                      <div className="grid grid-cols-3 gap-3">
+                                      <div className="grid grid-cols-4 gap-3">
                                         <div className="p-3 bg-white rounded-lg border border-blue-200 text-center">
                                           <div className="text-blue-600 font-semibold text-sm mb-1">Quantity</div>
                                           <div className="text-xl font-bold text-blue-800">{purchase.qty}</div>
+                                        </div>
+                                        <div className="p-3 bg-white rounded-lg border border-orange-200 text-center">
+                                          <div className="text-orange-600 font-semibold text-sm mb-1">Total Weight</div>
+                                          <div className="text-lg font-bold text-orange-800">{(() => {
+                                            const totalWeight = (parseFloat(purchase.weight) || 0) * (parseFloat(purchase.qty) || 0);
+                                            return totalWeight >= 1000 ? `${(totalWeight / 1000).toFixed(2)}kg` : `${totalWeight.toFixed(2)}g`;
+                                          })()}</div>
                                         </div>
                                         <div className="p-3 bg-white rounded-lg border border-green-200 text-center">
                                           <div className="text-green-600 font-semibold text-sm mb-1">Rate</div>
@@ -455,14 +536,27 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
             <Label className="text-sm font-semibold text-blue-700 mb-3 block">Purchase Information</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <Label className="text-xs text-blue-600 mb-1 block">Supplier Name</Label>
                 <Input
                   value={newPurchase.suppliername}
-                  onChange={(e) => setNewPurchase(prev => ({ ...prev, suppliername: e.target.value }))}
+                  onChange={(e) => handleSupplierChange(e.target.value)}
                   placeholder="Enter supplier name"
                   className="bg-white border-blue-300 focus:border-blue-500"
                 />
+                {showSupplierSuggestions && supplierSuggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    {supplierSuggestions.map((supplier, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                        onClick={() => selectSupplier(supplier)}
+                      >
+                        {supplier}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <Label className="text-xs text-blue-600 mb-1 block">Mode of Payment</Label>
@@ -503,8 +597,8 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
+                <div className="space-y-2 relative">
                   <Label className="text-sm font-semibold text-gray-700">Product Name</Label>
                   <Input
                     value={product.product}
@@ -512,24 +606,37 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                     placeholder="Enter product name"
                     className="border-gray-300 focus:border-indigo-500"
                   />
+                  {showProductSuggestions[index] && productSuggestions[index]?.length > 0 && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {productSuggestions[index].map((productName, idx) => (
+                        <div
+                          key={idx}
+                          className="p-2 hover:bg-indigo-50 cursor-pointer border-b last:border-b-0"
+                          onClick={() => selectProduct(index, productName)}
+                        >
+                          {productName}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Touch/Quality</Label>
+                  <Label className="text-sm font-semibold text-gray-700">Touch</Label>
                   <Input
                     value={product.touch}
                     onChange={(e) => updateProduct(index, 'touch', e.target.value)}
-                    placeholder="Enter touch/quality"
+                    placeholder="Touch/Quality"
                     className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Weight (g)</Label>
+                  <Label className="text-sm font-semibold text-gray-700">Weight/1 Piece (g)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={product.weight}
                     onChange={(e) => updateProduct(index, 'weight', e.target.value)}
-                    placeholder="Enter weight"
+                    placeholder="Weight per piece"
                     className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>
@@ -539,17 +646,27 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                     type="number"
                     value={product.qty}
                     onChange={(e) => updateProduct(index, 'qty', e.target.value)}
-                    placeholder="Enter quantity"
+                    placeholder="Quantity"
                     className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Rate (₹)</Label>
+                  <Label className="text-sm font-semibold text-gray-700">Total Weight (g)</Label>
+                  <Input
+                    value={product.totalWeight}
+                    readOnly
+                    placeholder="Auto calculated"
+                    className="bg-gray-50 border-gray-300"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-gray-700">Rate (₹/piece)</Label>
                   <Input
                     type="number"
+                    step="0.01"
                     value={product.rate}
                     onChange={(e) => updateProduct(index, 'rate', e.target.value)}
-                    placeholder="Enter rate"
+                    placeholder="Rate per piece"
                     className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>

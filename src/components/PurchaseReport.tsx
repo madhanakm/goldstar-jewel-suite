@@ -36,8 +36,8 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
 
   const loadPurchaseData = async () => {
     try {
-      const response = await request(endpoints.barcode.listBarcodes());
-      const data = response.data || [];
+      const response = await request(endpoints.barcode.list(1000));
+      const data = (response.data || []).sort((a, b) => b.id - a.id);
       setPurchaseData(data);
       setFilteredData(data);
       calculateStats(data);
@@ -52,7 +52,11 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
 
   const calculateStats = (data: any[]) => {
     const totalPurchases = data.length;
-    const totalAmount = data.reduce((sum, purchase) => sum + (parseFloat(purchase.making_charges_or_wastages) || 0), 0);
+    const totalAmount = data.reduce((sum, purchase) => {
+      const rate = parseFloat(purchase.rate) || 0;
+      const qty = parseFloat(purchase.qty) || 1;
+      return sum + (rate * qty);
+    }, 0);
     const totalWeight = data.reduce((sum, purchase) => sum + (parseFloat(purchase.weight) || 0) * (parseFloat(purchase.qty) || 1), 0);
     const avgPurchaseValue = totalPurchases > 0 ? totalAmount / totalPurchases : 0;
 
@@ -203,12 +207,15 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
                   }
                 },
                 {
-                  key: 'making_charges_or_wastages',
+                  key: 'amount',
                   header: 'Amount',
-                  render: (value) => `₹${parseFloat(value || 0).toLocaleString()}`
-                },
-                { key: 'trayno', header: 'Tray' },
-                { key: 'code', header: 'Code' }
+                  render: (value, row) => {
+                    const rate = parseFloat(row.rate) || 0;
+                    const qty = parseFloat(row.qty) || 1;
+                    const amount = rate * qty;
+                    return `₹${amount.toLocaleString()}`;
+                  }
+                }
               ]}
               emptyMessage="No purchase data found"
             />
@@ -230,7 +237,11 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
                   })()}</span>
                 </div>
                 <div className="text-sm font-medium text-gray-600">
-                  Total Amount: <span className="text-purple-600 font-bold">₹{filteredData.reduce((sum, item) => sum + (parseFloat(item.making_charges_or_wastages) || 0), 0).toLocaleString()}</span>
+                  Total Amount: <span className="text-purple-600 font-bold">₹{filteredData.reduce((sum, item) => {
+                    const rate = parseFloat(item.rate) || 0;
+                    const qty = parseFloat(item.qty) || 1;
+                    return sum + (rate * qty);
+                  }, 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>

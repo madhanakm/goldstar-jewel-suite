@@ -179,8 +179,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ...prev,
       product: product.product,
       touch: product.touch,
-      weight: product.weight || '',
-      making_charges_or_wastages: product.rate
+      weight: product.weight || ''
     }));
     setShowSuggestions(false);
     setIsConfirmed(false);
