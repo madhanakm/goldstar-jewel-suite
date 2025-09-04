@@ -145,13 +145,14 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              label={stat.label}
-              value={stat.value}
-              icon={stat.icon}
-              change={stat.change}
-            />
+            <div key={index} className={stat.label === "Monthly Sales" ? "col-span-1 md:col-span-2 lg:col-span-1" : ""}>
+              <StatCard
+                label={stat.label}
+                value={stat.value}
+                icon={stat.icon}
+                change={stat.change}
+              />
+            </div>
           ))}
         </div>
 
@@ -231,21 +232,14 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Barcode</span>
                 </ActionButton>
-                <ActionButton 
-                  variant="info" 
-                  className="h-16 flex-col p-3" 
-                  onClick={() => onNavigate("Sales Entry")}
-                >
-                  <ShoppingCart className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Sales Entry</span>
-                </ActionButton>
+
                 <ActionButton 
                   variant="secondary" 
                   className="h-16 flex-col p-3" 
                   onClick={() => onNavigate("Tray Management")}
                 >
                   <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Tray Mgmt</span>
+                  <span className="text-xs">Manage Tray</span>
                 </ActionButton>
 
               </div>

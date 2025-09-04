@@ -20,7 +20,7 @@ export const StatCard = ({ label, value, icon: Icon, change, color = "text-prima
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm font-medium text-slate-600 mb-1 sm:mb-2">{label}</p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-1 truncate">{value}</p>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-1 break-words">{value}</p>
             {change && (
               <div className={cn(
                 "inline-flex items-center text-xs sm:text-sm font-medium px-2 py-1 rounded-full",

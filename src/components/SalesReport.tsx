@@ -17,8 +17,8 @@ interface SalesReportProps {
 export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
   const [salesData, setSalesData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0]);
+  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
     totalSales: 0,
     totalAmount: 0,
@@ -33,6 +33,12 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
   useEffect(() => {
     loadSalesData();
   }, []);
+  
+  useEffect(() => {
+    if (salesData.length > 0) {
+      filterByCurrentDate();
+    }
+  }, [salesData]);
 
   const loadSalesData = async () => {
     try {
@@ -70,8 +76,7 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
       );
       
       setSalesData(enrichedData);
-      setFilteredData(enrichedData);
-      calculateStats(enrichedData);
+      // Don't set filtered data here, let useEffect handle current date filtering
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -95,8 +100,17 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
     });
   };
 
+  const filterByCurrentDate = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const filtered = salesData.filter(sale => {
+      const saleDate = sale.date.split('T')[0];
+      return saleDate === today;
+    });
+    setFilteredData(filtered);
+    calculateStats(filtered);
+  };
+  
   const filterByDate = () => {
-    console.log('Filter clicked:', { dateFrom, dateTo, salesData });
     if (!dateFrom || !dateTo) {
       setFilteredData(salesData);
       calculateStats(salesData);
@@ -105,10 +119,8 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
     
     const filtered = salesData.filter(sale => {
       const saleDate = sale.date.split('T')[0];
-      console.log('Comparing:', saleDate, 'between', dateFrom, 'and', dateTo);
       return saleDate >= dateFrom && saleDate <= dateTo;
     });
-    console.log('Filtered result:', filtered);
     setFilteredData(filtered);
     calculateStats(filtered);
   };

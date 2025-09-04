@@ -47,6 +47,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [modeOfPayment, setModeOfPayment] = useState("Cash");
   const [lastInvoiceId, setLastInvoiceId] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
+  const [entryNumber, setEntryNumber] = useState("");
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
@@ -55,6 +56,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   useEffect(() => {
     loadBarcodeProducts();
     loadSilverRate();
+    generateEntryNumber();
   }, []);
 
   useEffect(() => {
@@ -80,6 +82,31 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       }
     } catch (error) {
       console.error("Failed to load silver rate");
+    }
+  };
+
+  const generateEntryNumber = async () => {
+    try {
+      const response = await request(endpoints.sales.masters.list(1, 100));
+      const allEntries = response.data || [];
+      let nextNumber = 1;
+      
+      // Find the highest PJ number
+      const pjEntries = allEntries.filter(entry => entry.invoice && entry.invoice.startsWith('PJ-'));
+      if (pjEntries.length > 0) {
+        const numbers = pjEntries.map(entry => {
+          const num = parseInt(entry.invoice.split('-')[1]) || 0;
+          return num;
+        });
+        const maxNumber = Math.max(...numbers);
+        nextNumber = maxNumber + 1;
+      }
+      
+      const newEntryNumber = `PJ-${nextNumber.toString().padStart(3, '0')}`;
+      setEntryNumber(newEntryNumber);
+    } catch (error) {
+      console.error("Failed to generate entry number");
+      setEntryNumber('PJ-001');
     }
   };
 
@@ -189,7 +216,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       }
 
       // Create sales master
-      const invoiceId = Date.now().toString();
+      const invoiceId = entryNumber;
       await request(endpoints.sales.masters.create(), 'POST', {
         data: {
           cid: customerId.toString(),
@@ -284,6 +311,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
     setShowInvoice(false);
     setLastInvoiceId("");
+    generateEntryNumber();
   };
 
   return (
@@ -366,6 +394,12 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           {/* Summary Section */}
           <GradientCard title="Sale Summary" icon={<ShoppingCart className="w-5 h-5 text-white" />}>
             <div className="space-y-4">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-lg font-bold text-blue-600">
+                  {entryNumber}
+                </div>
+                <div className="text-sm text-blue-700">Sale Entry Number</div>
+              </div>
               <FormField label="Tax %">
                 <Input
                   value={taxPercentage}
