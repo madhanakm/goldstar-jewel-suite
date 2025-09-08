@@ -200,76 +200,76 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <ActionButton 
                   variant="success" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("New Sale")}
                 >
-                  <ShoppingCart className="w-5 h-5 mb-1" />
-                  <span className="text-xs">New Sale</span>
+                  <ShoppingCart className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">New Sale</span>
                 </ActionButton>
 
                 <ActionButton 
                   variant="info" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Estimation")}
                 >
-                  <Calculator className="w-5 h-5 mb-1" />
-                  <span className="text-xs">New Estimation</span>
+                  <Calculator className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">New Estimation</span>
                 </ActionButton>
 
                 <ActionButton 
                   variant="warning" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Purchase Entry")}
                 >
-                  <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Purchase Management</span>
+                  <Package className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Purchase Entry</span>
                 </ActionButton>
 
                 <ActionButton 
                   variant="dark" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Barcode Generator")}
                 >
-                  <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Barcode</span>
+                  <Package className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Barcode</span>
                 </ActionButton>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                 <ActionButton 
                   variant="default" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-slate-500 to-gray-600 hover:from-slate-600 hover:to-gray-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Daily Report")}
                 >
-                  <FileText className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Reports</span>
+                  <FileText className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Reports</span>
                 </ActionButton>
 
                 <ActionButton 
                   variant="info" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Sales List")}
                 >
-                  <FileText className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Sales List</span>
+                  <FileText className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Sales List</span>
                 </ActionButton>
 
                 <ActionButton 
                   variant="secondary" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Estimation List")}
                 >
-                  <FileText className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Est. List</span>
+                  <FileText className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Est. List</span>
                 </ActionButton>
 
                 <ActionButton 
                   variant="secondary" 
-                  className="h-16 flex-col p-3" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
                   onClick={() => onNavigate("Tray Management")}
                 >
-                  <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Manage Tray</span>
+                  <Package className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Manage Tray</span>
                 </ActionButton>
               </div>
             </GradientCard>

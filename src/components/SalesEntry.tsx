@@ -50,6 +50,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [entryNumber, setEntryNumber] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [estimationToConvert, setEstimationToConvert] = useState<any>(null);
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
@@ -59,7 +60,50 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     loadBarcodeProducts();
     loadSilverRate();
     generateEntryNumber();
+    loadEstimationData();
   }, []);
+
+  const loadEstimationData = () => {
+    const estimationData = sessionStorage.getItem('estimationToConvert');
+    if (estimationData) {
+      const data = JSON.parse(estimationData);
+      
+      // Store estimation data for later use
+      setEstimationToConvert(data);
+      
+      // Pre-fill customer data
+      setCustomer(data.customer);
+      
+      // Pre-fill products from estimation items
+      const convertedProducts = data.items.map((item: any) => {
+        const weight = parseFloat(item.weight) || 0;
+        const silverRate = data.silverRate || 0;
+        const price = weight * silverRate;
+        
+        return {
+          product: item.product || '',
+          touch: item.touch || '',
+          weight: item.weight || '',
+          qty: item.qty || '1',
+          price: price.toFixed(2),
+          wastage: data.wastage.toString(),
+          total: item.total || ''
+        };
+      });
+      
+      setProducts(convertedProducts.length > 0 ? convertedProducts : [{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
+      
+      // Pre-fill discount
+      setDiscountPercent(data.discountPercent);
+      setDiscountAmount(data.discountAmount);
+      
+      // Set silver rate
+      setSilverRate(data.silverRate);
+      
+      // Clear session storage
+      sessionStorage.removeItem('estimationToConvert');
+    }
+  };
 
   useEffect(() => {
     calculateTotal();
@@ -274,6 +318,33 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         }
       }
 
+      // Mark estimation as converted if this sale was created from an estimation
+      if (estimationToConvert) {
+        try {
+          const updatePayload = {
+            data: {
+              converted_to_sale: true,
+              converted_invoice_number: invoiceId
+            }
+          };
+          
+          // Use direct fetch with full URL
+          const response = await fetch(`https://jewelapi.sricashway.com/api/estimation-masters/${estimationToConvert.estimationId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatePayload)
+          });
+          
+          if (response.ok) {
+            setEstimationToConvert(null);
+          }
+        } catch (error) {
+          console.error('Failed to update estimation status:', error);
+        }
+      }
+      
       setLastInvoiceId(invoiceId);
       setShowInvoice(true);
       
@@ -340,6 +411,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
     setDiscountPercent(0);
     setDiscountAmount(0);
+    setEstimationToConvert(null);
     setShowInvoice(false);
     setLastInvoiceId("");
     generateEntryNumber();

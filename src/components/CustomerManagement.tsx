@@ -48,9 +48,12 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     aadhar: '',
     gstin: ''
   });
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
-  const { page, hasMore, nextPage, resetPagination } = usePagination();
+
   const { loading, request } = useApi();
   const { goBack } = useNavigation();
 
@@ -58,14 +61,11 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     loadCustomers();
   }, []);
 
-  const loadCustomers = async (pageNum = 1, search = "") => {
+  const loadCustomers = async () => {
     try {
-      const data = await request(endpoints.customers.list(pageNum, 10, search));
-      if (pageNum === 1) {
-        setCustomers(data.data || []);
-      } else {
-        setCustomers(prev => [...prev, ...(data.data || [])]);
-      }
+      const response = await request(endpoints.customers.list(1, 1000));
+      const customersData = response.data || [];
+      setCustomers(customersData);
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -75,26 +75,40 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     }
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop === clientHeight && hasMore && !loading) {
-      nextPage();
-      loadCustomers(page + 1, searchTerm);
+  const handleUpdateCustomer = async () => {
+    if (!selectedCustomer) return;
+    
+    try {
+      await request(`/api/customers/${selectedCustomer.documentId || selectedCustomer.id}`, 'PUT', {
+        data: formData
+      });
+      toast({
+        title: "✅ Success",
+        description: "Customer updated successfully",
+      });
+      setIsEditMode(false);
+      setSelectedCustomer(null);
+      setFormData({ name: '', phone: '', email: '', address: '', aadhar: '', gstin: '' });
+      loadCustomers();
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to update customer",
+        variant: "destructive",
+      });
     }
   };
 
+
+
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    resetPagination();
-    loadCustomers(1, value);
   };
 
   const handleAddCustomer = async () => {
     try {
       await request(endpoints.customers.create(), 'POST', {
-        data: {
-          attributes: formData
-        }
+        data: formData
       });
       toast({
         title: "✅ Success",
@@ -112,7 +126,13 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     }
   };
 
-  const filteredCustomers = customers;
+  const filteredCustomers = customers.filter(customer => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      customer.name?.toLowerCase().includes(searchLower) ||
+      customer.phone?.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <PageLayout>
@@ -129,36 +149,23 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
       <PageContent>
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <SearchFilter
-              searchTerm={searchTerm}
-              onSearchChange={handleSearch}
-              searchPlaceholder="Search by name, phone, or ID..."
-              filters={[
-                {
-                  label: "KYC Status",
-                  value: "all",
-                  options: [
-                    { value: "all", label: "All Status" },
-                    { value: "verified", label: "Verified" },
-                    { value: "pending", label: "Pending" },
-                    { value: "rejected", label: "Rejected" }
-                  ],
-                  onChange: () => {}
-                },
-                {
-                  label: "Member Type",
-                  value: "all",
-                  options: [
-                    { value: "all", label: "All Types" },
-                    { value: "premium", label: "Premium" },
-                    { value: "regular", label: "Regular" },
-                    { value: "vip", label: "VIP" }
-                  ],
-                  onChange: () => {}
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search by name or phone..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="pl-10 w-80"
+                  />
+                </div>
+              </div>
+              <Dialog open={isAddCustomerOpen} onOpenChange={(open) => {
+                setIsAddCustomerOpen(open);
+                if (open) {
+                  setFormData({ name: '', phone: '', email: '', address: '', aadhar: '', gstin: '' });
                 }
-              ]}
-              />
-              <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+              }}>
                 <DialogTrigger asChild>
                   <Button variant="default">
                     <Plus className="w-4 h-4 mr-2" />
@@ -227,6 +234,111 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
               </Dialog>
             </div>
 
+            {/* View Customer Dialog */}
+            <Dialog open={isViewMode} onOpenChange={setIsViewMode}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Customer Details</DialogTitle>
+                </DialogHeader>
+                {selectedCustomer && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Name</label>
+                        <p className="text-sm font-semibold">{selectedCustomer.name}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Phone</label>
+                        <p className="text-sm">{selectedCustomer.phone}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Email</label>
+                        <p className="text-sm">{selectedCustomer.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">GSTIN</label>
+                        <p className="text-sm">{selectedCustomer.gstin || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Address</label>
+                      <p className="text-sm">{selectedCustomer.address || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Aadhar</label>
+                      <p className="text-sm">{selectedCustomer.aadhar || 'N/A'}</p>
+                    </div>
+                    <Button onClick={() => setIsViewMode(false)} className="w-full">
+                      Close
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Edit Customer Dialog */}
+            <Dialog open={isEditMode} onOpenChange={setIsEditMode}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Customer</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <FormField label="Customer Name" required>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="Enter customer name"
+                    />
+                  </FormField>
+                  <FormField label="Phone Number" required>
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      placeholder="Enter phone number"
+                    />
+                  </FormField>
+                  <FormField label="Email">
+                    <Input
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      placeholder="Enter email address"
+                    />
+                  </FormField>
+                  <FormField label="Address">
+                    <Textarea
+                      value={formData.address}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      placeholder="Enter address"
+                    />
+                  </FormField>
+                  <FormField label="Aadhar Number">
+                    <Input
+                      value={formData.aadhar}
+                      onChange={(e) => setFormData({...formData, aadhar: e.target.value})}
+                      placeholder="Enter Aadhar number"
+                      maxLength={12}
+                    />
+                  </FormField>
+                  <FormField label="GSTIN">
+                    <Input
+                      value={formData.gstin}
+                      onChange={(e) => setFormData({...formData, gstin: e.target.value})}
+                      placeholder="Enter GSTIN"
+                      maxLength={15}
+                    />
+                  </FormField>
+                  <div className="flex space-x-2">
+                    <Button onClick={handleUpdateCustomer} className="flex-1">
+                      Update Customer
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsEditMode(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <DataGrid
               data={filteredCustomers}
               columns={[
@@ -290,12 +402,34 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                 {
                   key: 'id',
                   header: 'Actions',
-                  render: () => (
+                  render: (_, customer) => (
                     <div className="flex space-x-2">
-                      <ActionButton size="sm" variant="ghost">
+                      <ActionButton 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedCustomer(customer);
+                          setIsViewMode(true);
+                        }}
+                      >
                         <Eye className="w-4 h-4" />
                       </ActionButton>
-                      <ActionButton size="sm" variant="ghost">
+                      <ActionButton 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedCustomer(customer);
+                          setFormData({
+                            name: customer.name || '',
+                            phone: customer.phone || '',
+                            email: customer.email || '',
+                            address: customer.address || '',
+                            aadhar: customer.aadhar || '',
+                            gstin: customer.gstin || ''
+                          });
+                          setIsEditMode(true);
+                        }}
+                      >
                         <Edit className="w-4 h-4" />
                       </ActionButton>
                     </div>

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { Calculator, Printer, LogOut, Calendar } from "lucide-react";
+import { Calculator, Printer, LogOut, Calendar, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
 import { EstimationService } from "@/services/estimation";
@@ -80,6 +80,26 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
       return estimationDate === selectedDate;
     });
     setFilteredData([...filtered]);
+  };
+
+  const handleConvertToSale = (estimation: any) => {
+    // Navigate to sales entry page with estimation data
+    const estimationData = {
+      customer: estimation.customer,
+      items: estimation.estimationDetails,
+      discountPercent: parseFloat(estimation.discount_percentage) || 0,
+      discountAmount: parseFloat(estimation.discount_amount) || 0,
+      silverRate: parseFloat(estimation.current_silver_rate) || 0,
+      wastage: parseFloat(estimation.wastage) || 0,
+      estimationId: estimation.documentId || estimation.id,
+      estimationNumber: estimation.estimation_number
+    };
+    
+    // Store estimation data in sessionStorage for sales entry page
+    sessionStorage.setItem('estimationToConvert', JSON.stringify(estimationData));
+    
+    // Navigate to sales entry page
+    onNavigate?.('Sales Entry');
   };
 
   const handlePrintPDF = (estimation: any) => {
@@ -183,14 +203,25 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
                   key: 'actions',
                   header: 'Actions',
                   render: (_, row) => (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handlePrintPDF(row)}
-                    >
-                      <Printer className="w-4 h-4 mr-1" />
-                      Print PDF
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePrintPDF(row)}
+                      >
+                        <Printer className="w-4 h-4 mr-1" />
+                        Print PDF
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={row.converted_to_sale ? "secondary" : "default"}
+                        onClick={() => handleConvertToSale(row)}
+                        disabled={row.converted_to_sale}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-1" />
+                        {row.converted_to_sale ? 'Converted' : 'Convert to Sale'}
+                      </Button>
+                    </div>
                   )
                 }
               ]}
