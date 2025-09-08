@@ -1,6 +1,29 @@
-import { Invoice, InvoiceTemplate } from '@/types/invoice';
+interface EstimationItem {
+  id: string;
+  itemName: string;
+  purity: string;
+  quantity: number;
+  weight: number;
+  makingCharges: number;
+  total: number;
+}
 
-export class InvoiceService {
+interface EstimationData {
+  estimationNumber: string;
+  customer: {
+    name: string;
+    phone: string;
+    address: string;
+  };
+  date: string;
+  silverRate: number;
+  items: EstimationItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+}
+
+export class EstimationService {
   private static numberToWords(num: number): string {
     const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
     const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
@@ -43,38 +66,15 @@ export class InvoiceService {
     return result.trim() + ' Rupees Only';
   }
 
-  static mapInvoiceToTemplate(invoice: Invoice): InvoiceTemplate {
-    const sgst = invoice.gst.total / 2;
-    const cgst = invoice.gst.total / 2;
-
-    return {
-      invoiceNumber: invoice.invoiceNumber,
-      customerName: invoice.customer.name,
-      customerAddress: invoice.customer.address || '',
-      customerPhone: invoice.customer.phone,
-      customerGstin: invoice.customer.gstin || '',
-      silverRate: invoice.silverRate || 0,
-      date: new Date(invoice.date).toLocaleDateString('en-GB'),
-      items: invoice.items,
-      subtotal: invoice.subtotal,
-      sgst,
-      cgst,
-      total: invoice.total,
-      amountInWords: this.numberToWords(Math.floor(invoice.total))
-    };
-  }
-
-  static generateInvoiceHTML(invoice: Invoice): string {
-    const template = this.mapInvoiceToTemplate(invoice);
-    
+  static generateEstimationHTML(estimation: EstimationData): string {
     // Generate items rows
-    const itemsHTML = template.items.map((item, index) => `
+    const itemsHTML = estimation.items.map((item, index) => `
       <tr>
         <td style="border-right: 1px solid #000">${index + 1}</td>
         <td style="border-right: 1px solid #000" colspan="3">${item.itemName} (${item.purity})</td>
         <td style="border-right: 1px solid #000">${item.quantity}</td>
         <td style="border-right: 1px solid #000">${item.weight}g</td>
-        <td style="border-right: 1px solid #000">${item.makingCharges}%</td>
+        <td style="border-right: 1px solid #000">${item.makingCharges.toFixed(2)}%</td>
         <td colspan="2">₹${item.total.toLocaleString()}</td>
       </tr>
     `).join('');
@@ -85,7 +85,7 @@ export class InvoiceService {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prabanjam Jewellery Invoice</title>
+    <title>Prabanjam Jewellery Estimation</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; font-size: 14px; }
@@ -93,7 +93,7 @@ export class InvoiceService {
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 10px 6px; text-align: center; }
         .logo { width: 90%; }
-        .tax-badge { color: #fff; background-color: #000; padding: 7px 15px; border-radius: 10px; }
+        .estimation-badge { color: #fff; background-color: #007bff; padding: 7px 15px; border-radius: 10px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             .invoice-container { max-width: none; padding: 0; margin: 0; }
@@ -111,20 +111,19 @@ export class InvoiceService {
             </tr>
             <tr><td colspan="9"><img src="/logo.jpg" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
-                <td colspan="3">Invoice No: ${template.invoiceNumber}</td>
-                <td colspan="3"><span class="tax-badge">Tax Invoice</span></td>
+                <td colspan="3">Estimation No: ${estimation.estimationNumber}</td>
+                <td colspan="3"><span class="estimation-badge">Price Estimation</span></td>
                 <td colspan="3">GSTIN: 33AAPCP7799B1ZX</td>
             </tr>
             <tr><td colspan="9" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 12px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="6">Name: ${template.customerName}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Date: ${template.date}</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="6">Name: ${estimation.customer.name}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Date: ${new Date(estimation.date).toLocaleDateString('en-GB')}</td>
             </tr>
-            <tr><td style="text-align: left; border-bottom: 1px solid #000" colspan="9">Customer Details: ${template.customerAddress}</td></tr>
+            <tr><td style="text-align: left; border-bottom: 1px solid #000" colspan="9">Customer Details: ${estimation.customer.address}</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Mobile: ${template.customerPhone}</td>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Buyer GSTIN: ${template.customerGstin}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Silver Rate: ₹${template.silverRate}/g</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="4">Mobile: ${estimation.customer.phone}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000" colspan="5">Silver Rate: ₹${estimation.silverRate}/g</td>
             </tr>
             <tr style="font-weight: bold">
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">S. No</td>
@@ -136,39 +135,31 @@ export class InvoiceService {
             </tr>
             <tbody>${itemsHTML}</tbody>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left" rowspan="5" colspan="5">Amount in Words: ${template.amountInWords}</td>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Discount:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${invoice.discount.toLocaleString()}</td>
-            </tr>
-            <tr>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: right; vertical-align: bottom; padding-right: 10px;" rowspan="3" colspan="5">Extra 3% GST</td>
                 <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Sub Total:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${(invoice.subtotal - invoice.discount).toLocaleString()}</td>
+                <td style="border-top: 1px solid #000" colspan="2">₹${estimation.subtotal.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Add SGST 1.5%:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${template.sgst.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Discount:</td>
+                <td style="border-top: 1px solid #000" colspan="2">₹${estimation.discount.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Add CGST 1.5%:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${template.cgst.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Total Amount:</td>
+                <td style="border-top: 1px solid #000" colspan="2">₹${estimation.total.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Grand Total:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${template.total.toFixed(2)}</td>
-            </tr>
-            <tr>
-                <td style="border-top: 1px solid #000" colspan="5">Weight & Pieces Verified Found O.K</td>
+                <td style="border-top: 1px solid #000" colspan="5"></td>
                 <td style="border-top: 1px solid #000" colspan="4">For PRABANJAM JEWELLERY LIMITED</td>
             </tr>
             <tr><td colspan="9" rowspan="2"></td></tr>
             <tr></tr>
             <tr>
-                <td colspan="5">Customer Signature</td>
+                <td colspan="5"></td>
                 <td colspan="4">Authorised Signature</td>
             </tr>
             <tr>
                 <td colspan="5" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருககக்கு நன்றி மீண்டும் வருக.</td>
-                <td colspan="4"></td>
+                <td colspan="4" style="text-align: center; font-style: italic; color: #666;">*This is an estimation only</td>
             </tr>
         </table>
     </div>
@@ -176,8 +167,8 @@ export class InvoiceService {
 </html>`;
   }
 
-  static printInvoice(invoice: Invoice): void {
-    const html = this.generateInvoiceHTML(invoice);
+  static printEstimation(estimation: EstimationData): void {
+    const html = this.generateEstimationHTML(estimation);
     
     const printWindow = window.open('', '_blank');
     if (printWindow) {

@@ -48,6 +48,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [lastInvoiceId, setLastInvoiceId] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
   const [entryNumber, setEntryNumber] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
@@ -61,7 +63,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   useEffect(() => {
     calculateTotal();
-  }, [products, taxPercentage]);
+  }, [products, taxPercentage, discountAmount]);
 
   const loadBarcodeProducts = async () => {
     try {
@@ -112,8 +114,23 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const calculateTotal = () => {
     const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
-    const taxAmount = (productTotal * parseFloat(taxPercentage)) / 100;
-    setTotalAmount(productTotal + taxAmount);
+    const discountedTotal = productTotal - discountAmount;
+    const taxAmount = (discountedTotal * parseFloat(taxPercentage)) / 100;
+    setTotalAmount(discountedTotal + taxAmount);
+  };
+
+  const handleDiscountPercentChange = (percent: number) => {
+    setDiscountPercent(percent);
+    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
+    const amount = Math.round((productTotal * percent) / 100);
+    setDiscountAmount(amount);
+  };
+
+  const handleDiscountAmountChange = (amount: number) => {
+    setDiscountAmount(amount);
+    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
+    const percent = productTotal > 0 ? Math.round(((amount / productTotal) * 100) * 100) / 100 : 0;
+    setDiscountPercent(percent);
   };
 
   const handleBarcodeSearch = async (barcode: string, index: number) => {
@@ -211,9 +228,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
             gstin: customer.gstin || ''
           }
         };
-        console.log('Creating customer:', customerPayload);
         const customerResponse = await request(endpoints.customers.create(), 'POST', customerPayload);
-        console.log('Customer response:', customerResponse);
         customerId = customerResponse.data.id;
         setCustomer(prev => ({ ...prev, id: customerId }));
       }
@@ -234,12 +249,12 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           modeofpayment: modeOfPayment,
           currentSilverRate: silverRate.toString(),
           wastage: totalWastageAmount.toString(),
-          remarks: `wastage_percent:${avgWastagePercent}`
+          remarks: `wastage_percent:${avgWastagePercent}`,
+          discount_percentage: discountPercent.toString(),
+          discount_amount: discountAmount.toString()
         }
       };
-      console.log('Creating sales master:', salesMasterPayload);
       const salesMasterResponse = await request(endpoints.sales.masters.create(), 'POST', salesMasterPayload);
-      console.log('Sales master response:', salesMasterResponse);
 
       // Create sales details
       for (const product of products) {
@@ -255,9 +270,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
               total: parseFloat(product.total) * parseFloat(product.qty || "1")
             }
           };
-          console.log('Creating sales detail:', salesDetailPayload);
           const salesDetailResponse = await request(endpoints.sales.details.create(), 'POST', salesDetailPayload);
-          console.log('Sales detail response:', salesDetailResponse);
         }
       }
 
@@ -280,7 +293,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const handlePrintInvoice = () => {
     const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
-    const taxableAmount = productTotal;
+    const taxableAmount = productTotal - discountAmount;
     const taxAmount = (taxableAmount * parseFloat(taxPercentage)) / 100;
     const sgst = taxAmount / 2;
     const cgst = taxAmount / 2;
@@ -303,7 +316,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         total: parseFloat(p.total) || 0
       })),
       subtotal: productTotal,
-      discount: 0,
+      discount: discountAmount,
       gst: {
         sgst,
         cgst,
@@ -325,6 +338,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const handleNewSale = () => {
     setCustomer({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
     setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
+    setDiscountPercent(0);
+    setDiscountAmount(0);
     setShowInvoice(false);
     setLastInvoiceId("");
     generateEntryNumber();
@@ -363,15 +378,17 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                     handleCustomerSearch(e.target.value);
                   }}
                   placeholder="Enter phone number"
+                  required
                 />
               </FormField>
-              <FormField label="Customer Name">
+              <FormField label="Customer Name" required>
                 <CustomerAutocomplete
                   value={customer.name}
                   onChange={(value) => setCustomer(prev => ({ ...prev, name: value }))}
                   onCustomerSelect={(selectedCustomer) => setCustomer(selectedCustomer)}
                   onCreateNew={(name) => setCustomer(prev => ({ ...prev, name, id: 0 }))}
                   placeholder="Enter customer name"
+                  required
                 />
               </FormField>
               <FormField label="Email">
@@ -431,6 +448,22 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   placeholder="Cash, UPI, Card"
                 />
               </FormField>
+              <FormField label="Discount %">
+                <Input
+                  type="number"
+                  value={discountPercent || ''}
+                  onChange={(e) => handleDiscountPercentChange(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                />
+              </FormField>
+              <FormField label="Discount Amount (₹)">
+                <Input
+                  type="number"
+                  value={discountAmount || ''}
+                  onChange={(e) => handleDiscountAmountChange(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                />
+              </FormField>
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
                   ₹{totalAmount.toFixed(2)}
@@ -472,14 +505,16 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                 <FormField label="Touch">
                   <Input
                     value={product.touch}
-                    onChange={(e) => updateProduct(index, "touch", e.target.value)}
+                    readOnly
+                    className="bg-gray-50"
                     placeholder="Touch/Purity"
                   />
                 </FormField>
                 <FormField label="Quantity">
                   <Input
                     value={product.qty}
-                    onChange={(e) => updateProduct(index, "qty", e.target.value)}
+                    readOnly
+                    className="bg-gray-50"
                     placeholder="Qty"
                     type="number"
                   />
@@ -487,7 +522,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                 <FormField label={`Weight (₹${silverRate}/g)`}>
                   <Input
                     value={product.weight}
-                    onChange={(e) => updateProduct(index, "weight", e.target.value)}
+                    readOnly
+                    className="bg-gray-50"
                     placeholder="Weight"
                     type="number"
                   />
@@ -504,7 +540,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   <div className="space-y-1">
                     <Input
                       value={product.wastage}
-                      onChange={(e) => updateProduct(index, "wastage", e.target.value)}
+                      readOnly
+                      className="bg-gray-50"
                       placeholder="Wastage %"
                       type="number"
                     />

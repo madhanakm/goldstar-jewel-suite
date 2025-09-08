@@ -197,7 +197,7 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
               description="Essential tools for jewelry business management"
               icon={<TrendingUp className="w-5 h-5 text-white" />}
             >
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <ActionButton 
                   variant="success" 
                   className="h-16 flex-col p-3" 
@@ -210,10 +210,10 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                 <ActionButton 
                   variant="info" 
                   className="h-16 flex-col p-3" 
-                  onClick={() => onNavigate("Sales List")}
+                  onClick={() => onNavigate("Estimation")}
                 >
-                  <FileText className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Sales List</span>
+                  <Calculator className="w-5 h-5 mb-1" />
+                  <span className="text-xs">New Estimation</span>
                 </ActionButton>
 
                 <ActionButton 
@@ -222,17 +222,9 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   onClick={() => onNavigate("Purchase Entry")}
                 >
                   <Package className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Purchase Entry</span>
+                  <span className="text-xs">Purchase Management</span>
                 </ActionButton>
 
-                <ActionButton 
-                  variant="default" 
-                  className="h-16 flex-col p-3" 
-                  onClick={() => onNavigate("Daily Report")}
-                >
-                  <FileText className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Daily Report</span>
-                </ActionButton>
                 <ActionButton 
                   variant="dark" 
                   className="h-16 flex-col p-3" 
@@ -240,6 +232,35 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                 >
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Barcode</span>
+                </ActionButton>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                <ActionButton 
+                  variant="default" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Daily Report")}
+                >
+                  <FileText className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Reports</span>
+                </ActionButton>
+
+                <ActionButton 
+                  variant="info" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Sales List")}
+                >
+                  <FileText className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Sales List</span>
+                </ActionButton>
+
+                <ActionButton 
+                  variant="secondary" 
+                  className="h-16 flex-col p-3" 
+                  onClick={() => onNavigate("Estimation List")}
+                >
+                  <FileText className="w-5 h-5 mb-1" />
+                  <span className="text-xs">Est. List</span>
                 </ActionButton>
 
                 <ActionButton 
@@ -250,7 +271,6 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <Package className="w-5 h-5 mb-1" />
                   <span className="text-xs">Manage Tray</span>
                 </ActionButton>
-
               </div>
             </GradientCard>
           </div>

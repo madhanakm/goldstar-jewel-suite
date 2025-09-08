@@ -25,6 +25,8 @@ import { TrayAdd } from "./components/TrayAdd";
 import { TrayReport } from "./components/TrayReport";
 import { RateManagement } from "./components/RateManagement";
 import { SalesList } from "./components/SalesList";
+import { Estimation } from "./components/Estimation";
+import { EstimationList } from "./components/EstimationList";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -146,6 +148,12 @@ const AppContent = () => {
       case "Sales List":
         navigate('/sales-list');
         break;
+      case "Estimation":
+        navigate('/estimation');
+        break;
+      case "Estimation List":
+        navigate('/estimation-list');
+        break;
       case "Stock Report":
         navigate('/stock-report');
         break;
@@ -243,6 +251,8 @@ const AppContent = () => {
       <Route path="/tray-add" element={<TrayAdd onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/rate-management" element={<RateManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/sales-list" element={<SalesList onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/estimation" element={<Estimation onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/estimation-list" element={<EstimationList onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>

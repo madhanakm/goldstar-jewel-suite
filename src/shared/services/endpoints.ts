@@ -45,5 +45,15 @@ export const endpoints = {
     list: (pageSize = 100) => `/api/rates?pagination[pageSize]=${pageSize}`,
     create: () => '/api/rates',
     update: (id: number) => `/api/rates/${id}`
+  },
+  estimation: {
+    masters: {
+      list: (page = 1, pageSize = 25) => `/api/estimation-masters?pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+      create: () => '/api/estimation-masters'
+    },
+    details: {
+      list: (estimationId: string) => `/api/estimation-details?filters[estimation_id][$eq]=${estimationId}`,
+      create: () => '/api/estimation-details'
+    }
   }
 };

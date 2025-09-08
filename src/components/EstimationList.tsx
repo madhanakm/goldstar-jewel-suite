@@ -5,18 +5,18 @@ import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { FileText, Printer, LogOut, Calendar } from "lucide-react";
+import { Calculator, Printer, LogOut, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
-import { InvoiceService } from "@/services/invoice";
+import { EstimationService } from "@/services/estimation";
 
-interface SalesListProps {
+interface EstimationListProps {
   onNavigate?: (module: string) => void;
   onLogout?: () => void;
 }
 
-export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
-  const [salesData, setSalesData] = useState<any[]>([]);
+export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) => {
+  const [estimationData, setEstimationData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const { sidebarOpen, toggleSidebar } = useSidebar();
@@ -25,38 +25,38 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
   const { goBack } = useNavigation();
 
   useEffect(() => {
-    loadSalesData();
+    loadEstimationData();
   }, []);
 
   useEffect(() => {
     filterByDate();
-  }, [salesData, selectedDate]);
+  }, [estimationData, selectedDate]);
 
-  const loadSalesData = async () => {
+  const loadEstimationData = async () => {
     try {
-      const response = await request(endpoints.sales.masters.list(1, 1000));
-      const salesMasters = response.data || response || [];
+      const response = await request('/api/estimation-masters');
+      const estimationMasters = response.data || response || [];
       
       const enrichedData = await Promise.all(
-        salesMasters.map(async (sale: any) => {
+        estimationMasters.map(async (estimation: any) => {
           try {
-            const [customerRes, salesDetailsRes] = await Promise.all([
+            const [customerRes, estimationDetailsRes] = await Promise.all([
               request(endpoints.customers.list()).then(res => 
-                res.data?.find((c: any) => c.id == sale.cid)
+                res.data?.find((c: any) => c.id == estimation.cid)
               ),
-              request(endpoints.sales.details.list(sale.invoice))
+              request(endpoints.estimation.details.list(estimation.estimation_number))
             ]);
             
             return {
-              ...sale,
+              ...estimation,
               customer: customerRes || { name: 'Unknown', phone: '', address: '', gstin: '', aadhar: '' },
-              salesDetails: salesDetailsRes?.data || []
+              estimationDetails: estimationDetailsRes?.data || []
             };
           } catch (err) {
             return {
-              ...sale,
+              ...estimation,
               customer: { name: 'Unknown', phone: '', address: '', gstin: '', aadhar: '' },
-              salesDetails: []
+              estimationDetails: []
             };
           }
         })
@@ -64,77 +64,64 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
       
       // Sort by date descending (latest first)
       const sortedData = enrichedData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setSalesData(sortedData);
+      setEstimationData(sortedData);
     } catch (error) {
       toast({
         title: "❌ Error",
-        description: "Failed to load sales data",
+        description: "Failed to load estimation data",
         variant: "destructive",
       });
     }
   };
 
   const filterByDate = () => {
-    const filtered = salesData.filter(sale => {
-      const saleDate = new Date(sale.date).toISOString().split('T')[0];
-      return saleDate === selectedDate;
+    const filtered = estimationData.filter(estimation => {
+      const estimationDate = new Date(estimation.date).toISOString().split('T')[0];
+      return estimationDate === selectedDate;
     });
     setFilteredData([...filtered]);
   };
 
-  const handlePrintPDF = (sale: any) => {
-    const invoice = {
-      id: sale.id,
-      invoiceNumber: sale.invoice,
-      customer: sale.customer,
-      date: sale.date,
-      items: sale.salesDetails.map((detail: any) => {
-        // Calculate wastage percentage from stored amount and price
-        const itemPrice = parseFloat(detail.weight) * parseFloat(sale.currentSilverRate || 0);
-        const totalWastageAmount = parseFloat(sale.wastage) || 0;
-        const wastagePercent = itemPrice > 0 ? (totalWastageAmount / (itemPrice * sale.salesDetails.length)) * 100 : 0;
-        
-        return {
-          id: detail.id,
-          itemName: detail.product || 'Product',
-          category: 'Jewelry',
-          weight: parseFloat(detail.weight) || 0,
-          purity: detail.touch || '',
-          rate: 0,
-          makingCharges: wastagePercent,
-          quantity: parseFloat(detail.qty) || 1,
-          total: parseFloat(detail.amount) || 0
-        };
-      }),
-      subtotal: (parseFloat(sale.totalamount) || 0) + (parseFloat(sale.discount_amount) || 0),
-      discount: parseFloat(sale.discount_amount) || 0,
-      gst: {
-        sgst: (parseFloat(sale.totalamount) * parseFloat(sale.taxpercentage || 3)) / 200,
-        cgst: (parseFloat(sale.totalamount) * parseFloat(sale.taxpercentage || 3)) / 200,
-        total: (parseFloat(sale.totalamount) * parseFloat(sale.taxpercentage || 3)) / 100
+  const handlePrintPDF = (estimation: any) => {
+    const avgWastage = parseFloat(estimation.wastage) || 0;
+    
+    const estimationData = {
+      estimationNumber: estimation.estimation_number,
+      customer: {
+        name: estimation.customer?.name || 'Unknown',
+        phone: estimation.customer?.phone || '',
+        address: estimation.customer?.address || ''
       },
-      total: parseFloat(sale.totalamount) || 0,
-      paymentMethod: sale.modeofpayment || 'Cash',
-      status: 'paid' as const,
-      createdAt: sale.date,
-      updatedAt: sale.date,
-      silverRate: parseFloat(sale.currentSilverRate) || 0
+      date: new Date(estimation.date).toLocaleDateString('en-GB'),
+      silverRate: parseFloat(estimation.current_silver_rate) || 0,
+      items: estimation.estimationDetails.map((item: any) => ({
+        id: item.id,
+        itemName: item.product || 'Product',
+        purity: item.touch || '',
+        quantity: parseFloat(item.qty) || 1,
+        weight: parseFloat(item.weight) || 0,
+        makingCharges: avgWastage,
+        total: parseFloat(item.total) || 0
+      })),
+      subtotal: parseFloat(estimation.subtotal) || 0,
+      discount: parseFloat(estimation.discount_amount) || 0,
+      total: parseFloat(estimation.total_amount) || 0
     };
     
-    InvoiceService.printInvoice(invoice);
+    EstimationService.printEstimation(estimationData);
   };
 
   return (
     <PageLayout>
       <PageHeader
-        title="Sales List"
+        title="Estimation List"
         onBack={goBack}
         onMenuClick={toggleSidebar}
         breadcrumbs={[
           { label: "Dashboard", onClick: () => onNavigate?.("Dashboard") },
-          { label: "Sales List" }
+          { label: "Estimation List" }
         ]}
-        icon={<FileText className="w-6 h-6 text-primary mr-3" />}
+        icon={<Calculator className="w-6 h-6 text-primary mr-3" />}
         actions={
           onLogout && (
             <Button variant="outline" size="sm" onClick={onLogout}>
@@ -157,14 +144,14 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
               className="w-48"
             />
             <span className="text-sm text-gray-600">
-              Showing {filteredData.length} sales for {new Date(selectedDate).toLocaleDateString()}
+              Showing {filteredData.length} estimations for {new Date(selectedDate).toLocaleDateString()}
             </span>
           </div>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sales Entries</CardTitle>
+            <CardTitle>Estimation Entries</CardTitle>
           </CardHeader>
           <CardContent>
             <DataGrid
@@ -176,18 +163,22 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
                   header: 'Date',
                   render: (value) => new Date(value).toLocaleDateString()
                 },
-                { key: 'invoice', header: 'Invoice No.' },
+                { key: 'estimation_number', header: 'Estimation No.' },
                 { 
                   key: 'customer', 
                   header: 'Customer',
                   render: (value) => value?.name || 'Unknown'
                 },
                 {
-                  key: 'totalamount',
+                  key: 'total_amount',
                   header: 'Amount',
-                  render: (value) => `₹${parseFloat(value).toLocaleString()}`
+                  render: (value) => `₹${parseFloat(value || 0).toLocaleString()}`
                 },
-                { key: 'modeofpayment', header: 'Payment' },
+                {
+                  key: 'discount_amount',
+                  header: 'Discount',
+                  render: (value) => `₹${parseFloat(value || 0).toLocaleString()}`
+                },
                 {
                   key: 'actions',
                   header: 'Actions',
@@ -203,7 +194,7 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
                   )
                 }
               ]}
-              emptyMessage="No sales entries found"
+              emptyMessage="No estimation entries found"
               loading={loading}
             />
           </CardContent>
