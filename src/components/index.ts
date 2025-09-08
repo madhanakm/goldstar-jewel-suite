@@ -23,3 +23,4 @@ export { BarcodeModule } from './BarcodeModule';
 export { BarcodeScanner } from './BarcodeScanner';
 export { BarcodeLabel } from './BarcodeLabel';
 export { TrayReport } from './TrayReport';
+export { SalesList } from './SalesList';

@@ -53,7 +53,7 @@ export class InvoiceService {
       customerAddress: invoice.customer.address || '',
       customerPhone: invoice.customer.phone,
       customerGstin: invoice.customer.gstin || '',
-      customerAadhar: invoice.customer.aadhar || '',
+      silverRate: invoice.silverRate || 0,
       date: new Date(invoice.date).toLocaleDateString('en-IN'),
       items: invoice.items,
       subtotal: invoice.subtotal,
@@ -68,11 +68,13 @@ export class InvoiceService {
     const template = this.mapInvoiceToTemplate(invoice);
     
     // Generate items rows
-    const itemsHTML = template.items.map(item => `
+    const itemsHTML = template.items.map((item, index) => `
       <tr>
+        <td style="border-right: 1px solid #000">${index + 1}</td>
         <td style="border-right: 1px solid #000" colspan="3">${item.itemName} (${item.purity})</td>
-        <td style="border-right: 1px solid #000" colspan="2">${item.quantity}</td>
-        <td style="border-right: 1px solid #000" colspan="2">${item.weight}g</td>
+        <td style="border-right: 1px solid #000">${item.quantity}</td>
+        <td style="border-right: 1px solid #000">${item.weight}g</td>
+        <td style="border-right: 1px solid #000">${item.makingCharges}%</td>
         <td colspan="2">₹${item.total.toLocaleString()}</td>
       </tr>
     `).join('');
@@ -91,7 +93,7 @@ export class InvoiceService {
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 10px 6px; text-align: center; }
         .logo { width: 90%; }
-        .tax-badge { color: #fff; background-color: #000; padding: 7px 15px; border-radius: 5px; }
+        .tax-badge { color: #fff; background-color: #000; padding: 7px 15px; border-radius: 10px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             .invoice-container { max-width: none; padding: 0; margin: 0; }
@@ -122,12 +124,14 @@ export class InvoiceService {
             <tr>
                 <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Mobile: ${template.customerPhone}</td>
                 <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Buyer GSTIN: ${template.customerGstin}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Aadhar: ${template.customerAadhar}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Silver Rate: ₹${template.silverRate}/g</td>
             </tr>
             <tr style="font-weight: bold">
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">S. No</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Description</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="2">Quantity</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="2">Weight</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">Quantity</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">Weight</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">VA%</td>
                 <td style="border-bottom: 1px solid #000" colspan="2">Amount</td>
             </tr>
             <tbody>${itemsHTML}</tbody>
@@ -157,6 +161,10 @@ export class InvoiceService {
             <tr>
                 <td colspan="5">Customer Signature</td>
                 <td colspan="4">Authorised Signature</td>
+            </tr>
+            <tr>
+                <td colspan="5" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருககக்கு நன்றி மீண்டும் வருக.</td>
+                <td colspan="4"></td>
             </tr>
         </table>
     </div>

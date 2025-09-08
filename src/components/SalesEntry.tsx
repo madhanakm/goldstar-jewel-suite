@@ -122,8 +122,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     if (foundProduct) {
       const weight = parseFloat(foundProduct.weight) || 0;
       const price = weight * silverRate;
-      const wastage = parseFloat(foundProduct.making_charges_or_wastages) || 0;
-      const total = price + wastage;
+      const wastagePercent = parseFloat(foundProduct.making_charges_or_wastages) || 0;
+      const wastageAmount = (price * wastagePercent) / 100;
+      const total = price + wastageAmount;
       
       setProducts(prev => prev.map((product, i) => 
         i === index ? {
@@ -133,7 +134,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           weight: foundProduct.weight || '',
           qty: foundProduct.qty || '1',
           price: price.toFixed(2),
-          wastage: wastage.toFixed(2),
+          wastage: wastagePercent.toFixed(2),
           total: total.toFixed(2)
         } : product
       ));
@@ -178,9 +179,10 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         // Auto-calculate price and total when weight or wastage changes
         if ((field === 'weight' || field === 'wastage') && silverRate > 0) {
           const weight = parseFloat(field === 'weight' ? value : product.weight) || 0;
-          const wastage = parseFloat(field === 'wastage' ? value : product.wastage) || 0;
+          const wastagePercent = parseFloat(field === 'wastage' ? value : product.wastage) || 0;
           const price = weight * silverRate;
-          const total = price + wastage;
+          const wastageAmount = (price * wastagePercent) / 100;
+          const total = price + wastageAmount;
           
           updatedProduct.price = price.toFixed(2);
           updatedProduct.total = total.toFixed(2);
@@ -199,41 +201,50 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       // Create or update customer
       let customerId = customer.id;
       if (!customerId && (customer.name || customer.phone)) {
-        const customerResponse = await request(endpoints.customers.create(), 'POST', {
+        const customerPayload = {
           data: {
-            attributes: {
-              name: customer.name || 'Unknown Customer',
-              phone: customer.phone || '',
-              email: customer.email || '',
-              address: customer.address || '',
-              aadhar: customer.aadhar || '',
-              gstin: customer.gstin || ''
-            }
+            name: customer.name || 'Unknown Customer',
+            phone: customer.phone || '',
+            email: customer.email || '',
+            address: customer.address || '',
+            aadhar: customer.aadhar || '',
+            gstin: customer.gstin || ''
           }
-        });
+        };
+        console.log('Creating customer:', customerPayload);
+        const customerResponse = await request(endpoints.customers.create(), 'POST', customerPayload);
+        console.log('Customer response:', customerResponse);
         customerId = customerResponse.data.id;
         setCustomer(prev => ({ ...prev, id: customerId }));
       }
 
       // Create sales master
       const invoiceId = entryNumber;
-      await request(endpoints.sales.masters.create(), 'POST', {
+      const totalWastageAmount = products.reduce((sum, p) => sum + ((parseFloat(p.price) || 0) * (parseFloat(p.wastage) || 0) / 100), 0);
+      const avgWastagePercent = products.length > 0 ? 
+        products.reduce((sum, p) => sum + (parseFloat(p.wastage) || 0), 0) / products.length : 0;
+      const salesMasterPayload = {
         data: {
           cid: customerId.toString(),
           date: new Date().toISOString(),
           invoice: invoiceId,
           totalamount: totalAmount.toString(),
           totalqty: products.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0).toString(),
-
           taxpercentage: taxPercentage,
-          modeofpayment: modeOfPayment
+          modeofpayment: modeOfPayment,
+          currentSilverRate: silverRate.toString(),
+          wastage: totalWastageAmount.toString(),
+          remarks: `wastage_percent:${avgWastagePercent}`
         }
-      });
+      };
+      console.log('Creating sales master:', salesMasterPayload);
+      const salesMasterResponse = await request(endpoints.sales.masters.create(), 'POST', salesMasterPayload);
+      console.log('Sales master response:', salesMasterResponse);
 
       // Create sales details
       for (const product of products) {
         if (product.product) {
-          await request(endpoints.sales.details.create(), 'POST', {
+          const salesDetailPayload = {
             data: {
               invoice_id: invoiceId,
               product: product.product,
@@ -243,7 +254,10 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
               amount: product.total,
               total: parseFloat(product.total) * parseFloat(product.qty || "1")
             }
-          });
+          };
+          console.log('Creating sales detail:', salesDetailPayload);
+          const salesDetailResponse = await request(endpoints.sales.details.create(), 'POST', salesDetailPayload);
+          console.log('Sales detail response:', salesDetailResponse);
         }
       }
 
@@ -255,6 +269,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         description: "Sales entry created successfully",
       });
     } catch (error) {
+      console.error('Sales entry error:', error);
       toast({
         title: "❌ Error",
         description: "Failed to create sales entry",
@@ -275,6 +290,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       invoiceNumber: lastInvoiceId,
       customer: customer,
       date: new Date().toISOString(),
+      silverRate: silverRate,
       items: products.map(p => ({
         id: p.product,
         itemName: p.product,
@@ -484,13 +500,20 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                     className="bg-gray-50"
                   />
                 </FormField>
-                <FormField label="Wastage & Making">
-                  <Input
-                    value={product.wastage}
-                    onChange={(e) => updateProduct(index, "wastage", e.target.value)}
-                    placeholder="Wastage amount"
-                    type="number"
-                  />
+                <FormField label="Wastage & Making %">
+                  <div className="space-y-1">
+                    <Input
+                      value={product.wastage}
+                      onChange={(e) => updateProduct(index, "wastage", e.target.value)}
+                      placeholder="Wastage %"
+                      type="number"
+                    />
+                    {product.price && product.wastage && (
+                      <div className="text-xs text-gray-500">
+                        Amount: ₹{((parseFloat(product.price) || 0) * (parseFloat(product.wastage) || 0) / 100).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
                 </FormField>
                 <FormField label="Total">
                   <Input

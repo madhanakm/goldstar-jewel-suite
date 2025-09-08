@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GST Shop Bill</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+    .invoice {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      margin: auto;
+      background: #fff;
+      border: 1px solid #000;
+      box-sizing: border-box;
+    }
+    h2, h3 {
+      text-align: center;
+      margin: 5px 0;
+    }
+    .top-text {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .phone {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .shop-details {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .shop-details p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+    .bill-info {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #000;
+    }
+    th, td {
+      padding: 6px;
+      text-align: center;
+      font-size: 14px;
+    }
+    tbody tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    td:last-child, th:last-child {
+      text-align: right;
+    }
+    .totals {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .totals p strong {
+      font-size: 15px;
+    }
+    .signature {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      font-size: 13px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 13px;
+    }
+    @media print {
+      body {
+        background: none;
+      }
+      .invoice {
+        border: none;
+        box-shadow: none;
+      }
+    }
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+  </style>
+</head>
+<body>
+
+<div class="invoice">
+  <div class="top-text">நடப்பது யாவும் நன்மைக்கே</div>
+  <div class="phone">Cell: 98422 44014, 90478 07888</div>
+  
+  <h2>PRABANJAM JEWELLERY LIMITED</h2>
+  <div class="shop-details">
+    <p>NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD, MANIYAKARANPALAYAM, GANAPATHY, CBE-06</p>
+    <h3>TAX INVOICE</h3>
+    <p>GSTIN: 33AAPCP7799B1ZX</p>
+  </div>
+
+  <div class="bill-info">
+    <div>
+      <p><strong>Invoice No:</strong> ____________</p>
+      <p><strong>Date:</strong> ____________</p>
+    </div>
+    <div>
+      <p><strong>Buyer GSTIN:</strong> ____________</p>
+      <p><strong>Payment Mode:</strong> ____________</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>S.NO</th>
+        <th>Description</th>
+        <th>Qty</th>
+        <th>Weight</th>
+        <th>VA%</th>
+        <th>Total Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Silver</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Gold Ring</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div>
+      <p><strong>CGST:</strong> 1.5%</p>
+      <p><strong>SGST:</strong> 1.5%</p>
+    </div>
+    <div>
+      <p><strong>Total Amount:</strong> ____________</p>
+    </div>
+  </div>
+
+  <div style="margin-top:30px; font-size:13px;">
+    <strong>Remarks:</strong> __________________________
+  </div>
+
+  <div class="signature">
+    <p>Customer Signature</p>
+    <p>For PRABANJAM JEWELLERY LIMITED<br>
+       Authorised Signature</p>
+  </div>
+
+  <div class="footer">
+    <p>Weight & Pieces Verified Found O.K</p>
+    <p>தங்கள் வருககக்கு நன்றி மீண்டும் வருக.</p>

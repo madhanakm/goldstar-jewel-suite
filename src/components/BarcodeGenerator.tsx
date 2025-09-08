@@ -416,11 +416,11 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   </FormField>
                 </div>
 
-                <FormField label="Making Charges/Wastages">
+                <FormField label="Making Charges/Wastages %">
                   <Input
                     value={formData.making_charges_or_wastages}
                     onChange={(e) => setFormData(prev => ({ ...prev, making_charges_or_wastages: e.target.value }))}
-                    placeholder="Enter charges"
+                    placeholder="Enter percentage (e.g., 5 for 5%)"
                     type="number"
                     step="0.01"
                   />

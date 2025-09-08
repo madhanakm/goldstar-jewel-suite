@@ -23,6 +23,7 @@ export const sidebarConfig = [
     category: "Sales & Billing",
     items: [
       { name: "Sales Entry", icon: ShoppingCart, description: "Create sales with barcode scanning", color: "bg-green-500" },
+      { name: "Sales List", icon: FileText, description: "View and print sales invoices", color: "bg-teal-500" },
       { name: "Customer Profiles", icon: Users, description: "Manage customer information", color: "bg-blue-600" },
       { name: "Rate Management", icon: TrendingUp, description: "Manage rates per gram", color: "bg-indigo-500" }
     ]
