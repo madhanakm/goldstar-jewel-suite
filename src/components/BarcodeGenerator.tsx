@@ -244,7 +244,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = 300;
-    canvas.height = 160;
+    canvas.height = 180;
     
     if (ctx) {
       // White background
@@ -267,14 +267,18 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.textAlign = 'center';
       
       const centerX = canvas.width / 2;
-      ctx.fillText(`${product.product} | ${product.touch} | ${product.weight}g`, centerX, 22);
+      ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
+      ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 35);
       
       // Draw barcode centered
       const x = (canvas.width - tempCanvas.width) / 2;
-      ctx.drawImage(tempCanvas, x, 30);
+      ctx.drawImage(tempCanvas, x, 40);
       
-      // Add code below barcode
-      ctx.fillText(product.code, centerX, 110);
+      // Add tray and VA info below barcode
+      ctx.fillText(`Tray: ${product.trayno} | VA: ${product.making_charges_or_wastages}%`, centerX, 135);
+      
+      // Add code below everything
+      ctx.fillText(product.code, centerX, 155);
     }
     
     return canvas;
@@ -383,7 +387,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                     <Input
                       value={formData.qty}
                       onChange={(e) => setFormData(prev => ({ ...prev, qty: e.target.value }))}
-                      placeholder="1"
+                      placeholder="0"
                       type="number"
                     />
                   </FormField>
@@ -416,7 +420,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   </FormField>
                 </div>
 
-                <FormField label="Making Charges/Wastages %">
+                <FormField label="VA%">
                   <Input
                     value={formData.making_charges_or_wastages}
                     onChange={(e) => setFormData(prev => ({ ...prev, making_charges_or_wastages: e.target.value }))}
@@ -466,11 +470,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                 <div className="space-y-4">
                   <div className="bg-white p-6 rounded-lg border-2 border-dashed border-amber-200">
                     <div className="text-center space-y-3">
-                      <h3 className="font-bold text-lg text-slate-800">{formData.product}</h3>
+                      <h3 className="font-bold text-lg text-slate-800">{formData.product} - {formData.touch}</h3>
                       <div className="flex justify-center space-x-4 text-sm text-slate-600">
                         <span>Weight: {formData.weight}g</span>
-                        <span>•</span>
-                        <span>Touch: {formData.touch}</span>
                         <span>•</span>
                         <span>Qty: {formData.qty}</span>
                       </div>
@@ -479,7 +481,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         className="mx-auto border border-gray-200 rounded"
                       />
                       <div className="text-xs text-slate-500">
-                        Tray: {formData.trayno} | Charges: ₹{formData.making_charges_or_wastages}
+                        Tray: {formData.trayno} | VA: {formData.making_charges_or_wastages}%
                       </div>
                     </div>
                   </div>

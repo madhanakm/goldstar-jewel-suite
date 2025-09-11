@@ -181,6 +181,16 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   };
 
   const handleSubmit = async () => {
+    // Validate required fields
+    if (!newPurchase.suppliername.trim()) {
+      toast({
+        title: "❌ Validation Error",
+        description: "Supplier name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const totalAmount = calculateTotal(newPurchase.products);
       const totalQty = newPurchase.products.reduce((sum, product) => 
@@ -270,52 +280,53 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     return (
       <Card
         key={purchase.id}
-        className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-l-4 ${
-          isHighValue ? 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-white' : 
-          isRecent ? 'border-l-green-500 bg-gradient-to-r from-green-50 to-white' :
-          'border-l-blue-500 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white'
+        className={`cursor-pointer hover:shadow-md border-l-4 ${
+          isHighValue ? 'border-l-amber-500 bg-amber-50' : 
+          isRecent ? 'border-l-green-500 bg-green-50' :
+          'border-l-blue-500 hover:bg-blue-50'
         }`}
         onClick={() => handlePurchaseClick(purchase)}
       >
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${
-                  isHighValue ? 'bg-amber-100 text-amber-600' :
-                  isRecent ? 'bg-green-100 text-green-600' :
-                  'bg-blue-100 text-blue-600'
-                }`}>
-                  {isHighValue ? <Star className="w-4 h-4" /> :
-                   isRecent ? <TrendingUp className="w-4 h-4" /> :
-                   <ShoppingBag className="w-4 h-4" />}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-800">#{purchase.id}</span>
-                    {isRecent && <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">New</span>}
-                    {isHighValue && <span className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full font-medium">High Value</span>}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                isHighValue ? 'bg-amber-100 text-amber-600' :
+                isRecent ? 'bg-green-100 text-green-600' :
+                'bg-blue-100 text-blue-600'
+              }`}>
+                {isHighValue ? <Star className="w-5 h-5" /> :
+                 isRecent ? <TrendingUp className="w-5 h-5" /> :
+                 <ShoppingBag className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 mb-1">{purchase.suppliername || 'Unknown Supplier'}</h3>
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {formatDate(purchase.date)}
                   </div>
-                  <div className="text-sm font-medium text-gray-700 mt-1">
-                    Supplier: {purchase.suppliername || 'N/A'}
+                  <div className="flex items-center gap-1">
+                    <Package className="w-3 h-3" />
+                    {purchase.totalqty} items
+                  </div>
+                  <div className="text-xs px-2 py-1 bg-gray-100 rounded">
+                    {purchase.modeofpayment || 'Cash'}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="text-right space-y-1">
-              <div className={`text-xl font-bold ${
+            <div className="text-right">
+              <div className={`text-2xl font-bold mb-1 ${
                 isHighValue ? 'text-amber-600' :
                 amount > 5000 ? 'text-green-600' :
                 'text-blue-600'
               }`}>
                 {formatCurrency(purchase.totalamount)}
               </div>
-              <div className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                {purchase.totalqty} items
+              <div className="flex gap-1">
+                {isRecent && <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">New</span>}
+                {isHighValue && <span className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full">High Value</span>}
               </div>
             </div>
           </div>
@@ -348,9 +359,8 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
         <div className="flex gap-4 h-[calc(100vh-160px)] max-w-none">
           {/* Left Panel - Purchase List */}
           <div className={`${showDetails ? 'w-1/2' : 'w-full'} transition-all duration-500 ease-in-out`}>
-            <div className="relative h-full">
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl blur opacity-20 animate-pulse"></div>
-              <div className="relative bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 h-full">
+            <div className="h-full">
+              <div className="bg-white rounded-xl shadow-lg border h-full">
                 <DataList
                   title="Purchase Entries"
                   icon={<div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg"><Package className="w-5 h-5 text-white" /></div>}
@@ -368,11 +378,10 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
           </div>
 
           {showDetails && (
-            <div className="w-1/2 animate-in slide-in-from-right duration-500">
-              <div className="relative h-full">
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 rounded-xl blur opacity-20"></div>
-                <Card className="relative h-full bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"></div>
+            <div className="w-1/2">
+              <div className="h-full">
+                <Card className="h-full bg-white border shadow-lg overflow-hidden">
+                  <div className="h-1 bg-blue-500"></div>
                   
                   <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                     <div className="flex items-center justify-between">
@@ -537,7 +546,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
             <Label className="text-sm font-semibold text-blue-700 mb-3 block">Purchase Information</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
-                <Label className="text-xs text-blue-600 mb-1 block">Supplier Name</Label>
+                <Label className="text-xs text-blue-600 mb-1 block">Supplier Name *</Label>
                 <Input
                   value={newPurchase.suppliername}
                   onChange={(e) => handleSupplierChange(e.target.value)}
