@@ -51,6 +51,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [estimationToConvert, setEstimationToConvert] = useState<any>(null);
+
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
@@ -59,9 +60,12 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   useEffect(() => {
     loadBarcodeProducts();
     loadSilverRate();
-    generateEntryNumber();
     loadEstimationData();
+    
+    generateEntryNumber();
   }, []);
+
+
 
   const loadEstimationData = () => {
     const estimationData = sessionStorage.getItem('estimationToConvert');
@@ -195,7 +199,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           weight: foundProduct.weight || '',
           qty: foundProduct.qty || '1',
           price: price.toFixed(2),
-          wastage: wastagePercent.toFixed(2),
+          wastage: wastagePercent.toString(),
           total: total.toFixed(2)
         } : product
       ));
@@ -276,6 +280,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         customerId = customerResponse.data.id;
         setCustomer(prev => ({ ...prev, id: customerId }));
       }
+      
+
 
       // Create sales master
       const invoiceId = entryNumber;
@@ -577,16 +583,14 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                 <FormField label="Touch">
                   <Input
                     value={product.touch}
-                    readOnly
-                    className="bg-gray-50"
+                    onChange={(e) => updateProduct(index, "touch", e.target.value)}
                     placeholder="Touch/Purity"
                   />
                 </FormField>
                 <FormField label="Quantity">
                   <Input
                     value={product.qty}
-                    readOnly
-                    className="bg-gray-50"
+                    onChange={(e) => updateProduct(index, "qty", e.target.value)}
                     placeholder="Qty"
                     type="number"
                   />
@@ -594,8 +598,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                 <FormField label={`Weight (₹${silverRate}/g)`}>
                   <Input
                     value={product.weight}
-                    readOnly
-                    className="bg-gray-50"
+                    onChange={(e) => updateProduct(index, "weight", e.target.value)}
                     placeholder="Weight"
                     type="number"
                   />
@@ -608,12 +611,11 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                     className="bg-gray-50"
                   />
                 </FormField>
-                <FormField label="Wastage & Making %">
+                <FormField label="VA%">
                   <div className="space-y-1">
                     <Input
                       value={product.wastage}
-                      readOnly
-                      className="bg-gray-50"
+                      onChange={(e) => updateProduct(index, "wastage", e.target.value)}
                       placeholder="Wastage %"
                       type="number"
                     />

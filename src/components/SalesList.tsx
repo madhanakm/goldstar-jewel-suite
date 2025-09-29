@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { FileText, Printer, LogOut, Calendar } from "lucide-react";
+import { FileText, Printer, LogOut, Calendar, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
 import { InvoiceService } from "@/services/invoice";
@@ -80,6 +80,41 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
       return saleDate === selectedDate;
     });
     setFilteredData([...filtered]);
+  };
+
+  const handleEdit = (sale: any) => {
+    // Ensure salesDetails are included in the edit data
+    const editData = {
+      ...sale,
+      salesDetails: sale.salesDetails || []
+    };
+    sessionStorage.setItem('editSale', JSON.stringify(editData));
+    onNavigate?.('Sales Entry');
+  };
+
+  const handleDelete = async (sale: any) => {
+    if (!confirm('Are you sure you want to delete this sale?')) return;
+    
+    try {
+      // Delete sales details first
+      for (const detail of sale.salesDetails) {
+        await request(`/api/sales/${detail.documentId}`, 'DELETE');
+      }
+      // Then delete sales master
+      await request(`/api/sales-masters/${sale.documentId}`, 'DELETE');
+      
+      toast({
+        title: "✅ Success",
+        description: "Sale deleted successfully",
+      });
+      loadSalesData();
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to delete sale",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePrintPDF = (sale: any) => {
@@ -192,14 +227,23 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
                   key: 'actions',
                   header: 'Actions',
                   render: (_, row) => (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handlePrintPDF(row)}
-                    >
-                      <Printer className="w-4 h-4 mr-1" />
-                      Print PDF
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(row)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePrintPDF(row)}
+                      >
+                        <Printer className="w-3 h-3" />
+                      </Button>
+                    </div>
                   )
                 }
               ]}

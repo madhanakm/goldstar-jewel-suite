@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { Calculator, Printer, LogOut, Calendar, ShoppingCart } from "lucide-react";
+import { Calculator, Printer, LogOut, Calendar, ShoppingCart, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
 import { EstimationService } from "@/services/estimation";
@@ -102,6 +102,31 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
     onNavigate?.('Sales Entry');
   };
 
+  const handleEdit = (estimation: any) => {
+    // Navigate to estimation entry page with data for editing
+    sessionStorage.setItem('editEstimation', JSON.stringify(estimation));
+    onNavigate?.('Estimation');
+  };
+
+  const handleDelete = async (estimation: any) => {
+    if (!confirm('Are you sure you want to delete this estimation?')) return;
+    
+    try {
+      await request(`/api/estimation-masters/${estimation.documentId}`, 'DELETE');
+      toast({
+        title: "✅ Success",
+        description: "Estimation deleted successfully",
+      });
+      loadEstimationData();
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to delete estimation",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handlePrintPDF = (estimation: any) => {
     const avgWastage = parseFloat(estimation.wastage) || 0;
     
@@ -112,7 +137,7 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
         phone: estimation.customer?.phone || '',
         address: estimation.customer?.address || ''
       },
-      date: new Date(estimation.date).toLocaleDateString('en-GB'),
+      date: estimation.date,
       silverRate: parseFloat(estimation.current_silver_rate) || 0,
       items: estimation.estimationDetails.map((item: any) => ({
         id: item.id,
@@ -203,14 +228,21 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
                   key: 'actions',
                   header: 'Actions',
                   render: (_, row) => (
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(row)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handlePrintPDF(row)}
                       >
-                        <Printer className="w-4 h-4 mr-1" />
-                        Print PDF
+                        <Printer className="w-3 h-3" />
                       </Button>
                       <Button
                         size="sm"
@@ -218,8 +250,7 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
                         onClick={() => handleConvertToSale(row)}
                         disabled={row.converted_to_sale}
                       >
-                        <ShoppingCart className="w-4 h-4 mr-1" />
-                        {row.converted_to_sale ? 'Converted' : 'Convert to Sale'}
+                        <ShoppingCart className="w-3 h-3" />
                       </Button>
                     </div>
                   )

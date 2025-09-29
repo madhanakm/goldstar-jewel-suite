@@ -47,7 +47,12 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   React.useEffect(() => {
     loadBarcodeProducts();
     loadSilverRate();
+    
+    // Generate estimation number for new estimations
+    generateEstimationNumber().then(setLastEstimationId);
   }, []);
+
+
 
   const loadBarcodeProducts = async () => {
     try {
@@ -84,7 +89,9 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [lastEstimationId, setLastEstimationId] = useState("");
+  const [lastEstimationDate, setLastEstimationDate] = useState("");
   const [showPrintOption, setShowPrintOption] = useState(false);
+
 
   const addItem = () => {
     const newItem: EstimationItem = {
@@ -201,9 +208,9 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
         phone: customer.phone,
         address: customer.address
       },
-      date: new Date().toLocaleDateString('en-GB'),
+      date: lastEstimationDate,
       silverRate: silverRate,
-      items: items.filter(item => item.description).map(item => ({
+      items: items.filter(item => item.description && item.description.trim() !== '').map(item => ({
         id: item.id,
         itemName: item.description,
         purity: item.purity,
@@ -237,6 +244,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
     setDiscountAmount(0);
     setShowPrintOption(false);
     setLastEstimationId("");
+    setLastEstimationDate("");
   };
 
   const generateEstimationNumber = async () => {
@@ -283,12 +291,15 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
         customerId = customerResponse.data.id;
         setCustomer(prev => ({ ...prev, id: customerId }));
       }
-      // Generate estimation number
+      
+
+      
+      // Generate estimation number for new estimation
       const estimationNumber = await generateEstimationNumber();
       
       const subtotal = getSubtotal();
       const totalAmount = getTotalEstimation();
-
+      const estimationDate = new Date().toISOString();
 
       // Create estimation master
       const avgWastagePercent = items.length > 0 ? 
@@ -297,7 +308,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       const estimationMasterPayload = {
         data: {
           cid: customerId.toString(),
-          date: new Date().toISOString(),
+          date: estimationDate,
           estimation_number: estimationNumber,
           subtotal: subtotal.toString(),
           discount_percentage: discountPercent.toString(),
@@ -367,6 +378,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       
 
       setLastEstimationId(estimationNumber);
+      setLastEstimationDate(estimationDate);
       setShowPrintOption(true);
       toast({
         title: "✅ Success",
@@ -384,7 +396,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   return (
     <PageLayout>
       <PageHeader
-        title="Price Estimation"
+        title={`Price Estimation${lastEstimationId ? ` - ${lastEstimationId}` : ''}`}
         subtitle="Create price estimates for customers"
         onBack={() => onNavigate("Dashboard")}
         onLogout={onLogout}
@@ -588,6 +600,14 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
+                {lastEstimationId && lastEstimationId !== "" && (
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-lg font-bold text-blue-600">
+                      {lastEstimationId}
+                    </div>
+                    <div className="text-sm text-blue-700">Estimation Number</div>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">Subtotal:</span>
                   <span className="text-lg">₹{getSubtotal().toFixed(2)}</span>

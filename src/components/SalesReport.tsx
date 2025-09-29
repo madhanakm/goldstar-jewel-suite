@@ -17,8 +17,8 @@ interface SalesReportProps {
 export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
   const [salesData, setSalesData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0]);
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [stats, setStats] = useState({
     totalSales: 0,
     totalAmount: 0,
@@ -36,14 +36,23 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
   
   useEffect(() => {
     if (salesData.length > 0) {
-      filterByCurrentDate();
+      // Show current date by default, if no entries show all
+      const today = new Date().toISOString().split('T')[0];
+      const todayFiltered = salesData.filter(sale => {
+        const saleDate = new Date(sale.date).toISOString().split('T')[0];
+        return saleDate === today;
+      });
+      
+      // If no entries for today, show all data
+      const dataToShow = todayFiltered.length > 0 ? todayFiltered : salesData;
+      setFilteredData(dataToShow);
+      calculateStats(dataToShow);
     }
   }, [salesData]);
 
   const loadSalesData = async () => {
     try {
-      const response = await request(endpoints.sales.masters.list());
-      console.log('Sales Masters:', response);
+      const response = await request(endpoints.sales.masters.list(1, 1000));
       const salesMasters = response.data || response || [];
       
       // Fetch customer and product details for each sale
@@ -56,8 +65,6 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
               ),
               request(endpoints.sales.details.list(sale.invoice))
             ]);
-            
-            console.log('Customer:', customerRes, 'Sales Details:', salesDetailsRes);
             
             return {
               ...sale,
@@ -100,16 +107,6 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
     });
   };
 
-  const filterByCurrentDate = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const filtered = salesData.filter(sale => {
-      const saleDate = sale.date.split('T')[0];
-      return saleDate === today;
-    });
-    setFilteredData(filtered);
-    calculateStats(filtered);
-  };
-  
   const filterByDate = () => {
     if (!dateFrom || !dateTo) {
       setFilteredData(salesData);
@@ -118,9 +115,10 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
     }
     
     const filtered = salesData.filter(sale => {
-      const saleDate = sale.date.split('T')[0];
+      const saleDate = new Date(sale.date).toISOString().split('T')[0];
       return saleDate >= dateFrom && saleDate <= dateTo;
     });
+    
     setFilteredData(filtered);
     calculateStats(filtered);
   };

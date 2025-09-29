@@ -66,16 +66,18 @@ export class EstimationService {
     return result.trim() + ' Rupees Only';
   }
 
-  static generateEstimationHTML(estimation: EstimationData): string {
+  static generateEstimationHTML(estimation: EstimationData, logoBase64: string = ''): string {
+    console.log('Estimation items:', estimation.items);
+    
     // Generate items rows
     const itemsHTML = estimation.items.map((item, index) => `
       <tr>
-        <td style="border-right: 1px solid #000">${index + 1}</td>
-        <td style="border-right: 1px solid #000" colspan="3">${item.itemName} (${item.purity})</td>
-        <td style="border-right: 1px solid #000">${item.quantity}</td>
-        <td style="border-right: 1px solid #000">${item.weight}g</td>
-        <td style="border-right: 1px solid #000">${item.makingCharges.toFixed(2)}%</td>
-        <td colspan="2">₹${item.total.toLocaleString()}</td>
+        <td style="border-right: 1px solid #000; width: 8%;">${index + 1}</td>
+        <td style="border-right: 1px solid #000; width: 35%;" colspan="3">${item.itemName} (${item.purity})</td>
+        <td style="border-right: 1px solid #000; width: 10%;">${item.quantity}</td>
+        <td style="border-right: 1px solid #000; width: 12%;">${item.weight}g</td>
+        <td style="border-right: 1px solid #000; width: 10%;">${Math.round(item.makingCharges)}%</td>
+        <td style="width: 25%;" colspan="2">₹${item.total.toLocaleString()}</td>
       </tr>
     `).join('');
 
@@ -92,7 +94,7 @@ export class EstimationService {
         .invoice-container { max-width: 210mm; margin: 0 auto; padding: 14px; }
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 10px 6px; text-align: center; }
-        .logo { width: 90%; }
+        .logo { width: 90%; filter: grayscale(100%); }
         .estimation-badge { color: #fff; background-color: #007bff; padding: 7px 15px; border-radius: 10px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
@@ -109,11 +111,11 @@ export class EstimationService {
                 <td colspan="3">நடப்பது யாவும் நன்மைக்கே</td>
                 <td colspan="3">90478 07888</td>
             </tr>
-            <tr><td colspan="9"><img src="/logo.jpg" alt="Logo" class="logo"></td></tr>
+            <tr><td colspan="9"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
-                <td colspan="3">Estimation No: ${estimation.estimationNumber}</td>
-                <td colspan="3"><span class="estimation-badge">Price Estimation</span></td>
-                <td colspan="3">GSTIN: 33AAPCP7799B1ZX</td>
+                <td colspan="3" style="text-align: left">EST-No: ${estimation.estimationNumber}</td>
+                <td colspan="3" style="text-align: center"><span class="estimation-badge">Price Estimation</span></td>
+                <td colspan="3"></td>
             </tr>
             <tr><td colspan="9" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 12px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
             <tr>
@@ -126,12 +128,12 @@ export class EstimationService {
                 <td style="text-align: left; border-bottom: 1px solid #000" colspan="5">Silver Rate: ₹${estimation.silverRate}/g</td>
             </tr>
             <tr style="font-weight: bold">
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">S. No</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Description</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">Quantity</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">Weight</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000">VA%</td>
-                <td style="border-bottom: 1px solid #000" colspan="2">Amount</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">S. No</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 35%;" colspan="3">Description</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 10%;">Quantity</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Weight</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 10%;">VA%</td>
+                <td style="border-bottom: 1px solid #000; width: 25%;" colspan="2">Amount</td>
             </tr>
             <tbody>${itemsHTML}</tbody>
             <tr>
@@ -167,16 +169,31 @@ export class EstimationService {
 </html>`;
   }
 
-  static printEstimation(estimation: EstimationData): void {
-    const html = this.generateEstimationHTML(estimation);
+  static async printEstimation(estimation: EstimationData): Promise<void> {
+    let logoBase64 = '';
+    try {
+      const response = await fetch('https://jewelapi.sricashway.com/api/logos');
+      const data = await response.json();
+      if (data.data && data.data.length > 0) {
+        logoBase64 = data.data[0].logo;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch logo:', error);
+    }
+    
+    const html = this.generateEstimationHTML(estimation, logoBase64);
     
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(html);
       printWindow.document.close();
       printWindow.focus();
-      printWindow.print();
-      printWindow.close();
+      
+      // Wait for images to load before printing (Chrome fix)
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 1000);
     }
   }
 }
