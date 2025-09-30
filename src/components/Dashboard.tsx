@@ -19,7 +19,8 @@ import {
   Menu,
   Settings,
   Plus,
-  Calculator
+  Calculator,
+  Recycle
 } from "lucide-react";
 
 interface DashboardProps {
@@ -270,6 +271,17 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                 >
                   <Package className="w-6 h-6 mb-2" />
                   <span className="text-xs font-semibold">Manage Tray</span>
+                </ActionButton>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                <ActionButton 
+                  variant="warning" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
+                  onClick={() => onNavigate("Old Silver Management")}
+                >
+                  <Recycle className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Old Silver</span>
                 </ActionButton>
               </div>
             </GradientCard>

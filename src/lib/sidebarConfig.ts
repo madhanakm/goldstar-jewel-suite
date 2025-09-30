@@ -7,7 +7,8 @@ import {
   Receipt,
   ShoppingBag,
   FileText,
-  Calculator
+  Calculator,
+  Recycle
 } from "lucide-react";
 
 export const sidebarConfig = [
@@ -28,7 +29,8 @@ export const sidebarConfig = [
       { name: "Estimation", icon: Calculator, description: "Create price estimates for customers", color: "bg-cyan-500" },
       { name: "Estimation List", icon: FileText, description: "View and print estimations", color: "bg-indigo-500" },
       { name: "Customer Profiles", icon: Users, description: "Manage customer information", color: "bg-blue-600" },
-      { name: "Rate Management", icon: TrendingUp, description: "Manage rates per gram", color: "bg-indigo-500" }
+      { name: "Rate Management", icon: TrendingUp, description: "Manage rates per gram", color: "bg-indigo-500" },
+      { name: "Old Silver Management", icon: Recycle, description: "Manage old silver for exchange", color: "bg-amber-600" }
     ]
   },
   {
@@ -37,7 +39,8 @@ export const sidebarConfig = [
       { name: "Sales Report", icon: TrendingUp, description: "Sales analytics and revenue tracking", color: "bg-blue-500" },
       { name: "Stock Report", icon: Package, description: "Inventory levels and stock analysis", color: "bg-green-500" },
       { name: "Purchase Report", icon: ShoppingBag, description: "Purchase analytics and cost tracking", color: "bg-purple-500" },
-      { name: "Tray Report", icon: FileText, description: "Tray-wise inventory and stock tracking", color: "bg-amber-500" }
+      { name: "Tray Report", icon: FileText, description: "Tray-wise inventory and stock tracking", color: "bg-amber-500" },
+      { name: "Old Silver Report", icon: Recycle, description: "Old silver exchange analytics and tracking", color: "bg-emerald-500" }
     ]
   }
 ];

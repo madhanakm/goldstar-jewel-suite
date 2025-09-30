@@ -27,6 +27,8 @@ import { RateManagement } from "./components/RateManagement";
 import { SalesList } from "./components/SalesList";
 import { Estimation } from "./components/Estimation";
 import { EstimationList } from "./components/EstimationList";
+import { OldSilverManagement } from "./components/OldSilverManagement";
+import { OldSilverReport } from "./components/OldSilverReport";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -172,6 +174,12 @@ const AppContent = () => {
       case "Rate Management":
         navigate('/rate-management');
         break;
+      case "Old Silver Management":
+        navigate('/old-silver-management');
+        break;
+      case "Old Silver Report":
+        navigate('/old-silver-report');
+        break;
       case "Silver Billing":
       case "Silver Sales":
       case "Silver Exchange":
@@ -253,6 +261,8 @@ const AppContent = () => {
       <Route path="/sales-list" element={<SalesList onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/estimation" element={<Estimation onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/estimation-list" element={<EstimationList onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/old-silver-management" element={<OldSilverManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/old-silver-report" element={<OldSilverReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>

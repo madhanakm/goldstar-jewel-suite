@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { BarChart3, LogOut, TrendingUp, Package, ShoppingCart, ShoppingBag, Users, DollarSign, FileText } from "lucide-react";
+import { BarChart3, LogOut, TrendingUp, Package, ShoppingCart, ShoppingBag, Users, DollarSign, FileText, Recycle } from "lucide-react";
 
 interface AnalyticsReportsProps {
   onNavigate?: (module: string) => void;
@@ -87,6 +87,13 @@ export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps
       icon: FileText,
       color: "bg-indigo-500",
       onClick: () => onNavigate?.("Tray Report")
+    },
+    {
+      name: "Old Silver Report",
+      description: "Old silver exchange analytics and tracking",
+      icon: Recycle,
+      color: "bg-emerald-500",
+      onClick: () => onNavigate?.("Old Silver Report")
     }
   ];
 

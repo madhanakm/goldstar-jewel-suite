@@ -24,3 +24,5 @@ export { BarcodeScanner } from './BarcodeScanner';
 export { BarcodeLabel } from './BarcodeLabel';
 export { TrayReport } from './TrayReport';
 export { SalesList } from './SalesList';
+export { OldSilverManagement } from './OldSilverManagement';
+export { OldSilverReport } from './OldSilverReport';
