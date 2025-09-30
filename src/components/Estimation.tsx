@@ -33,8 +33,11 @@ interface EstimationItem {
   purity: string;
   ratePerGram: number;
   makingChargesPercent: number;
+  discountPercent: number;
+  discountAmount: number;
   quantity: number;
   total: number;
+  isFixedPrice?: boolean;
 }
 
 export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
@@ -82,15 +85,17 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       purity: "",
       ratePerGram: 0,
       makingChargesPercent: 0,
+      discountPercent: 0,
+      discountAmount: 0,
       quantity: 0,
       total: 0
     }
   ]);
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [discountAmount, setDiscountAmount] = useState(0);
+
   const [lastEstimationId, setLastEstimationId] = useState("");
   const [lastEstimationDate, setLastEstimationDate] = useState("");
   const [showPrintOption, setShowPrintOption] = useState(false);
+  const [estimationDate, setEstimationDate] = useState(new Date().toISOString().split('T')[0]);
 
 
   const addItem = () => {
@@ -101,6 +106,8 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       purity: "",
       ratePerGram: 0,
       makingChargesPercent: 0,
+      discountPercent: 0,
+      discountAmount: 0,
       quantity: 0,
       total: 0
     };
@@ -115,24 +122,50 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
     const foundProduct = barcodeProducts.find(p => p.code === barcode);
     
     if (foundProduct) {
-      const weight = parseFloat(foundProduct.weight) || 0;
-      const rate = silverRate || 0;
-      const makingCharges = parseFloat(foundProduct.making_charges_or_wastages) || 0;
-      const goldValue = weight * rate;
-      const total = goldValue + makingCharges;
-      
-      setItems(items.map(item => 
-        item.id === id ? {
-          ...item,
-          description: foundProduct.product || '',
-          weight: weight,
-          purity: foundProduct.touch || '',
-          ratePerGram: rate,
-          makingChargesPercent: makingCharges,
-          quantity: parseFloat(foundProduct.qty) || 1,
-          total: total
-        } : item
-      ));
+      if (foundProduct.staticProduct) {
+        // Fixed price product
+        const price = parseFloat(foundProduct.price) || 0;
+        
+        setItems(items.map(item => 
+          item.id === id ? {
+            ...item,
+            description: foundProduct.product || '',
+            weight: 0,
+            purity: '',
+            ratePerGram: price,
+            makingChargesPercent: 0,
+            discountPercent: 0,
+            discountAmount: 0,
+            quantity: parseFloat(foundProduct.qty) || 1,
+            total: price,
+            isFixedPrice: true
+          } : item
+        ));
+      } else {
+        // Weight-based product
+        const weight = parseFloat(foundProduct.weight) || 0;
+        const rate = silverRate || 0;
+        const makingCharges = parseFloat(foundProduct.making_charges_or_wastages) || 0;
+        const goldValue = weight * rate;
+        const makingAmount = (goldValue * makingCharges) / 100;
+        const total = goldValue + makingAmount;
+        
+        setItems(items.map(item => 
+          item.id === id ? {
+            ...item,
+            description: foundProduct.product || '',
+            weight: weight,
+            purity: foundProduct.touch || '',
+            ratePerGram: rate,
+            makingChargesPercent: makingCharges,
+            discountPercent: 0,
+            discountAmount: 0,
+            quantity: parseFloat(foundProduct.qty) || 1,
+            total: total,
+            isFixedPrice: false
+          } : item
+        ));
+      }
     }
   };
 
@@ -141,13 +174,33 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         
-        // Calculate total when weight, rate, making charges, or quantity change
-        if (field === 'weight' || field === 'ratePerGram' || field === 'makingChargesPercent' || field === 'quantity') {
+        // Calculate subtotal based on product type
+        let subtotal;
+        if (updatedItem.isFixedPrice) {
+          // For fixed price products, use ratePerGram as the base price
+          subtotal = updatedItem.ratePerGram;
+        } else {
+          // For weight-based products
           const goldValue = updatedItem.weight * updatedItem.ratePerGram;
           const makingAmount = (goldValue * updatedItem.makingChargesPercent) / 100;
-          const itemTotal = goldValue + makingAmount;
-          updatedItem.total = itemTotal * updatedItem.quantity;
+          subtotal = goldValue + makingAmount;
         }
+        
+        // Handle discount percentage/amount conversion
+        if (field === 'discountPercent') {
+          const percent = parseFloat(value) || 0;
+          const amount = Math.round((subtotal * percent) / 100);
+          updatedItem.discountAmount = amount;
+        } else if (field === 'discountAmount') {
+          const amount = parseFloat(value) || 0;
+          const percent = subtotal > 0 ? Math.round(((amount / subtotal) * 100) * 100) / 100 : 0;
+          updatedItem.discountPercent = percent;
+        }
+        
+        // Calculate final total (without quantity multiplication)
+        const discountAmount = parseFloat(updatedItem.discountAmount) || 0;
+        const finalTotal = subtotal - discountAmount;
+        updatedItem.total = Math.round(finalTotal * 100) / 100;
         
         return updatedItem;
       }
@@ -160,23 +213,10 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   };
 
   const getTotalEstimation = () => {
-    const subtotal = getSubtotal();
-    return subtotal - discountAmount;
+    return getSubtotal();
   };
 
-  const handleDiscountPercentChange = (percent: number) => {
-    setDiscountPercent(percent);
-    const subtotal = getSubtotal();
-    const amount = Math.round((subtotal * percent) / 100);
-    setDiscountAmount(amount);
-  };
 
-  const handleDiscountAmountChange = (amount: number) => {
-    setDiscountAmount(amount);
-    const subtotal = getSubtotal();
-    const percent = subtotal > 0 ? Math.round(((amount / subtotal) * 100) * 100) / 100 : 0;
-    setDiscountPercent(percent);
-  };
 
   const handleCustomerSearch = async (phone: string) => {
     if (phone.length >= 10) {
@@ -201,31 +241,43 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   };
 
   const handlePrint = () => {
-    const estimationData = {
-      estimationNumber: lastEstimationId,
-      customer: {
-        name: customer.name,
-        phone: customer.phone,
-        address: customer.address
-      },
-      date: lastEstimationDate,
-      silverRate: silverRate,
-      items: items.filter(item => item.description && item.description.trim() !== '').map(item => ({
-        id: item.id,
-        itemName: item.description,
-        purity: item.purity,
-        quantity: item.quantity,
-        weight: item.weight,
-        makingCharges: item.makingChargesPercent,
-        total: item.total
-      })),
-      subtotal: getSubtotal(),
-      discount: discountAmount,
-      total: getTotalEstimation()
-    };
-    
-    EstimationService.printEstimation(estimationData);
-    handleNewEstimation();
+    try {
+      const estimationData = {
+        estimationNumber: lastEstimationId,
+        customer: {
+          name: customer.name,
+          phone: customer.phone,
+          address: customer.address
+        },
+        date: lastEstimationDate,
+        silverRate: silverRate,
+        items: items.filter(item => item.description && item.description.trim() !== '').map(item => ({
+          id: item.id,
+          itemName: item.description,
+          purity: item.purity,
+          quantity: item.quantity,
+          weight: item.weight,
+          makingCharges: item.makingChargesPercent,
+          discountPercent: item.discountPercent || 0,
+          discountAmount: item.discountAmount || 0,
+          total: item.total
+        })),
+        subtotal: getSubtotal(),
+        discount: 0,
+        total: getTotalEstimation()
+      };
+      
+      console.log('Estimation data:', estimationData);
+      EstimationService.printEstimation(estimationData);
+      handleNewEstimation();
+    } catch (error) {
+      console.error('Print error:', error);
+      toast({
+        title: "❌ Error",
+        description: "Failed to print estimation",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNewEstimation = () => {
@@ -237,14 +289,16 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       purity: "",
       ratePerGram: 0,
       makingChargesPercent: 0,
+      discountPercent: 0,
+      discountAmount: 0,
       quantity: 0,
       total: 0
     }]);
-    setDiscountPercent(0);
-    setDiscountAmount(0);
+
     setShowPrintOption(false);
     setLastEstimationId("");
     setLastEstimationDate("");
+    setEstimationDate(new Date().toISOString().split('T')[0]);
   };
 
   const generateEstimationNumber = async () => {
@@ -272,6 +326,16 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   };
 
   const handleSaveEstimation = async () => {
+    // Validate required fields
+    if (!customer.name || !customer.phone) {
+      toast({
+        title: "❌ Error",
+        description: "Customer name and phone number are required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       // Create or update customer if needed
       let customerId = customer.id;
@@ -299,7 +363,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       
       const subtotal = getSubtotal();
       const totalAmount = getTotalEstimation();
-      const estimationDate = new Date().toISOString();
+      const estimationDateISO = new Date(estimationDate).toISOString();
 
       // Create estimation master
       const avgWastagePercent = items.length > 0 ? 
@@ -308,11 +372,11 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       const estimationMasterPayload = {
         data: {
           cid: customerId.toString(),
-          date: estimationDate,
+          date: estimationDateISO,
           estimation_number: estimationNumber,
           subtotal: subtotal.toString(),
-          discount_percentage: discountPercent.toString(),
-          discount_amount: discountAmount.toString(),
+          discount_percentage: "0",
+          discount_amount: "0",
           total_amount: totalAmount.toString(),
           current_silver_rate: silverRate.toString(),
           wastage: avgWastagePercent.toString()
@@ -353,7 +417,9 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
               weight: item.weight.toString(),
               qty: item.quantity.toString(),
               amount: item.ratePerGram.toString(),
-              total: item.total.toString()
+              total: item.total.toString(),
+              discount_percentage: item.discountPercent.toString(),
+              discount_amount: item.discountAmount.toString()
             }
           };
           
@@ -378,7 +444,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
       
 
       setLastEstimationId(estimationNumber);
-      setLastEstimationDate(estimationDate);
+      setLastEstimationDate(estimationDateISO);
       setShowPrintOption(true);
       toast({
         title: "✅ Success",
@@ -415,7 +481,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="customerPhone">Phone Number</Label>
+                  <Label htmlFor="customerPhone">Phone Number *</Label>
                   <Input
                     id="customerPhone"
                     value={customer.phone}
@@ -424,16 +490,18 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                       handleCustomerSearch(e.target.value);
                     }}
                     placeholder="Enter phone number"
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="customerName">Customer Name</Label>
+                  <Label htmlFor="customerName">Customer Name *</Label>
                   <CustomerAutocomplete
                     value={customer.name}
                     onChange={(value) => setCustomer(prev => ({ ...prev, name: value }))}
                     onCustomerSelect={(selectedCustomer) => setCustomer(selectedCustomer)}
                     onCreateNew={(name) => setCustomer(prev => ({ ...prev, name, id: 0 }))}
                     placeholder="Enter customer name"
+                    required
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -491,7 +559,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
             <CardContent>
               <div className="space-y-4">
                 {items.map((item, index) => (
-                  <div key={item.id} className="grid grid-cols-1 md:grid-cols-8 gap-4 p-4 border rounded-lg">
+                  <div key={item.id} className="grid grid-cols-1 md:grid-cols-10 gap-4 p-4 border rounded-lg">
                     <div>
                       <Label>Barcode/Product</Label>
                       <Input
@@ -500,8 +568,8 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                           const value = e.target.value;
                           updateItem(item.id, 'description', value);
                           
-                          // Only search if it's a complete barcode
-                          if (value.length === 14 && /^\d+$/.test(value)) {
+                          // Search for any numeric barcode
+                          if (value.length >= 10 && /^\d+$/.test(value)) {
                             handleBarcodeSearch(value, item.id);
                           }
                         }}
@@ -509,16 +577,18 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                       />
                     </div>
                     
-                    <div>
-                      <Label>Weight (g)</Label>
-                      <Input
-                        type="number"
-                        value={item.weight || ''}
-                        readOnly
-                        className="bg-gray-50"
-                        placeholder="0.00"
-                      />
-                    </div>
+                    {!item.isFixedPrice && (
+                      <div>
+                        <Label>Weight (g)</Label>
+                        <Input
+                          type="number"
+                          value={item.weight || ''}
+                          readOnly
+                          className="bg-gray-50"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    )}
                     
                     <div>
                       <Label>Quantity</Label>
@@ -531,18 +601,20 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                       />
                     </div>
                     
-                    <div>
-                      <Label>Touch</Label>
-                      <Input
-                        value={item.purity}
-                        readOnly
-                        className="bg-gray-50"
-                        placeholder="Touch"
-                      />
-                    </div>
+                    {!item.isFixedPrice && (
+                      <div>
+                        <Label>Touch</Label>
+                        <Input
+                          value={item.purity}
+                          readOnly
+                          className="bg-gray-50"
+                          placeholder="Touch"
+                        />
+                      </div>
+                    )}
                     
                     <div>
-                      <Label>Rate/Gram (₹)</Label>
+                      <Label>{item.isFixedPrice ? 'Price (₹)' : 'Rate/Gram (₹)'}</Label>
                       <Input
                         type="number"
                         value={item.ratePerGram || ''}
@@ -552,22 +624,44 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                       />
                     </div>
                     
-                    <div>
-                      <Label>VA%</Label>
-                      <div className="space-y-1">
-                        <Input
-                          type="number"
-                          value={item.makingChargesPercent || ''}
-                          readOnly
-                          className="bg-gray-50"
-                          placeholder="0.00"
-                        />
-                        {item.ratePerGram && item.weight && item.makingChargesPercent && (
-                          <div className="text-xs text-gray-500">
-                            Amount: ₹{((item.weight * item.ratePerGram * item.makingChargesPercent) / 100).toFixed(2)}
-                          </div>
-                        )}
+                    {!item.isFixedPrice && (
+                      <div>
+                        <Label>VA%</Label>
+                        <div className="space-y-1">
+                          <Input
+                            type="number"
+                            value={item.makingChargesPercent || ''}
+                            readOnly
+                            className="bg-gray-50"
+                            placeholder="0.00"
+                          />
+                          {item.ratePerGram && item.weight && item.makingChargesPercent && (
+                            <div className="text-xs text-gray-500">
+                              Amount: ₹{((item.weight * item.ratePerGram * item.makingChargesPercent) / 100).toFixed(2)}
+                            </div>
+                          )}
+                        </div>
                       </div>
+                    )}
+                    
+                    <div>
+                      <Label>Discount %</Label>
+                      <Input
+                        type="number"
+                        value={item.discountPercent === 0 ? '' : item.discountPercent}
+                        onChange={(e) => updateItem(item.id, 'discountPercent', e.target.value)}
+                        placeholder="Discount %"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Discount ₹</Label>
+                      <Input
+                        type="number"
+                        value={item.discountAmount === 0 ? '' : item.discountAmount}
+                        onChange={(e) => updateItem(item.id, 'discountAmount', e.target.value)}
+                        placeholder="Discount Amount"
+                      />
                     </div>
                     
                     <div>
@@ -613,25 +707,15 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                   <span className="text-lg">₹{getSubtotal().toFixed(2)}</span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Discount %</Label>
-                    <Input
-                      type="number"
-                      value={discountPercent || ''}
-                      onChange={(e) => handleDiscountPercentChange(parseFloat(e.target.value) || 0)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <Label>Discount Amount (₹)</Label>
-                    <Input
-                      type="number"
-                      value={discountAmount || ''}
-                      onChange={(e) => handleDiscountAmountChange(parseFloat(e.target.value) || 0)}
-                      placeholder="0.00"
-                    />
-                  </div>
+
+                
+                <div>
+                  <Label>Estimation Date</Label>
+                  <Input
+                    type="date"
+                    value={estimationDate}
+                    onChange={(e) => setEstimationDate(e.target.value)}
+                  />
                 </div>
                 
                 <div className="flex justify-between items-center text-lg font-semibold border-t pt-4">

@@ -43,15 +43,38 @@ export const TrayReport = ({ onNavigate }: TrayReportProps) => {
       const productsResponse = await request(endpoints.barcode.listBarcodes());
       const allProducts = productsResponse.data || [];
 
-      // Load sales for selected date
-      const salesResponse = await request(endpoints.sales.masters.list(1, 1000));
-      const allSales = salesResponse.data || [];
+      // Load sales data for selected date only
+      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesMasters = salesMastersResponse.data || [];
+      
+      // Filter sales masters by selected date
+      const selectedDateSales = salesMasters.filter(master => {
+        const masterAttrs = master.attributes || master;
+        const saleDate = new Date(masterAttrs.date).toISOString().split('T')[0];
+        return saleDate === selectedDate;
+      });
+      
+      const allSalesDetails = [];
+      for (const master of selectedDateSales) {
+        try {
+          const masterAttrs = master.attributes || master;
+          const detailsResponse = await request(endpoints.sales.details.list(masterAttrs.invoice));
+          const details = detailsResponse.data || [];
+          allSalesDetails.push(...details);
+        } catch (error) {
+          console.error(`Failed to load details for invoice ${masterAttrs.invoice}`);
+        }
+      }
 
       const trayStockData: TrayStock[] = [];
 
       for (const tray of allTrays) {
         const trayNo = tray.attributes?.trayno || tray.trayno;
         if (!trayNo) continue;
+        
+        // Only show trays that existed on or before the selected date
+        const trayCreatedDate = new Date(tray.createdAt || tray.attributes?.createdAt).toISOString().split('T')[0];
+        if (trayCreatedDate > selectedDate) continue;
 
         // Get products in this tray
         const trayProducts = allProducts.filter(p => p.trayno === trayNo);
@@ -60,39 +83,55 @@ export const TrayReport = ({ onNavigate }: TrayReportProps) => {
         const openingQty = trayProducts.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
         const openingWeight = trayProducts.reduce((sum, p) => sum + (parseFloat(p.weight) || 0) * (parseFloat(p.qty) || 0), 0);
 
-        // Calculate sold items for selected date
+        // Calculate sold items using same logic as tray management
         let soldQty = 0;
         let soldWeight = 0;
 
-        for (const sale of allSales) {
-          const saleAttrs = sale.attributes || sale;
-          const saleDate = new Date(saleAttrs.date).toISOString().split('T')[0];
+        console.log(`Processing tray ${trayNo} with ${trayProducts.length} products`);
+        console.log('Sales details for date:', allSalesDetails.length, 'on date:', selectedDate);
+
+        // Track sold products to avoid double counting
+        const soldProductIds = new Set();
+        
+        for (const product of trayProducts) {
+          console.log(`Checking tray product: ${product.product}, weight: ${product.weight}, touch: '${product.touch}', qty: ${product.qty}`);
           
-          if (saleDate === selectedDate) {
-            // Get sale details for this sale
-            try {
-              const saleDetailsResponse = await request(endpoints.sales.details.list(saleAttrs.invoice));
-              const saleDetails = saleDetailsResponse.data || [];
-              
-              for (const detail of saleDetails) {
-                const detailAttrs = detail.attributes || detail;
-                // Find matching product in tray
-                const matchingProduct = trayProducts.find(p => 
-                  p.product === detailAttrs.product && 
-                  p.touch === detailAttrs.touch && 
-                  p.weight === detailAttrs.weight
-                );
-                
-                if (matchingProduct) {
-                  soldQty += parseFloat(detailAttrs.qty) || 0;
-                  soldWeight += (parseFloat(detailAttrs.weight) || 0) * (parseFloat(detailAttrs.qty) || 0);
-                }
-              }
-            } catch (error) {
-              console.error(`Failed to load sale details for ${saleAttrs.invoice}`);
+          // Check if this specific product (by ID) was sold
+          const wasSold = allSalesDetails.some(sale => {
+            const saleAttrs = sale.attributes || sale;
+            
+            console.log(`  Comparing with sale: ${saleAttrs.product}, weight: ${saleAttrs.weight}, touch: '${saleAttrs.touch}'`);
+            
+            // Match by product name and handle static products (weight = 0)
+            const productWeight = parseFloat(product.weight || 0);
+            const saleWeight = parseFloat(saleAttrs.weight || 0);
+            const productTouch = (product.touch || '').trim();
+            const saleTouch = (saleAttrs.touch || '').trim();
+            
+            // For static products (sale weight = 0), only match by name and touch
+            const isMatch = saleAttrs.product === product.product &&
+                           (saleWeight === 0 ? productTouch === saleTouch : 
+                            productWeight === saleWeight && productTouch === saleTouch);
+            
+            console.log(`  Match result: ${isMatch}`);
+            
+            if (isMatch && !soldProductIds.has(product.id)) {
+              soldProductIds.add(product.id);
+              return true;
             }
+            return false;
+          });
+          
+          if (wasSold) {
+            soldQty += parseFloat(product.qty) || 0;
+            soldWeight += (parseFloat(product.weight) || 0) * (parseFloat(product.qty) || 0);
+            console.log(`Product ${product.product} (ID: ${product.id}) marked as sold`);
+          } else {
+            console.log(`Product ${product.product} (ID: ${product.id}) NOT sold`);
           }
         }
+        
+        console.log(`Tray ${trayNo} - Opening: ${openingQty}, Sold: ${soldQty}, Current: ${openingQty - soldQty}`);
 
         // Calculate current stock
         const currentQty = openingQty - soldQty;

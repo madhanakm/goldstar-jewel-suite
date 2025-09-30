@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { PageLayout, PageContent, PageHeader, SearchFilter, FormField, FormSection, useSidebar, SidebarWrapper, GradientCard, ActionButton, DataGrid } from "@/components/common";
-import { useApi, endpoints, usePagination } from "@/shared";
+import { PageLayout, PageContent, PageHeader, FormField, useSidebar, SidebarWrapper, ActionButton } from "@/components/common";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useApi, endpoints } from "@/shared";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
 import { sidebarConfig } from "@/lib/sidebarConfig";
@@ -20,14 +22,7 @@ import {
   FileText,
   CreditCard,
   Gift,
-  ArrowLeft,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  Star,
-  Package,
-  IdCard
+  RefreshCw
 } from "lucide-react";
 
 interface CustomerManagementProps {
@@ -37,7 +32,6 @@ interface CustomerManagementProps {
 
 export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementProps) => {
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>({
@@ -51,6 +45,9 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
 
@@ -64,7 +61,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
   const loadCustomers = async () => {
     try {
       const response = await request(endpoints.customers.list(1, 1000));
-      const customersData = response.data || [];
+      const customersData = (response.data || []).sort((a, b) => b.id - a.id);
       setCustomers(customersData);
     } catch (error) {
       toast({
@@ -101,10 +98,6 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
 
 
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
-
   const handleAddCustomer = async () => {
     try {
       await request(endpoints.customers.create(), 'POST', {
@@ -126,13 +119,25 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
     }
   };
 
+  // Computed values for table
   const filteredCustomers = customers.filter(customer => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      customer.name?.toLowerCase().includes(searchLower) ||
-      customer.phone?.toLowerCase().includes(searchLower)
-    );
+    const matchesSearch = !searchFilter || 
+      customer.name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      customer.phone?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchFilter.toLowerCase());
+    
+    return matchesSearch;
   });
+
+  const totalPages = Math.ceil(filteredCustomers.length / pageSize);
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFilter, pageSize]);
 
   return (
     <PageLayout>
@@ -147,18 +152,15 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
         icon={<Users className="w-6 h-6 text-primary mr-3" />}
       />
       <PageContent>
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search by name or phone..."
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="pl-10 w-80"
-                  />
-                </div>
+        <Card className="bg-white border shadow-lg">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Customer Management
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">View and manage all customers</p>
               </div>
               <Dialog open={isAddCustomerOpen} onOpenChange={(open) => {
                 setIsAddCustomerOpen(open);
@@ -233,6 +235,166 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
                 </DialogContent>
               </Dialog>
             </div>
+          </div>
+          
+          <div className="p-6 space-y-4">
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Search</Label>
+                <Input
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search by name, phone, or email..."
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Entries per page</Label>
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button onClick={loadCustomers} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GSTIN</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedCustomers.map((customer, index) => (
+                      <tr key={customer.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {(currentPage - 1) * pageSize + index + 1}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center mr-3">
+                              <Users className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="font-medium">{customer.name}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customer.phone}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customer.email || '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {customer.gstin || '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedCustomer(customer);
+                                setIsViewMode(true);
+                              }}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedCustomer(customer);
+                                setFormData({
+                                  name: customer.name || '',
+                                  phone: customer.phone || '',
+                                  email: customer.email || '',
+                                  address: customer.address || '',
+                                  aadhar: customer.aadhar || '',
+                                  gstin: customer.gstin || ''
+                                });
+                                setIsEditMode(true);
+                              }}
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredCustomers.length)} of {filteredCustomers.length} entries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  )
+                  .map((page, index, array) => (
+                    <React.Fragment key={page}>
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-500">...</span>
+                      )}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  ))
+                }
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
 
             {/* View Customer Dialog */}
             <Dialog open={isViewMode} onOpenChange={setIsViewMode}>
@@ -339,106 +501,7 @@ export const CustomerManagement = ({ onBack, onNavigate }: CustomerManagementPro
               </DialogContent>
             </Dialog>
 
-            <DataGrid
-              data={filteredCustomers}
-              columns={[
-                {
-                  key: 'name',
-                  header: 'Customer',
-                  render: (_, customer) => (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center">
-                        <Users className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-800">{customer.name}</p>
-                      </div>
-                    </div>
-                  )
-                },
-                {
-                  key: 'phone',
-                  header: 'Contact',
-                  render: (_, customer) => (
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm text-slate-700">
-                        <Phone className="w-3 h-3 mr-2 text-amber-600" />
-                        {customer.phone}
-                      </div>
-                      <div className="flex items-center text-sm text-slate-600">
-                        <Mail className="w-3 h-3 mr-2 text-amber-600" />
-                        {customer.email}
-                      </div>
-                    </div>
-                  )
-                },
-                {
-                  key: 'gstin',
-                  header: 'GST Details',
-                  render: (_, customer) => (
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm text-slate-700">
-                        <FileText className="w-3 h-3 mr-2 text-amber-600" />
-                        {customer.gstin || 'N/A'}
-                      </div>
-                      <div className="flex items-center text-sm text-slate-600">
-                        <IdCard className="w-3 h-3 mr-2 text-amber-600" />
-                        {customer.aadhar || 'N/A'}
-                      </div>
-                    </div>
-                  )
-                },
-                {
-                  key: 'totalPurchases',
-                  header: 'Purchases',
-                  render: (value) => (
-                    <div className="text-center">
-                      <div className="font-semibold text-slate-800">{value}</div>
-                      <div className="text-xs text-slate-600">Total</div>
-                    </div>
-                  )
-                },
 
-                {
-                  key: 'id',
-                  header: 'Actions',
-                  render: (_, customer) => (
-                    <div className="flex space-x-2">
-                      <ActionButton 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedCustomer(customer);
-                          setIsViewMode(true);
-                        }}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </ActionButton>
-                      <ActionButton 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedCustomer(customer);
-                          setFormData({
-                            name: customer.name || '',
-                            phone: customer.phone || '',
-                            email: customer.email || '',
-                            address: customer.address || '',
-                            aadhar: customer.aadhar || '',
-                            gstin: customer.gstin || ''
-                          });
-                          setIsEditMode(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </ActionButton>
-                    </div>
-                  )
-                }
-              ]}
-              emptyMessage="No customers found. Add your first customer to get started."
-            />
-        </div>
       </PageContent>
       
       <SidebarWrapper

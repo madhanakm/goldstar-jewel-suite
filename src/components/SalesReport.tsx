@@ -185,26 +185,41 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
         </div>
 
         {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="flex items-center gap-4">
-            <Calendar className="w-5 h-5 text-gray-400" />
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              placeholder="From Date"
-            />
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              placeholder="To Date"
-            />
-            <Button onClick={filterByDate}>Filter</Button>
-            <Button variant="outline" onClick={exportReport}>
-              <Download className="w-4 h-4 mr-2" />
-              Export CSV
-            </Button>
+        <Card className="p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-gray-700">Date Range:</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 min-w-[60px]">From:</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 min-w-[60px]">To:</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={filterByDate} className="bg-blue-600 hover:bg-blue-700">
+                  Apply Filter
+                </Button>
+                <Button variant="outline" onClick={exportReport} className="border-green-600 text-green-600 hover:bg-green-50">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
+            </div>
           </div>
         </Card>
 
@@ -246,6 +261,17 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
                   render: (value) => {
                     const touches = value?.map((item: any) => item.touch || item.purity).filter(Boolean) || [];
                     return touches.length > 0 ? touches.join(', ') : 'N/A';
+                  }
+                },
+                {
+                  key: 'salesDetails',
+                  header: 'Product Type',
+                  render: (value) => {
+                    const types = value?.map((item: any) => {
+                      const weight = parseFloat(item.weight || 0);
+                      return weight === 0 ? 'Fixed Price' : 'Weight Based';
+                    }) || [];
+                    return types.length > 0 ? [...new Set(types)].join(', ') : 'N/A';
                   }
                 },
                 {

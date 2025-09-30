@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
+import { useApi, endpoints } from "@/shared";
 import { BarChart3, LogOut, TrendingUp, Package, ShoppingCart, ShoppingBag, Users, DollarSign, FileText } from "lucide-react";
 
 interface AnalyticsReportsProps {
@@ -12,6 +13,51 @@ interface AnalyticsReportsProps {
 
 export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps) => {
   const { sidebarOpen, toggleSidebar } = useSidebar();
+  const { request } = useApi();
+  const [stats, setStats] = useState({
+    todaysSales: 0,
+    activeCustomers: 0,
+    monthlyRevenue: 0
+  });
+
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
+
+  const loadAnalyticsData = async () => {
+    try {
+      // Get today's sales
+      const today = new Date().toISOString().split('T')[0];
+      const salesResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesData = salesResponse.data || [];
+      const todaysSales = salesData.filter(sale => {
+        const saleDate = new Date(sale.date || sale.createdAt).toISOString().split('T')[0];
+        return saleDate === today;
+      }).reduce((sum, sale) => sum + (parseFloat(sale.totalamount) || 0), 0);
+
+
+
+      // Get active customers count
+      const customersResponse = await request(endpoints.customers.list(1, 1000));
+      const activeCustomers = (customersResponse.data || []).length;
+
+      // Get monthly revenue
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const monthlyRevenue = salesData.filter(sale => {
+        const saleDate = new Date(sale.date || sale.createdAt);
+        return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
+      }).reduce((sum, sale) => sum + (parseFloat(sale.totalamount) || 0), 0);
+
+      setStats({
+        todaysSales,
+        activeCustomers,
+        monthlyRevenue
+      });
+    } catch (error) {
+      console.error('Failed to load analytics data:', error);
+    }
+  };
 
   const reportModules = [
     {
@@ -45,10 +91,9 @@ export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps
   ];
 
   const quickStats = [
-    { title: "Today's Sales", value: "₹25,000", icon: ShoppingCart, color: "text-blue-600" },
-    { title: "Stock Items", value: "1,250", icon: Package, color: "text-green-600" },
-    { title: "Active Customers", value: "85", icon: Users, color: "text-purple-600" },
-    { title: "Monthly Revenue", value: "₹5,50,000", icon: DollarSign, color: "text-orange-600" }
+    { title: "Today's Sales", value: `₹${Math.round(stats.todaysSales).toLocaleString()}`, icon: ShoppingCart, color: "text-blue-600" },
+    { title: "Active Customers", value: stats.activeCustomers.toLocaleString(), icon: Users, color: "text-purple-600" },
+    { title: "Monthly Revenue", value: `₹${Math.round(stats.monthlyRevenue).toLocaleString()}`, icon: DollarSign, color: "text-orange-600" }
   ];
 
   return (
@@ -74,7 +119,7 @@ export const AnalyticsReports = ({ onNavigate, onLogout }: AnalyticsReportsProps
       
       <PageContent>
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {quickStats.map((stat, index) => (
             <GradientCard key={index} title={stat.title} icon={<stat.icon className="w-5 h-5 text-white" />}>
               <div className={`text-3xl font-bold ${stat.color}`}>{stat.value}</div>

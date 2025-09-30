@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard, DataGrid } from "@/components/common";
+import { Label } from "@/components/ui/label";
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints } from "@/shared";
-import { Package, LogOut, Download, Search, AlertTriangle, TrendingUp } from "lucide-react";
+import { Package, LogOut, Download, Search, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
 
@@ -16,12 +18,12 @@ interface StockReportProps {
 
 export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
   const [stockData, setStockData] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [stats, setStats] = useState({
     totalProducts: 0,
-    totalWeight: 0,
-    lowStock: 0,
-    outOfStock: 0
+    totalWeight: 0
   });
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
@@ -34,37 +36,34 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
 
   const loadStockData = async () => {
     try {
-      const [barcodeResponse, salesResponse] = await Promise.all([
-        request(endpoints.barcode.listBarcodes()),
-        request(endpoints.sales.details.list('all'))
-      ]);
-
+      const barcodeResponse = await request(endpoints.barcode.listBarcodes());
       const products = barcodeResponse.data || [];
-      const sales = salesResponse.data || [];
+      
+      // Load all sales data
+      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesMasters = salesMastersResponse.data || [];
+      
+      const allSalesDetails = [];
+      for (const master of salesMasters) {
+        try {
+          const detailsResponse = await request(endpoints.sales.details.list(master.invoice));
+          allSalesDetails.push(...(detailsResponse.data || []));
+        } catch (error) {
+          console.error(`Failed to load details for invoice ${master.invoice}`);
+        }
+      }
 
-      // Calculate available stock
-      const stockWithAvailability = products.map((product: any) => {
-        const soldQty = sales.reduce((total: number, sale: any) => {
+      // Filter out sold products - only show available items
+      const availableProducts = products.filter((product: any) => {
+        const isSold = allSalesDetails.some((sale: any) => {
           const saleAttrs = sale.attributes || sale;
-          if (saleAttrs.code === product.code) {
-            return total + (parseFloat(saleAttrs.qty) || 0);
-          }
-          return total;
-        }, 0);
-
-        const availableQty = (parseFloat(product.qty) || 0) - soldQty;
-        const status = availableQty <= 0 ? 'out_of_stock' : availableQty <= 2 ? 'low_stock' : 'in_stock';
-
-        return {
-          ...product,
-          availableQty,
-          soldQty,
-          status
-        };
+          return saleAttrs.barcode && product.code && saleAttrs.barcode === product.code;
+        });
+        return !isSold;
       });
 
-      setStockData(stockWithAvailability);
-      calculateStats(stockWithAvailability);
+      setStockData(availableProducts);
+      calculateStats(availableProducts);
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -75,31 +74,34 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
   };
 
   const calculateStats = (data: any[]) => {
-    const totalProducts = data.reduce((sum, item) => {
-      const availableQty = parseFloat(item.availableQty) || 0;
-      return sum + (availableQty > 0 ? availableQty : 0);
-    }, 0);
+    const totalProducts = data.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0);
     const totalWeight = data.reduce((sum, item) => {
       const weight = parseFloat(item.weight) || 0;
-      const availableQty = parseFloat(item.availableQty) || 0;
-      return sum + (availableQty > 0 ? weight * availableQty : 0);
+      const qty = parseFloat(item.qty) || 0;
+      return sum + (weight * qty);
     }, 0);
-    const lowStock = data.filter(item => item.status === 'low_stock').length;
-    const outOfStock = data.filter(item => item.status === 'out_of_stock').length;
 
     setStats({
       totalProducts,
-      totalWeight,
-      lowStock,
-      outOfStock
+      totalWeight
     });
   };
 
   const filteredData = stockData.filter(item =>
-    item.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.code.includes(searchTerm) ||
-    item.trayno?.toLowerCase().includes(searchTerm.toLowerCase())
+    item.product.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    item.code.includes(searchFilter) ||
+    item.trayno?.toLowerCase().includes(searchFilter.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFilter, pageSize]);
 
   const exportReport = () => {
     const csvContent = [
@@ -109,10 +111,9 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
         item.code,
         item.touch,
         item.weight,
-        item.availableQty,
-        item.soldQty,
+        item.qty,
         item.trayno || '',
-        item.status
+        'Available'
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -147,118 +148,141 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
       
       <PageContent>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <GradientCard title="Total Stock" icon={<Package className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-blue-600">{stats.totalProducts}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <GradientCard title="Available Products" icon={<Package className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-green-600">{stats.totalProducts}</div>
           </GradientCard>
           
-          <GradientCard title="Total Weight" icon={<TrendingUp className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-green-600">{stats.totalWeight >= 1000 ? `${(stats.totalWeight / 1000).toFixed(2)}kg` : `${stats.totalWeight.toFixed(1)}g`}</div>
-          </GradientCard>
-          
-          <GradientCard title="Low Stock" icon={<AlertTriangle className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-yellow-600">{stats.lowStock}</div>
-          </GradientCard>
-          
-          <GradientCard title="Out of Stock" icon={<AlertTriangle className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-red-600">{stats.outOfStock}</div>
+          <GradientCard title="Total Weight" icon={<Package className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-blue-600">{stats.totalWeight >= 1000 ? `${(stats.totalWeight / 1000).toFixed(2)}kg` : `${stats.totalWeight.toFixed(1)}g`}</div>
           </GradientCard>
         </div>
 
-        {/* Search and Export */}
-        <Card className="p-4 mb-6">
-          <div className="flex items-center gap-4">
-            <Search className="w-5 h-5 text-gray-400" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by product, code, or tray..."
-              className="flex-1"
-            />
-            <Button variant="outline" onClick={exportReport}>
-              <Download className="w-4 h-4 mr-2" />
-              Export CSV
-            </Button>
+        {/* Filters */}
+        <Card className="p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Search</Label>
+              <Input
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Search by product, code, or tray..."
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Items per page</Label>
+              <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end gap-2">
+              <Button onClick={loadStockData} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+              <Button variant="outline" onClick={exportReport}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
         </Card>
 
         {/* Stock Data */}
         <Card>
           <CardHeader>
-            <CardTitle>Stock Inventory</CardTitle>
+            <CardTitle>Available Stock Inventory</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataGrid
-              data={filteredData}
-              columns={[
-                { key: 'product', header: 'Product' },
-                { key: 'code', header: 'Code' },
-                { key: 'touch', header: 'Touch' },
-                {
-                  key: 'weight',
-                  header: 'Weight',
-                  render: (value) => {
-                    const weight = parseFloat(value) || 0;
-                    return weight >= 1000 ? `${(weight / 1000).toFixed(2)}kg` : `${weight.toFixed(1)}g`;
-                  }
-                },
-                {
-                  key: 'availableQty',
-                  header: 'Qty',
-                  render: (value) => (
-                    <span className={value <= 0 ? 'text-red-600' : value <= 2 ? 'text-yellow-600' : 'text-green-600'}>
-                      {value}
-                    </span>
-                  )
-                },
-                {
-                  key: 'totalWeight',
-                  header: 'Total Weight',
-                  render: (value, row) => {
-                    const weight = parseFloat(row.weight) || 0;
-                    const qty = parseFloat(row.availableQty) || 0;
-                    const totalWeight = weight * qty;
-                    return totalWeight >= 1000 ? `${(totalWeight / 1000).toFixed(2)}kg` : `${totalWeight.toFixed(1)}g`;
-                  }
-                },
-                { key: 'soldQty', header: 'Sold' },
-                { key: 'trayno', header: 'Tray' },
-                {
-                  key: 'status',
-                  header: 'Status',
-                  render: (value) => (
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      value === 'out_of_stock' ? 'bg-red-100 text-red-700' :
-                      value === 'low_stock' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
-                      {value.replace('_', ' ').toUpperCase()}
-                    </span>
-                  )
-                }
-              ]}
-              emptyMessage="No stock data found"
-            />
-            
-            {/* Summary Totals */}
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg border-t">
-              <div className="flex justify-between items-center">
-                <div className="text-sm font-medium text-gray-600">
-                  Total Items: <span className="text-blue-600 font-bold">{filteredData.reduce((sum, item) => {
-                    const availableQty = parseFloat(item.availableQty) || 0;
-                    return sum + (availableQty > 0 ? availableQty : 0);
-                  }, 0)}</span>
-                </div>
-                <div className="text-sm font-medium text-gray-600">
-                  Total Weight: <span className="text-green-600 font-bold">{(() => {
-                    const totalWeight = filteredData.reduce((sum, item) => {
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Touch</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tray</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedData.map((item, index) => {
                       const weight = parseFloat(item.weight) || 0;
-                      const availableQty = parseFloat(item.availableQty) || 0;
-                      return sum + (availableQty > 0 ? weight * availableQty : 0);
-                    }, 0);
-                    return totalWeight >= 1000 ? `${(totalWeight / 1000).toFixed(2)}kg` : `${totalWeight.toFixed(1)}g`;
-                  })()}</span>
-                </div>
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {(currentPage - 1) * pageSize + index + 1}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.product}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.code}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.touch || '-'}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {weight > 0 ? (weight >= 1000 ? `${(weight / 1000).toFixed(2)}kg` : `${weight.toFixed(1)}g`) : '-'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{item.qty}</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.trayno || '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-gray-700">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} entries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  )
+                  .map((page, index, array) => (
+                    <React.Fragment key={page}>
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-500">...</span>
+                      )}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  ))
+                }
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
               </div>
             </div>
           </CardContent>

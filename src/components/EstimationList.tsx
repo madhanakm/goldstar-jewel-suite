@@ -62,8 +62,14 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
         })
       );
       
-      // Sort by date descending (latest first)
-      const sortedData = enrichedData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Sort by ID descending (latest first) then by date
+      const sortedData = enrichedData.sort((a, b) => {
+        // First sort by ID (latest entries have higher IDs)
+        const idDiff = (b.id || 0) - (a.id || 0);
+        if (idDiff !== 0) return idDiff;
+        // Then by date as fallback
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
       setEstimationData(sortedData);
     } catch (error) {
       toast({
@@ -83,12 +89,18 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
   };
 
   const handleConvertToSale = (estimation: any) => {
-    // Navigate to sales entry page with estimation data
+    // Calculate proportional discount for each item
+    const totalAmount = parseFloat(estimation.subtotal) || 0;
+    const totalDiscount = parseFloat(estimation.discount_amount) || 0;
+    const discountPercent = parseFloat(estimation.discount_percentage) || 0;
+    
     const estimationData = {
       customer: estimation.customer,
-      items: estimation.estimationDetails,
-      discountPercent: parseFloat(estimation.discount_percentage) || 0,
-      discountAmount: parseFloat(estimation.discount_amount) || 0,
+      items: estimation.estimationDetails.map((item: any) => ({
+        ...item,
+        discountPercent: parseFloat(item.discount_percentage) || 0,
+        discountAmount: parseFloat(item.discount_amount) || 0
+      })),
       silverRate: parseFloat(estimation.current_silver_rate) || 0,
       wastage: parseFloat(estimation.wastage) || 0,
       estimationId: estimation.documentId || estimation.id,
@@ -109,16 +121,35 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
   };
 
   const handleDelete = async (estimation: any) => {
+    console.log('Delete clicked for:', estimation);
+    
     if (!confirm('Are you sure you want to delete this estimation?')) return;
     
     try {
+      console.log('Deleting estimation documentId:', estimation.documentId);
+      
+      // Delete estimation details first to avoid foreign key constraint
+      try {
+        const detailsResponse = await request(`/api/estimation-details?filters[estimation_id][$eq]=${estimation.estimation_number}`);
+        if (detailsResponse.data && detailsResponse.data.length > 0) {
+          for (const detail of detailsResponse.data) {
+            await request(`/api/estimation-details/${detail.documentId || detail.id}`, 'DELETE');
+          }
+        }
+      } catch (detailError) {
+        console.log('No details to delete or error deleting details:', detailError);
+      }
+      
+      // Delete estimation master using documentId
       await request(`/api/estimation-masters/${estimation.documentId}`, 'DELETE');
+      
       toast({
         title: "✅ Success",
         description: "Estimation deleted successfully",
       });
       loadEstimationData();
     } catch (error) {
+      console.error('Delete error:', error);
       toast({
         title: "❌ Error",
         description: "Failed to delete estimation",
@@ -146,6 +177,8 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
         quantity: parseFloat(item.qty) || 1,
         weight: parseFloat(item.weight) || 0,
         makingCharges: avgWastage,
+        discountPercent: parseFloat(item.discount_percentage) || 0,
+        discountAmount: parseFloat(item.discount_amount) || 0,
         total: parseFloat(item.total) || 0
       })),
       subtotal: parseFloat(estimation.subtotal) || 0,
@@ -219,35 +252,40 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
                   header: 'Amount',
                   render: (value) => `₹${parseFloat(value || 0).toLocaleString()}`
                 },
-                {
-                  key: 'discount_amount',
-                  header: 'Discount',
-                  render: (value) => `₹${parseFloat(value || 0).toLocaleString()}`
-                },
+
                 {
                   key: 'actions',
                   header: 'Actions',
                   render: (_, row) => (
-                    <div className="flex gap-1">
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDelete(row)}
-                        className="text-red-600 hover:text-red-700"
+                        onClick={() => {
+                          console.log('Delete button clicked');
+                          handleDelete(row);
+                        }}
+                        className="text-red-600 hover:bg-red-50 hover:border-red-300"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handlePrintPDF(row)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePrintPDF(row);
+                        }}
                       >
                         <Printer className="w-3 h-3" />
                       </Button>
                       <Button
                         size="sm"
                         variant={row.converted_to_sale ? "secondary" : "default"}
-                        onClick={() => handleConvertToSale(row)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConvertToSale(row);
+                        }}
                         disabled={row.converted_to_sale}
                       >
                         <ShoppingCart className="w-3 h-3" />

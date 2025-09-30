@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, GradientCard, FormField } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
-import { Package, LogOut, Search, QrCode, ShoppingCart, Plus } from "lucide-react";
+import { Package, LogOut, Search, QrCode, ShoppingCart, Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TrayProduct {
@@ -33,7 +33,9 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
   const [searchTray, setSearchTray] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<TrayProduct[]>([]);
   const [newTrayNo, setNewTrayNo] = useState("");
+  const [newTrayWeight, setNewTrayWeight] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingTray, setEditingTray] = useState<any>(null);
   const [selectedTray, setSelectedTray] = useState<string | null>(null);
   const [showTrayProducts, setShowTrayProducts] = useState(false);
   const { sidebarOpen, toggleSidebar } = useSidebar();
@@ -90,10 +92,47 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
 
   const loadSalesData = async () => {
     try {
-      const response = await request(endpoints.sales.details.list('all'));
-      setSalesData(response.data || []);
+      // Load all sales masters first
+      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesMasters = salesMastersResponse.data || [];
+      
+      // Load all sales details for each master
+      const allSalesDetails = [];
+      for (const master of salesMasters) {
+        try {
+          const masterAttrs = master.attributes || master;
+          const detailsResponse = await request(endpoints.sales.details.list(masterAttrs.invoice));
+          const details = detailsResponse.data || [];
+          allSalesDetails.push(...details);
+        } catch (error) {
+          console.error(`Failed to load details for invoice ${masterAttrs.invoice}`);
+        }
+      }
+      
+      setSalesData(allSalesDetails);
     } catch (error) {
       console.error("Failed to load sales data");
+    }
+  };
+
+  const handleDeleteTray = async (tray: any) => {
+    if (!confirm('Are you sure you want to delete this tray?')) return;
+
+    try {
+      const trayId = tray.documentId;
+      await request(`/api/trays/${trayId}`, 'DELETE');
+      toast({
+        title: "✅ Success",
+        description: "Tray deleted successfully",
+      });
+      loadAllTrays();
+      loadTrayData();
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to delete tray",
+        variant: "destructive",
+      });
     }
   };
 
@@ -108,23 +147,40 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
     }
 
     try {
-      await request(endpoints.trays.create(), 'POST', {
-        data: { trayno: newTrayNo.trim() }
-      });
+      const payload = {
+        data: { 
+          trayno: newTrayNo.trim(),
+          tray_weight: newTrayWeight || '0'
+        }
+      };
       
-      toast({
-        title: "✅ Success",
-        description: "Tray added successfully",
-      });
+
+
+      if (editingTray) {
+        const trayId = editingTray.documentId;
+        await request(`/api/trays/${trayId}`, 'PUT', payload);
+        toast({
+          title: "✅ Success",
+          description: "Tray updated successfully",
+        });
+      } else {
+        await request(endpoints.trays.create(), 'POST', payload);
+        toast({
+          title: "✅ Success",
+          description: "Tray added successfully",
+        });
+      }
       
       setNewTrayNo("");
+      setNewTrayWeight("");
+      setEditingTray(null);
       setShowAddDialog(false);
       loadAllTrays();
       loadTrayData();
     } catch (error) {
       toast({
         title: "❌ Error",
-        description: "Failed to add tray",
+        description: editingTray ? "Failed to update tray" : "Failed to add tray",
         variant: "destructive",
       });
     }
@@ -141,34 +197,22 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       );
     }
 
-    // Mark products as sold based on exact barcode match in sales data
-    filtered = filtered.map(product => {
-      const soldQty = salesData.reduce((total, sale) => {
+    // Filter out sold products - only show available items
+    filtered = filtered.filter(product => {
+      const isSold = salesData.some(sale => {
         const saleAttrs = sale.attributes || sale;
-        // Match by barcode/code for exact identification
-        if (saleAttrs.code === product.code || 
-            (saleAttrs.product === product.product && 
-             saleAttrs.touch === product.touch && 
-             saleAttrs.weight === product.weight)) {
-          return total + (parseFloat(saleAttrs.qty) || 0);
-        }
-        return total;
-      }, 0);
-      
-      const availableQty = (parseFloat(product.qty) || 0) - soldQty;
-      const status = availableQty > 0 ? 'available' as const : 'sold' as const;
-      
-      return { ...product, status, availableQty, soldQty };
-    });
-
+        return saleAttrs.barcode && product.code && saleAttrs.barcode === product.code;
+      });
+      return !isSold;
+    }).map(product => ({ ...product, status: 'available' as const, availableQty: 1, soldQty: 0 }));
+    
     setFilteredProducts(filtered);
   };
 
   const getTrayStats = () => {
-    const totalProducts = filteredProducts.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
-    const availableProducts = filteredProducts.filter(p => p.status === 'available').reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
+    const availableProducts = filteredProducts.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0);
     
-    return { trays: allTrays.length, totalProducts, availableProducts };
+    return { trays: allTrays.length, availableProducts };
   };
 
   const getTrayWiseData = () => {
@@ -189,28 +233,22 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       // Processing product for tray assignment
       if (product.trayno && trayMap.has(product.trayno)) {
         const trayData = trayMap.get(product.trayno);
-        const soldQty = salesData.reduce((total, sale) => {
+        // Check if this specific barcode is sold
+        const isSold = salesData.some(sale => {
           const saleAttrs = sale.attributes || sale;
-          if (saleAttrs.code === product.code || 
-              (saleAttrs.product === product.product && 
-               saleAttrs.touch === product.touch && 
-               saleAttrs.weight === product.weight)) {
-            return total + (parseFloat(saleAttrs.qty) || 0);
-          }
-          return total;
-        }, 0);
+          return saleAttrs.barcode && product.code && saleAttrs.barcode === product.code;
+        });
         
-        const productQty = parseFloat(product.qty) || 1;
-        const availableQty = productQty - soldQty;
-        const productWeight = parseFloat(product.weight) || 0;
-        const availableWeight = (availableQty / productQty) * productWeight * productQty;
-        
-        trayData.total += productQty;
-        trayData.productCount++;
-        trayData.totalWeight += availableWeight;
-        trayData.products.push({ ...product, availableQty, soldQty, status: availableQty > 0 ? 'available' : 'sold' });
-        trayData.available += Math.max(0, availableQty);
-        trayData.sold += soldQty;
+        // Only add available products to tray data
+        if (!isSold) {
+          const productWeight = parseFloat(product.weight || 0);
+          
+          trayData.total += 1;
+          trayData.productCount++;
+          trayData.totalWeight += productWeight;
+          trayData.products.push({ ...product, availableQty: 1, soldQty: 0, status: 'available' });
+          trayData.available += 1;
+        }
         // Product added to tray successfully
       }
     });
@@ -221,40 +259,29 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
   const stats = getTrayStats();
 
   const renderProductCard = (product: TrayProduct) => {
-    const isSold = product.status === 'sold';
+    const weight = parseFloat(product.weight) || 0;
     
     return (
-      <Card key={product.id} className={`p-4 border-l-4 ${
-        isSold ? 'border-l-red-500 bg-gradient-to-r from-red-50 to-white opacity-75' : 
-        'border-l-green-500 bg-gradient-to-r from-green-50 to-white'
-      }`}>
-        <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg">{product.product}</span>
-              <span className={`px-2 py-1 text-xs rounded-full ${
-                isSold ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-              }`}>
-                {isSold ? 'Sold' : 'Available'}
-              </span>
+      <Card key={product.id} className="p-3 border-l-4 border-l-green-500 bg-green-50/50 transition-all">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="font-semibold text-sm truncate">{product.product}</div>
+              <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                <QrCode className="w-3 h-3" />
+                {product.code}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-              <div>Touch: {product.touch}</div>
-              <div>Weight: {parseFloat(product.weight) >= 1000 ? `${(parseFloat(product.weight) / 1000).toFixed(2)}kg` : `${product.weight}g`}</div>
-              <div>Qty: {product.qty}</div>
-              <div>Tray: {product.trayno}</div>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <QrCode className="w-3 h-3" />
-              {product.code}
-            </div>
+            <span className="px-2 py-1 text-xs rounded-full font-medium bg-green-100 text-green-700">
+              Available
+            </span>
           </div>
-          <div className="text-right">
-            <div className={`p-2 rounded-full ${
-              isSold ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-            }`}>
-              {isSold ? <ShoppingCart className="w-4 h-4" /> : <Package className="w-4 h-4" />}
-            </div>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {product.touch && <div><span className="text-gray-500">Touch:</span> {product.touch}</div>}
+            {weight > 0 && <div><span className="text-gray-500">Weight:</span> {weight >= 1000 ? `${(weight / 1000).toFixed(1)}kg` : `${weight}g`}</div>}
+            <div><span className="text-gray-500">Qty:</span> {product.qty}</div>
+            <div><span className="text-gray-500">Tray:</span> {product.trayno}</div>
           </div>
         </div>
       </Card>
@@ -283,17 +310,17 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       
       <PageContent>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <GradientCard title="Total Trays" icon={<Package className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-blue-600">{stats.trays}</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <GradientCard title="Total Trays" icon={<Package className="w-4 h-4 text-white" />}>
+            <div className="text-2xl font-bold text-blue-600">{stats.trays}</div>
           </GradientCard>
           
-          <GradientCard title="Total Products" icon={<Package className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-purple-600">{stats.totalProducts}</div>
+          <GradientCard title="Available Products" icon={<Package className="w-4 h-4 text-white" />}>
+            <div className="text-2xl font-bold text-green-600">{stats.availableProducts}</div>
           </GradientCard>
           
-          <GradientCard title="Available" icon={<Package className="w-5 h-5 text-white" />}>
-            <div className="text-3xl font-bold text-green-600">{stats.availableProducts}</div>
+          <GradientCard title="Available Weight" icon={<Package className="w-4 h-4 text-white" />}>
+            <div className="text-2xl font-bold text-purple-600">{(filteredProducts.reduce((sum, p) => sum + (parseFloat(p.weight) || 0), 0) / 1000).toFixed(1)}kg</div>
           </GradientCard>
         </div>
 
@@ -316,7 +343,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Tray</DialogTitle>
+                  <DialogTitle>{editingTray ? 'Edit Tray' : 'Add New Tray'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <FormField label="Tray Number" required>
@@ -324,13 +351,28 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
                       value={newTrayNo}
                       onChange={(e) => setNewTrayNo(e.target.value)}
                       placeholder="Enter tray number (e.g., T001)"
+                      readOnly={!!editingTray}
+                      disabled={!!editingTray}
+                    />
+                  </FormField>
+                  <FormField label="Tray Weight (g)">
+                    <Input
+                      type="number"
+                      value={newTrayWeight}
+                      onChange={(e) => setNewTrayWeight(e.target.value)}
+                      placeholder="Enter tray weight in grams"
                     />
                   </FormField>
                   <div className="flex gap-2 pt-4">
                     <Button onClick={handleAddTray} loading={loading} className="flex-1">
-                      Add Tray
+                      {editingTray ? 'Update Tray' : 'Add Tray'}
                     </Button>
-                    <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                    <Button variant="outline" onClick={() => {
+                      setShowAddDialog(false);
+                      setEditingTray(null);
+                      setNewTrayNo("");
+                      setNewTrayWeight("");
+                    }}>
                       Cancel
                     </Button>
                   </div>
@@ -355,92 +397,112 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
           </DialogContent>
         </Dialog>
 
-        {/* Tray-wise View */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-bold mb-4">Tray Overview</h2>
-            <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-              {getTrayWiseData().map(([trayNo, data]) => (
-                <Card 
-                  key={trayNo} 
-                  className={`p-3 cursor-pointer hover:shadow-lg transition-all border-2 ${
-                    selectedTray === trayNo ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'
-                  }`}
-                  onClick={() => {
-                    // Tray selected
-                    setSelectedTray(trayNo);
-                    const trayProductsWithStatus = data.products.map(product => {
-                      const soldQty = salesData.reduce((total, sale) => {
-                        const saleAttrs = sale.attributes || sale;
-                        if (saleAttrs.code === product.code || 
-                            (saleAttrs.product === product.product && 
-                             saleAttrs.touch === product.touch && 
-                             saleAttrs.weight === product.weight)) {
-                          return total + (parseFloat(saleAttrs.qty) || 0);
-                        }
-                        return total;
-                      }, 0);
-                      
-                      const availableQty = (parseFloat(product.qty) || 0) - soldQty;
-                      const status = availableQty > 0 ? 'available' as const : 'sold' as const;
-                      
-                      return { ...product, status, availableQty, soldQty };
-                    });
-                    // Products processed for display
-                    setFilteredProducts(trayProductsWithStatus);
-                  }}
-                >
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-blue-600">{trayNo}</div>
-                    <div className="text-sm text-gray-600">{data.available} available</div>
-                    <div className="text-xs text-gray-500">{data.totalWeight >= 1000 ? `${(data.totalWeight / 1000).toFixed(2)}kg` : `${data.totalWeight.toFixed(1)}g`}</div>
-                    <div className={`text-xs font-medium mt-1 ${
-                      data.available === 0 ? 'text-red-600' : 'text-green-600'
-                    }`}>
-                      {data.available > 0 ? 'In Stock' : 'Out of Stock'}
-                    </div>
-                  </div>
-                </Card>
-              ))}
+        {/* Tray Grid */}
+        <Card className="p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold">Tray Overview</h2>
+            <div className="text-sm text-gray-500">
+              {getTrayWiseData().length} trays
             </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">
-                {selectedTray ? `Products in Tray ${selectedTray}` : 'All Products'}
-              </h2>
-              <div className="flex items-center gap-4">
-                {selectedTray && (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setSelectedTray(null);
-                    filterProducts();
-                  }}>
-                    Show All
-                  </Button>
-                )}
-                <div className="text-sm text-gray-500">
-                  {filteredProducts.length} products found
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+            {getTrayWiseData().map(([trayNo, data]) => {
+              const trayData = allTrays.find(t => (t.attributes?.trayno || t.trayno) === trayNo);
+              const trayWeight = parseFloat(trayData?.attributes?.tray_weight || trayData?.tray_weight || '0');
+              const productWeight = data.totalWeight;
+              const actualWeight = productWeight + trayWeight;
+              
+              return (
+              <Card 
+                key={trayNo} 
+                className={`p-3 cursor-pointer hover:shadow-md transition-all border-2 ${
+                  selectedTray === trayNo ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'
+                } bg-green-50/30`}
+                onClick={() => {
+                  setSelectedTray(trayNo);
+                  const trayProductsWithStatus = data.products.map(product => {
+                    const isSold = salesData.some(sale => {
+                      const saleAttrs = sale.attributes || sale;
+                      return saleAttrs.barcode && product.code && saleAttrs.barcode === product.code;
+                    });
+                    
+                    const soldQty = isSold ? 1 : 0;
+                    const availableQty = isSold ? 0 : 1;
+                    const status = availableQty > 0 ? 'available' as const : 'sold' as const;
+                    
+                    return { ...product, status, availableQty, soldQty };
+                  });
+                  setFilteredProducts(trayProductsWithStatus);
+                }}
+              >
+                <div className="text-center space-y-2">
+                  <div className="text-lg font-bold text-blue-600">{trayNo}</div>
+                  <div className="flex justify-center">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      {data.available} items
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <div>Items: {productWeight >= 1000 ? `${(productWeight / 1000).toFixed(1)}kg` : `${productWeight.toFixed(0)}g`}</div>
+                    <div>Tray: {trayWeight >= 1000 ? `${(trayWeight / 1000).toFixed(1)}kg` : `${trayWeight.toFixed(0)}g`}</div>
+                    <div className="font-medium text-blue-600">Total: {actualWeight >= 1000 ? `${(actualWeight / 1000).toFixed(1)}kg` : `${actualWeight.toFixed(0)}g`}</div>
+                  </div>
+                  <div className="flex justify-center gap-1">
+                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTray(trayData);
+                      setNewTrayNo(trayNo);
+                      setNewTrayWeight(trayWeight.toString());
+                      setShowAddDialog(true);
+                    }}><Edit className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500" onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTray(trayData);
+                    }}><Trash2 className="w-3 h-3" /></Button>
+                  </div>
                 </div>
+              </Card>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Products Section */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold">
+              {selectedTray ? `Products in Tray ${selectedTray}` : 'All Products'}
+            </h2>
+            <div className="flex items-center gap-4">
+              {selectedTray && (
+                <Button variant="outline" size="sm" onClick={() => {
+                  setSelectedTray(null);
+                  filterProducts();
+                }}>
+                  Show All
+                </Button>
+              )}
+              <div className="text-sm text-gray-500">
+                {filteredProducts.length} products
               </div>
             </div>
-            
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2">Loading tray data...</p>
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  {selectedTray ? `No products in Tray ${selectedTray}` : 'No products found'}
-                </div>
-              ) : (
-                filteredProducts.map(renderProductCard)
-              )}
-            </div>
-          </Card>
-        </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+            {loading ? (
+              <div className="col-span-full text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2">Loading tray data...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                {selectedTray ? `No products in Tray ${selectedTray}` : 'No products found'}
+              </div>
+            ) : (
+              filteredProducts.map(renderProductCard)
+            )}
+          </div>
+        </Card>
       </PageContent>
       
       <SidebarWrapper

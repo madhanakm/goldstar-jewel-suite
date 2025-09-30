@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,9 @@ import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, Action
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { DataList, DetailPanel, FormDialog, useApi, usePagination, formatCurrency, formatDate, calculateTotal, BaseEntity, PageProps } from "@/shared";
 import { endpoints } from "@/shared";
-import { Package, Calendar, Hash, IndianRupee, Trash2, Plus, ShoppingBag, TrendingUp, Clock, Star, LogOut } from "lucide-react";
+import { Package, Calendar, Hash, IndianRupee, Trash2, Plus, ShoppingBag, TrendingUp, Clock, Star, LogOut, RefreshCw, Eye } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
 import "@/styles/scrollbar.css";
@@ -15,6 +17,7 @@ import "@/styles/scrollbar.css";
 interface PurchaseMaster extends BaseEntity {
   totalamount: string;
   totalqty: string;
+  totalweight?: string;
   date: string;
   suppliername: string;
   modeofpayment: string;
@@ -27,15 +30,15 @@ interface Purchase extends BaseEntity {
   qty: string;
   touch: string;
   product: string;
+  weight: string;
 }
 
 interface ProductForm {
   product: string;
   touch: string;
-  weight: string;
   qty: string;
   totalWeight: string;
-  rate: string;
+  totalPrice: string;
 }
 
 interface PurchaseEntryProps extends PageProps {
@@ -45,6 +48,7 @@ interface PurchaseEntryProps extends PageProps {
 export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryProps) => {
   const [purchaseMasters, setPurchaseMasters] = useState<PurchaseMaster[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [purchaseWeights, setPurchaseWeights] = useState<{[key: number]: string}>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPurchase, setSelectedPurchase] = useState<PurchaseMaster | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -55,10 +59,11 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const { loading, request } = useApi();
   const { goBack } = useNavigation();
 
-  const [newPurchase, setNewPurchase] = useState<{ suppliername: string; modeofpayment: string; products: ProductForm[] }>({
+  const [newPurchase, setNewPurchase] = useState<{ suppliername: string; modeofpayment: string; date: string; products: ProductForm[] }>({
     suppliername: "",
     modeofpayment: "",
-    products: [{ product: "", touch: "", weight: "", qty: "", totalWeight: "", rate: "" }]
+    date: new Date().toISOString().split('T')[0],
+    products: [{ product: "", touch: "", qty: "", totalWeight: "", totalPrice: "" }]
   });
   
   const [existingProducts, setExistingProducts] = useState<string[]>([]);
@@ -67,12 +72,47 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const [supplierSuggestions, setSupplierSuggestions] = useState<string[]>([]);
   const [showProductSuggestions, setShowProductSuggestions] = useState<{ [key: number]: boolean }>({});
   const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Computed values for table
+  const filteredPurchases = purchaseMasters
+    .filter(purchase => {
+      const matchesSearch = !searchFilter || 
+        purchase.suppliername?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        purchase.id?.toString().includes(searchFilter);
+      
+      return matchesSearch;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const totalPages = Math.ceil(filteredPurchases.length / pageSize);
+  const paginatedPurchases = filteredPurchases.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const loadPurchaseMasters = useCallback(async (pageNum = 1, search = "") => {
     try {
       const data = await request(endpoints.purchase.masters.list(1, 1000, search));
       const sortedData = (data.data || []).sort((a, b) => b.id - a.id);
       setPurchaseMasters(sortedData);
+      
+      // Load weights for each purchase master
+      const weights: {[key: number]: string} = {};
+      for (const master of sortedData) {
+        try {
+          const detailsData = await request(endpoints.purchase.details.list(master.id.toString()));
+          const totalWeight = (detailsData.data || []).reduce((sum: number, purchase: any) => 
+            sum + (parseFloat(purchase.weight) * parseFloat(purchase.qty)), 0
+          );
+          weights[master.id] = totalWeight.toFixed(2);
+        } catch (error) {
+          weights[master.id] = '0';
+        }
+      }
+      setPurchaseWeights(weights);
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -110,10 +150,29 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     loadPurchaseDetails(purchase.id.toString());
   };
 
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this purchase entry?')) return;
+    
+    try {
+      await request(endpoints.purchase.masters.delete(id), 'DELETE');
+      toast({
+        title: "✅ Success",
+        description: "Purchase entry deleted successfully",
+      });
+      loadPurchaseMasters(1, searchTerm);
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to delete purchase entry",
+        variant: "destructive",
+      });
+    }
+  };
+
   const addProductRow = () => {
     setNewPurchase(prev => ({
       ...prev,
-      products: [...prev.products, { product: "", touch: "", weight: "", qty: "", totalWeight: "", rate: "" }]
+      products: [...prev.products, { product: "", touch: "", qty: "", totalWeight: "", totalPrice: "" }]
     }));
   };
 
@@ -129,16 +188,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       ...prev,
       products: prev.products.map((product, i) => {
         if (i === index) {
-          const updatedProduct = { ...product, [field]: value };
-          
-          // Auto-calculate total weight when weight or quantity changes
-          if (field === 'weight' || field === 'qty') {
-            const weight = parseFloat(field === 'weight' ? value : product.weight) || 0;
-            const qty = parseFloat(field === 'qty' ? value : product.qty) || 0;
-            updatedProduct.totalWeight = (weight * qty).toFixed(2);
-          }
-          
-          return updatedProduct;
+          return { ...product, [field]: value };
         }
         return product;
       })
@@ -192,9 +242,15 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     }
 
     try {
-      const totalAmount = calculateTotal(newPurchase.products);
+      const totalAmount = newPurchase.products.reduce((sum, product) => 
+        sum + (parseFloat(product.totalPrice) || 0), 0
+      );
       const totalQty = newPurchase.products.reduce((sum, product) => 
         sum + (parseFloat(product.qty) || 0), 0
+      );
+
+      const totalWeight = newPurchase.products.reduce((sum, product) => 
+        sum + (parseFloat(product.totalWeight) || 0), 0
       );
 
       // Create purchase master
@@ -204,7 +260,8 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
           modeofpayment: newPurchase.modeofpayment,
           totalamount: totalAmount.toString(),
           totalqty: totalQty.toString(),
-          date: new Date().toISOString()
+          totalweight: totalWeight.toString(),
+          date: new Date(newPurchase.date).toISOString()
         }
       });
 
@@ -212,16 +269,16 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
 
       // Create individual purchases
       for (const product of newPurchase.products) {
-        if (product.product && product.qty && product.rate) {
+        if (product.product && product.qty && product.totalWeight && product.totalPrice) {
           await request(endpoints.purchase.details.create(), 'POST', {
             data: {
               pid: masterId.toString(),
               product: product.product,
               qty: product.qty,
-              rate: product.rate,
+              rate: (parseFloat(product.totalPrice) / parseFloat(product.qty)).toString(),
               touch: product.touch,
-              weight: product.weight,
-              total_amount: parseFloat(product.qty) * parseFloat(product.rate)
+              weight: (parseFloat(product.totalWeight) / parseFloat(product.qty)).toString(),
+              total_amount: parseFloat(product.totalPrice)
             }
           });
         }
@@ -233,7 +290,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       });
 
       setShowAddDialog(false);
-      setNewPurchase({ suppliername: "", modeofpayment: "", products: [{ product: "", touch: "", weight: "", qty: "", totalWeight: "", rate: "" }] });
+      setNewPurchase({ suppliername: "", modeofpayment: "", date: new Date().toISOString().split('T')[0], products: [{ product: "", touch: "", qty: "", totalWeight: "", totalPrice: "" }] });
       loadPurchaseMasters(1, searchTerm);
     } catch (error) {
       toast({
@@ -248,6 +305,10 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     loadPurchaseMasters();
     loadExistingData();
   }, [loadPurchaseMasters]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFilter, pageSize]);
   
   const loadExistingData = async () => {
     try {
@@ -356,182 +417,174 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       />
       
       <PageContent>
-        <div className="flex gap-4 h-[calc(100vh-160px)] max-w-none">
-          {/* Left Panel - Purchase List */}
-          <div className={`${showDetails ? 'w-1/2' : 'w-full'} transition-all duration-500 ease-in-out`}>
-            <div className="h-full">
-              <div className="bg-white rounded-xl shadow-lg border h-full">
-                <DataList
-                  title="Purchase Entries"
-                  icon={<div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg"><Package className="w-5 h-5 text-white" /></div>}
-                  data={purchaseMasters}
-                  loading={loading}
-                  searchValue={searchTerm}
-                  onSearchChange={handleSearch}
-                  onScroll={handleScroll}
-                  onAdd={() => setShowAddDialog(true)}
-                  renderItem={renderPurchaseItem}
-                  addButtonText="New Purchase"
-                />
+        {/* Purchase Table Section */}
+        <div>
+          <Card className="bg-white border shadow-lg">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <Package className="w-5 h-5 text-primary" />
+                    Purchase Entries
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">View and manage all purchase entries</p>
+                </div>
+                <Button onClick={() => setShowAddDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Purchase
+                </Button>
               </div>
             </div>
-          </div>
+            
+            <div className="p-6 space-y-4">
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Search</Label>
+                  <Input
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    placeholder="Search by supplier name or ID..."
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Entries per page</Label>
+                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={() => loadPurchaseMasters()} variant="outline">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
 
-          {showDetails && (
-            <div className="w-1/2">
-              <div className="h-full">
-                <Card className="h-full bg-white border shadow-lg overflow-hidden">
-                  <div className="h-1 bg-blue-500"></div>
-                  
-                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
-                          <Hash className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-800">Purchase Details</h3>
-                          <p className="text-sm text-gray-500">#{selectedPurchase?.id}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="hover:bg-red-50 hover:text-red-600">
-                        ✕
-                      </Button>
-                    </div>
-                  </div>
+              {/* Table */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {paginatedPurchases.map((purchase, index) => (
+                        <tr key={purchase.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {(currentPage - 1) * pageSize + index + 1}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {purchase.suppliername || 'Unknown Supplier'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(purchase.date)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                            {formatCurrency(purchase.totalamount)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {purchaseWeights[purchase.id] ? `${purchaseWeights[purchase.id]}g` : 'Loading...'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {purchase.totalqty} items
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {purchase.modeofpayment || 'Cash'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handlePurchaseClick(purchase)}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                View
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(purchase.id)}
+                                className="text-red-600 hover:bg-red-50 hover:border-red-300"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-                  <div className="flex-1 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-                    {selectedPurchase && (
-                      <div className="p-6 space-y-6">
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl border border-blue-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Calendar className="w-4 h-4 text-blue-600" />
-                              <Label className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Date</Label>
-                            </div>
-                            <p className="text-lg font-bold text-blue-800">{formatDate(selectedPurchase.date)}</p>
-                          </div>
-                          
-                          <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <IndianRupee className="w-4 h-4 text-green-600" />
-                              <Label className="text-xs font-semibold text-green-700 uppercase tracking-wide">Total</Label>
-                            </div>
-                            <p className="text-lg font-bold text-green-800">{formatCurrency(selectedPurchase.totalamount)}</p>
-                          </div>
-                          
-                          <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl border border-orange-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <TrendingUp className="w-4 h-4 text-orange-600" />
-                              <Label className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Supplier</Label>
-                            </div>
-                            <p className="text-lg font-bold text-orange-800">{selectedPurchase.suppliername || 'N/A'}</p>
-                          </div>
-                          
-                          <div className="p-4 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl border border-purple-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Package className="w-4 h-4 text-purple-600" />
-                              <Label className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Items</Label>
-                            </div>
-                            <p className="text-lg font-bold text-purple-800">{selectedPurchase.totalqty}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-100 rounded-xl border border-cyan-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <IndianRupee className="w-4 h-4 text-cyan-600" />
-                              <Label className="text-xs font-semibold text-cyan-700 uppercase tracking-wide">Payment Mode</Label>
-                            </div>
-                            <p className="text-lg font-bold text-cyan-800">{selectedPurchase.modeofpayment || 'N/A'}</p>
-                          </div>
-                        </div>
-
-                        {/* Products Section */}
-                        <div>
-                          <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-200">
-                            <div className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg shadow-md">
-                              <ShoppingBag className="w-4 h-4 text-white" />
-                            </div>
-                            <h4 className="text-lg font-bold text-gray-800">Product Breakdown</h4>
-                            <div className="ml-auto px-3 py-1 bg-gray-100 rounded-full text-sm font-medium text-gray-600">
-                              {purchases.length} items
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-3">
-                            {purchases.length === 0 ? (
-                              <div className="text-center py-8">
-                                <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                                <p className="text-gray-500">Loading products...</p>
-                              </div>
-                            ) : (
-                              purchases.map((purchase, index) => {
-                                const itemTotal = parseFloat(purchase.total_amount.toString());
-                                const isHighValue = itemTotal > 5000;
-                                
-                                return (
-                                  <Card key={purchase.id} className={`p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-l-4 ${
-                                    isHighValue ? 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-yellow-50' : 'border-l-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50'
-                                  }`}>
-                                    <div className="space-y-4">
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md ${
-                                            isHighValue ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-blue-400 to-indigo-500'
-                                          }`}>
-                                            {index + 1}
-                                          </div>
-                                          <div>
-                                            <h5 className="font-bold text-gray-800 text-lg">{purchase.product}</h5>
-                                            {isHighValue && <span className="inline-block px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full font-medium mt-1">High Value</span>}
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <div className={`text-2xl font-bold ${
-                                            isHighValue ? 'text-amber-600' : 'text-green-600'
-                                          }`}>
-                                            {formatCurrency(purchase.total_amount)}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-4 gap-3">
-                                        <div className="p-3 bg-white rounded-lg border border-blue-200 text-center">
-                                          <div className="text-blue-600 font-semibold text-sm mb-1">Quantity</div>
-                                          <div className="text-xl font-bold text-blue-800">{purchase.qty}</div>
-                                        </div>
-                                        <div className="p-3 bg-white rounded-lg border border-orange-200 text-center">
-                                          <div className="text-orange-600 font-semibold text-sm mb-1">Total Weight</div>
-                                          <div className="text-lg font-bold text-orange-800">{(() => {
-                                            const totalWeight = (parseFloat(purchase.weight) || 0) * (parseFloat(purchase.qty) || 0);
-                                            return totalWeight >= 1000 ? `${(totalWeight / 1000).toFixed(2)}kg` : `${totalWeight.toFixed(2)}g`;
-                                          })()}</div>
-                                        </div>
-                                        <div className="p-3 bg-white rounded-lg border border-green-200 text-center">
-                                          <div className="text-green-600 font-semibold text-sm mb-1">Rate</div>
-                                          <div className="text-xl font-bold text-green-800">{formatCurrency(purchase.rate)}</div>
-                                        </div>
-                                        <div className="p-3 bg-white rounded-lg border border-purple-200 text-center">
-                                          <div className="text-purple-600 font-semibold text-sm mb-1">Touch</div>
-                                          <div className="text-sm font-bold text-purple-800 truncate">{purchase.touch}</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </Card>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+              {/* Pagination */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredPurchases.length)} of {filteredPurchases.length} entries
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => 
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    )
+                    .map((page, index, array) => (
+                      <React.Fragment key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="px-2 text-gray-500">...</span>
+                        )}
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      </React.Fragment>
+                    ))
+                  }
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
-          )}
+          </Card>
         </div>
 
         <FormDialog
@@ -544,7 +597,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
         >
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
             <Label className="text-sm font-semibold text-blue-700 mb-3 block">Purchase Information</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="relative">
                 <Label className="text-xs text-blue-600 mb-1 block">Supplier Name *</Label>
                 <Input
@@ -566,6 +619,15 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                     ))}
                   </div>
                 )}
+              </div>
+              <div>
+                <Label className="text-xs text-blue-600 mb-1 block">Purchase Date</Label>
+                <Input
+                  type="date"
+                  value={newPurchase.date}
+                  onChange={(e) => setNewPurchase(prev => ({ ...prev, date: e.target.value }))}
+                  className="bg-white border-blue-300 focus:border-blue-500"
+                />
               </div>
               <div>
                 <Label className="text-xs text-blue-600 mb-1 block">Mode of Payment</Label>
@@ -606,7 +668,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
                 <div className="space-y-2 relative">
                   <Label className="text-sm font-semibold text-gray-700">Product Name</Label>
                   <Input
@@ -639,17 +701,6 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Weight/1 Piece (g)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={product.weight}
-                    onChange={(e) => updateProduct(index, 'weight', e.target.value)}
-                    placeholder="Weight per piece"
-                    className="border-gray-300 focus:border-indigo-500"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label className="text-sm font-semibold text-gray-700">Quantity</Label>
                   <Input
                     type="number"
@@ -662,28 +713,30 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-gray-700">Total Weight (g)</Label>
                   <Input
+                    type="number"
+                    step="0.01"
                     value={product.totalWeight}
-                    readOnly
-                    placeholder="Auto calculated"
-                    className="bg-gray-50 border-gray-300"
+                    onChange={(e) => updateProduct(index, 'totalWeight', e.target.value)}
+                    placeholder="Total weight"
+                    className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Rate (₹/piece)</Label>
+                  <Label className="text-sm font-semibold text-gray-700">Total Price (₹)</Label>
                   <Input
                     type="number"
                     step="0.01"
-                    value={product.rate}
-                    onChange={(e) => updateProduct(index, 'rate', e.target.value)}
-                    placeholder="Rate per piece"
+                    value={product.totalPrice}
+                    onChange={(e) => updateProduct(index, 'totalPrice', e.target.value)}
+                    placeholder="Total price"
                     className="border-gray-300 focus:border-indigo-500"
                   />
                 </div>
               </div>
-              {product.qty && product.rate && (
+              {product.totalPrice && (
                 <div className="mt-3 p-2 bg-green-50 rounded-lg border border-green-200">
                   <div className="text-sm text-green-700 font-medium">
-                    Subtotal: <span className="font-bold">{formatCurrency(parseFloat(product.qty) * parseFloat(product.rate) || 0)}</span>
+                    Price: <span className="font-bold">{formatCurrency(parseFloat(product.totalPrice) || 0)}</span>
                   </div>
                 </div>
               )}
@@ -700,12 +753,89 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
               <div className="text-right">
                 <div className="text-sm text-gray-600">Total Amount</div>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(calculateTotal(newPurchase.products))}
+                  {formatCurrency(newPurchase.products.reduce((sum, product) => sum + (parseFloat(product.totalPrice) || 0), 0))}
                 </div>
               </div>
             )}
           </div>
         </FormDialog>
+
+        {/* Purchase Details Dialog */}
+        <Dialog open={showDetails} onOpenChange={setShowDetails}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Purchase Details - #{selectedPurchase?.id}</DialogTitle>
+            </DialogHeader>
+            {selectedPurchase && (
+              <div className="space-y-6 pt-4">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="text-blue-600 font-semibold text-sm mb-1">Date</div>
+                    <div className="text-lg font-bold text-blue-800">{formatDate(selectedPurchase.date)}</div>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-green-600 font-semibold text-sm mb-1">Total Amount</div>
+                    <div className="text-lg font-bold text-green-800">{formatCurrency(selectedPurchase.totalamount)}</div>
+                  </div>
+                  <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="text-orange-600 font-semibold text-sm mb-1">Supplier</div>
+                    <div className="text-lg font-bold text-orange-800">{selectedPurchase.suppliername || 'N/A'}</div>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="text-purple-600 font-semibold text-sm mb-1">Items</div>
+                    <div className="text-lg font-bold text-purple-800">{selectedPurchase.totalqty}</div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                  <div className="text-cyan-600 font-semibold text-sm mb-1">Payment Mode</div>
+                  <div className="text-lg font-bold text-cyan-800">{selectedPurchase.modeofpayment || 'Cash'}</div>
+                </div>
+
+                {/* Products Table */}
+                <div>
+                  <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5" />
+                    Product Details ({purchases.length} items)
+                  </h4>
+                  
+                  {purchases.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500">Loading products...</p>
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Weight</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Touch</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {purchases.map((purchase, index) => (
+                            <tr key={purchase.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-4 text-sm font-medium text-gray-900">{purchase.product}</td>
+                              <td className="px-4 py-4 text-sm text-gray-500">{purchase.qty}</td>
+                              <td className="px-4 py-4 text-sm text-gray-500">{(parseFloat(purchase.weight) * parseFloat(purchase.qty)).toFixed(2)}g</td>
+                              <td className="px-4 py-4 text-sm text-gray-500">{purchase.touch}</td>
+                              <td className="px-4 py-4 text-sm font-medium text-green-600">{formatCurrency(purchase.total_amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </PageContent>
       
       <SidebarWrapper

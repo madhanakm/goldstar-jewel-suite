@@ -68,14 +68,35 @@ export class InvoiceService {
     const template = this.mapInvoiceToTemplate(invoice);
     
     // Generate items rows
-    const itemsHTML = template.items.map((item, index) => `
+    const itemsHTML = template.items.map((item, index) => {
+      // Hide weight for fixed price products (weight = 0)
+      const weightDisplay = (item.weight && item.weight > 0) ? `${item.weight}g` : '-';
+      
+      return `
       <tr>
-        <td style="border-right: 1px solid #000; width: 8%;">${index + 1}</td>
-        <td style="border-right: 1px solid #000; width: 35%;" colspan="3">${item.itemName} (${item.purity})</td>
-        <td style="border-right: 1px solid #000; width: 10%;">${item.quantity}</td>
-        <td style="border-right: 1px solid #000; width: 12%;">${item.weight}g</td>
-        <td style="border-right: 1px solid #000; width: 10%;">${Math.round(item.makingCharges)}%</td>
-        <td style="width: 25%;" colspan="2">₹${item.total.toLocaleString()}</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${index + 1}</td>
+        <td style="border-right: 1px solid #000; width: 40%; padding: 1px; text-align: left; font-size: 9px;">${item.itemName} (${item.purity || '-'})</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${item.quantity}</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 1px; font-size: 9px;">${weightDisplay}</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${item.makingCharges ? Math.round(item.makingCharges) + '%' : '-'}</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 1px; font-size: 9px;">${item.discountAmount ? '₹' + item.discountAmount.toFixed(2) : '-'}</td>
+        <td style="width: 12%; padding: 1px; font-size: 9px;">₹${item.total.toLocaleString()}</td>
+      </tr>
+      `;
+    }).join('');
+    
+    // Generate empty rows to fill space
+    const maxRows = 15; // Maximum rows that can fit
+    const emptyRowsCount = Math.max(0, maxRows - template.items.length);
+    const emptyRowsHTML = Array(emptyRowsCount).fill(0).map(() => `
+      <tr>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 40%; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 1px;">&nbsp;</td>
+        <td style="width: 12%; padding: 1px;">&nbsp;</td>
       </tr>
     `).join('');
 
@@ -88,16 +109,16 @@ export class InvoiceService {
     <title>Prabanjam Jewellery Invoice</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 14px; }
-        .invoice-container { max-width: 210mm; margin: 0 auto; padding: 14px; }
+        body { font-family: Arial, sans-serif; font-size: 10px; }
+        .invoice-container { width: 145mm; height: 210mm; margin: 0 auto; padding: 5mm; }
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
-        .invoice-table td { padding: 10px 6px; text-align: center; }
+        .invoice-table td { padding: 2px 3px; text-align: center; }
         .logo { width: 90%; }
-        .tax-badge { color: #fff; background-color: #000; padding: 7px 15px; border-radius: 10px; }
+        .tax-badge { color: #fff; background-color: #000; padding: 2px 6px; border-radius: 5px; font-size: 8px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
-            .invoice-container { max-width: none; padding: 0; margin: 0; }
-            @page { margin: 5mm; size: A4; }
+            .invoice-container { width: 145mm; height: 210mm; padding: 5mm; margin: 0; }
+            @page { margin: 0; size: 145mm 210mm; }
         }
     </style>
 </head>
@@ -105,70 +126,67 @@ export class InvoiceService {
     <div class="invoice-container">
         <table class="invoice-table">
             <tr style="font-weight: bold">
-                <td colspan="3" style="border-left: none; border-bottom: none; border-right: none">98422 44014</td>
-                <td colspan="3">நடப்பது யாவும் நன்மைக்கே</td>
-                <td colspan="3">90478 07888</td>
+                <td colspan="2" style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 9px;">98422 44014</td>
+                <td colspan="3" style="text-align: center; font-size: 9px;">நடப்பது யாவும் நன்மைக்கே</td>
+                <td colspan="2" style="text-align: right; font-size: 9px;">90478 07888</td>
             </tr>
             <tr><td colspan="9"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
-                <td colspan="3">Invoice No: ${template.invoiceNumber}</td>
-                <td colspan="3"><span class="tax-badge">Tax Invoice</span></td>
-                <td colspan="3">GSTIN: 33AAPCP7799B1ZX</td>
+                <td colspan="2" style="text-align: left; font-size: 9px;">Invoice No: ${template.invoiceNumber}</td>
+                <td colspan="2" style="text-align: center;"><span class="tax-badge" style="font-size: 10px; padding: 3px 8px; white-space: nowrap; display: inline-block;">Tax Invoice</span></td>
+                <td colspan="3" style="text-align: right; font-size: 9px; white-space: nowrap;">GSTIN: 33AAPCP7799B1ZX</td>
             </tr>
-            <tr><td colspan="9" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 12px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
+            <tr><td colspan="9" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 8px; padding: 1px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="6">Name: ${template.customerName}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Date: ${template.date}</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="6"><strong>Name:</strong> ${template.customerName}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Date:</strong> ${template.date}</td>
             </tr>
-            <tr><td style="text-align: left; border-bottom: 1px solid #000" colspan="9">Customer Details: ${template.customerAddress}</td></tr>
+            <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="9"><strong>Customer Details:</strong> ${template.customerAddress}</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Mobile: ${template.customerPhone}</td>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000" colspan="3">Buyer GSTIN: ${template.customerGstin}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000" colspan="3">Silver Rate: ₹${template.silverRate}/g</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Mobile:</strong> ${template.customerPhone}</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Customer GSTIN:</strong> ${template.customerGstin}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Silver Rate:</strong> ₹${template.silverRate}/g</td>
             </tr>
-            <tr style="font-weight: bold">
+            <tr style="font-weight: bold; background-color: #f5f5f5;">
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">S. No</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 35%;" colspan="3">Description</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 10%;">Quantity</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 40%;">Description</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">QTY</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Weight</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 10%;">VA%</td>
-                <td style="border-bottom: 1px solid #000; width: 25%;" colspan="2">Amount</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">VA%</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Disc Amt</td>
+                <td style="border-bottom: 1px solid #000; width: 12%;">Amount</td>
             </tr>
-            <tbody>${itemsHTML}</tbody>
+            ${itemsHTML}
+            ${emptyRowsHTML}
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left" rowspan="5" colspan="5">Amount in Words: ${template.amountInWords}</td>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Discount:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${invoice.discount.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Sub Total:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${(invoice.subtotal - invoice.discount).toLocaleString()}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 1px; font-weight: bold; font-size: 8px;" rowspan="4" colspan="5"><strong>Amount in Words:</strong> ${template.amountInWords}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px;">Sub Total:</td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px;">₹${invoice.subtotal.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Add SGST 1.5%:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${template.sgst.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px;">SGST 1.5%:</td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px;">₹${template.sgst.toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Add CGST 1.5%:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${template.cgst.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px;">CGST 1.5%:</td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px;">₹${template.cgst.toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000" colspan="2">Grand Total:</td>
-                <td style="border-top: 1px solid #000" colspan="2">₹${template.total.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-weight: bold; font-size: 8px; white-space: nowrap;"><strong>Total:</strong></td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px;">₹${template.total.toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000" colspan="5">Weight & Pieces Verified Found O.K</td>
-                <td style="border-top: 1px solid #000" colspan="4">For PRABANJAM JEWELLERY LIMITED</td>
+                <td style="border-top: 1px solid #000" colspan="4">Weight & Pieces Verified Found O.K</td>
+                <td style="border-top: 1px solid #000" colspan="3">For PRABANJAM JEWELLERY LIMITED</td>
             </tr>
-            <tr><td colspan="9" rowspan="2"></td></tr>
-            <tr></tr>
+            <tr><td colspan="7" style="height: 30px;"></td></tr>
             <tr>
-                <td colspan="5">Customer Signature</td>
-                <td colspan="4">Authorised Signature</td>
+                <td colspan="4">Customer Signature</td>
+                <td colspan="3">Authorised Signature</td>
             </tr>
             <tr>
-                <td colspan="5" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருககக்கு நன்றி மீண்டும் வருக.</td>
-                <td colspan="4"></td>
+                <td colspan="4" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருககக்கு நன்றி மீண்டும் வருக.</td>
+                <td colspan="3"></td>
             </tr>
         </table>
     </div>

@@ -29,7 +29,11 @@ interface Product {
   qty: string;
   price: string;
   wastage: string;
+  discountPercent: string;
+  discountAmount: string;
   total: string;
+  barcode?: string;
+  isFixedPrice?: boolean;
 }
 
 interface SalesEntryProps extends PageProps {
@@ -38,7 +42,7 @@ interface SalesEntryProps extends PageProps {
 
 export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [customer, setCustomer] = useState<Customer>({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
-  const [products, setProducts] = useState<Product[]>([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
+  const [products, setProducts] = useState<Product[]>([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", discountPercent: "", discountAmount: "", total: "", barcode: "" }]);
   const [barcodeProducts, setBarcodeProducts] = useState<any[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
@@ -48,9 +52,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [lastInvoiceId, setLastInvoiceId] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
   const [entryNumber, setEntryNumber] = useState("");
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [discountAmount, setDiscountAmount] = useState(0);
+
   const [estimationToConvert, setEstimationToConvert] = useState<any>(null);
+  const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
 
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
@@ -64,6 +68,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
     
     generateEntryNumber();
   }, []);
+
+
 
 
 
@@ -82,7 +88,11 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       const convertedProducts = data.items.map((item: any) => {
         const weight = parseFloat(item.weight) || 0;
         const silverRate = data.silverRate || 0;
-        const price = weight * silverRate;
+        const isFixedPrice = weight === 0; // Fixed price products have no weight
+        
+        // For fixed price products, use the item's amount as price
+        // For weight-based products, calculate price from weight * silver rate
+        const price = isFixedPrice ? (parseFloat(item.amount) || 0) : (weight * silverRate);
         
         return {
           product: item.product || '',
@@ -91,15 +101,17 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           qty: item.qty || '1',
           price: price.toFixed(2),
           wastage: data.wastage.toString(),
-          total: item.total || ''
+          discountPercent: item.discountPercent?.toString() || '0',
+          discountAmount: item.discountAmount?.toString() || '0',
+          total: item.total || '',
+          barcode: '',
+          isFixedPrice: isFixedPrice
         };
       });
       
-      setProducts(convertedProducts.length > 0 ? convertedProducts : [{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
+
       
-      // Pre-fill discount
-      setDiscountPercent(data.discountPercent);
-      setDiscountAmount(data.discountAmount);
+      setProducts(convertedProducts.length > 0 ? convertedProducts : [{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", discountPercent: "", discountAmount: "", total: "", barcode: "" }]);
       
       // Set silver rate
       setSilverRate(data.silverRate);
@@ -111,7 +123,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   useEffect(() => {
     calculateTotal();
-  }, [products, taxPercentage, discountAmount]);
+  }, [products, taxPercentage]);
 
   const loadBarcodeProducts = async () => {
     try {
@@ -162,47 +174,61 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const calculateTotal = () => {
     const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
-    const discountedTotal = productTotal - discountAmount;
-    const taxAmount = (discountedTotal * parseFloat(taxPercentage)) / 100;
-    setTotalAmount(discountedTotal + taxAmount);
+    const taxAmount = (productTotal * parseFloat(taxPercentage)) / 100;
+    setTotalAmount(productTotal + taxAmount);
   };
 
-  const handleDiscountPercentChange = (percent: number) => {
-    setDiscountPercent(percent);
-    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
-    const amount = Math.round((productTotal * percent) / 100);
-    setDiscountAmount(amount);
-  };
 
-  const handleDiscountAmountChange = (amount: number) => {
-    setDiscountAmount(amount);
-    const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
-    const percent = productTotal > 0 ? Math.round(((amount / productTotal) * 100) * 100) / 100 : 0;
-    setDiscountPercent(percent);
-  };
 
   const handleBarcodeSearch = async (barcode: string, index: number) => {
     const foundProduct = barcodeProducts.find(p => p.code === barcode);
     
     if (foundProduct) {
-      const weight = parseFloat(foundProduct.weight) || 0;
-      const price = weight * silverRate;
-      const wastagePercent = parseFloat(foundProduct.making_charges_or_wastages) || 0;
-      const wastageAmount = (price * wastagePercent) / 100;
-      const total = price + wastageAmount;
-      
-      setProducts(prev => prev.map((product, i) => 
-        i === index ? {
-          ...product,
-          product: foundProduct.product || '',
-          touch: foundProduct.touch || '',
-          weight: foundProduct.weight || '',
-          qty: foundProduct.qty || '1',
-          price: price.toFixed(2),
-          wastage: wastagePercent.toString(),
-          total: total.toFixed(2)
-        } : product
-      ));
+      if (foundProduct.staticProduct) {
+        // Fixed price product - use the stored price directly
+        const price = parseFloat(foundProduct.price) || 0;
+        
+        setProducts(prev => prev.map((product, i) => 
+          i === index ? {
+            ...product,
+            product: foundProduct.product || '',
+            touch: foundProduct.touch || '',
+            weight: '0', // Store as 0 for fixed price products
+            qty: foundProduct.qty || '1',
+            price: price.toFixed(2),
+            wastage: '0',
+            discountPercent: '0',
+            discountAmount: '0',
+            total: price.toFixed(2),
+            barcode: barcode,
+            isFixedPrice: true
+          } : product
+        ));
+      } else {
+        // Weight-based product - calculate price using silver rate
+        const weight = parseFloat(foundProduct.weight) || 0;
+        const price = weight * silverRate;
+        const wastagePercent = parseFloat(foundProduct.making_charges_or_wastages) || 0;
+        const wastageAmount = (price * wastagePercent) / 100;
+        const total = price + wastageAmount;
+        
+        setProducts(prev => prev.map((product, i) => 
+          i === index ? {
+            ...product,
+            product: foundProduct.product || '',
+            touch: foundProduct.touch || '',
+            weight: foundProduct.weight || '',
+            qty: foundProduct.qty || '1',
+            price: price.toFixed(2),
+            wastage: wastagePercent.toString(),
+            discountPercent: '0',
+            discountAmount: '0',
+            total: total.toFixed(2),
+            barcode: barcode,
+            isFixedPrice: false
+          } : product
+        ));
+      }
     }
   };
 
@@ -229,7 +255,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   };
 
   const addProduct = () => {
-    setProducts([...products, { product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
+    setProducts([...products, { product: "", touch: "", weight: "", qty: "", price: "", wastage: "", discountPercent: "", discountAmount: "", total: "", barcode: "" }]);
   };
 
   const removeProduct = (index: number) => {
@@ -241,17 +267,40 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       if (i === index) {
         const updatedProduct = { ...product, [field]: value };
         
-        // Auto-calculate price and total when weight or wastage changes
-        if ((field === 'weight' || field === 'wastage') && silverRate > 0) {
-          const weight = parseFloat(field === 'weight' ? value : product.weight) || 0;
-          const wastagePercent = parseFloat(field === 'wastage' ? value : product.wastage) || 0;
-          const price = weight * silverRate;
-          const wastageAmount = (price * wastagePercent) / 100;
-          const total = price + wastageAmount;
+        // Auto-calculate total with price, wastage, and discount
+        const calculateProductTotal = () => {
+          const price = parseFloat(updatedProduct.price) || 0;
+          const wastagePercent = parseFloat(updatedProduct.wastage) || 0;
+          const discountPercent = parseFloat(updatedProduct.discount) || 0;
           
-          updatedProduct.price = price.toFixed(2);
-          updatedProduct.total = total.toFixed(2);
+          if (field === 'weight' && silverRate > 0) {
+            const weight = parseFloat(value) || 0;
+            const calculatedPrice = weight * silverRate;
+            updatedProduct.price = calculatedPrice.toFixed(2);
+            return calculatedPrice;
+          }
+          return price;
+        };
+        
+        const basePrice = calculateProductTotal();
+        const wastageAmount = (basePrice * parseFloat(updatedProduct.wastage || '0')) / 100;
+        const subtotal = basePrice + wastageAmount;
+        
+        // Handle discount percentage/amount conversion
+        if (field === 'discountPercent') {
+          const percent = parseFloat(value) || 0;
+          const amount = (subtotal * percent) / 100;
+          updatedProduct.discountAmount = amount.toFixed(2);
+        } else if (field === 'discountAmount') {
+          const amount = parseFloat(value) || 0;
+          const percent = subtotal > 0 ? (amount / subtotal) * 100 : 0;
+          updatedProduct.discountPercent = percent.toFixed(2);
         }
+        
+        const discountAmount = parseFloat(updatedProduct.discountAmount || '0');
+        const total = subtotal - discountAmount;
+        
+        updatedProduct.total = total.toFixed(2);
         
         return updatedProduct;
       }
@@ -291,7 +340,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       const salesMasterPayload = {
         data: {
           cid: customerId.toString(),
-          date: new Date().toISOString(),
+          date: new Date(saleDate).toISOString(),
           invoice: invoiceId,
           totalamount: totalAmount.toString(),
           totalqty: products.reduce((sum, p) => sum + (parseFloat(p.qty) || 0), 0).toString(),
@@ -300,54 +349,87 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           currentSilverRate: silverRate.toString(),
           wastage: totalWastageAmount.toString(),
           remarks: `wastage_percent:${avgWastagePercent}`,
-          discount_percentage: discountPercent.toString(),
-          discount_amount: discountAmount.toString()
+          discount_percentage: "0",
+          discount_amount: "0"
         }
       };
       const salesMasterResponse = await request(endpoints.sales.masters.create(), 'POST', salesMasterPayload);
+      console.log('Sales Master Created:', salesMasterResponse);
 
-      // Create sales details
-      for (const product of products) {
+      // Create individual sales details with sequence numbers
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
         if (product.product) {
-          const salesDetailPayload = {
-            data: {
-              invoice_id: invoiceId,
-              product: product.product,
-              touch: product.touch,
-              weight: product.weight,
-              qty: product.qty,
-              amount: product.total,
-              total: parseFloat(product.total) * parseFloat(product.qty || "1")
+          try {
+            const salesDetailPayload = {
+              data: {
+                invoice_id: invoiceId,
+                product: product.product,
+                touch: product.touch || "",
+                weight: product.weight || "0",
+                qty: product.qty,
+                amount: product.total,
+                total: (parseFloat(product.total) * parseFloat(product.qty || "1")).toString(),
+                discount_percentage: product.discountPercent || "0",
+                discount_amount: product.discountAmount || "0",
+                barcode: product.barcode || ""
+              }
+            };
+            const detailResponse = await request(endpoints.sales.details.create(), 'POST', salesDetailPayload);
+            console.log(`Sales Detail ${i + 1} Created:`, detailResponse);
+            
+            // Add delay between requests
+            if (i < products.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 200));
             }
-          };
-          const salesDetailResponse = await request(endpoints.sales.details.create(), 'POST', salesDetailPayload);
+          } catch (detailError) {
+            console.error(`Failed to create sales detail for product ${i + 1}:`, product.product, detailError);
+          }
         }
       }
 
-      // Mark estimation as converted if this sale was created from an estimation
+      // Delete estimation if this sale was created from an estimation
       if (estimationToConvert) {
         try {
-          const updatePayload = {
-            data: {
-              converted_to_sale: true,
-              converted_invoice_number: invoiceId
+          console.log('Deleting estimation:', estimationToConvert.estimationNumber);
+          
+          // Delete estimation details first
+          const detailsResponse = await request(`/api/estimation-details?filters[estimation_id][$eq]=${estimationToConvert.estimationNumber}`);
+          console.log('Details to delete:', detailsResponse.data);
+          
+          if (detailsResponse.data && detailsResponse.data.length > 0) {
+            for (const detail of detailsResponse.data) {
+              console.log('Deleting detail:', detail.documentId);
+              try {
+                await fetch(`https://jewelapi.sricashway.com/api/estimation-details/${detail.documentId}`, {
+                  method: 'DELETE'
+                });
+              } catch (e) {
+                console.log('Detail deleted or already removed');
+              }
             }
-          };
-          
-          // Use direct fetch with full URL
-          const response = await fetch(`https://jewelapi.sricashway.com/api/estimation-masters/${estimationToConvert.estimationId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatePayload)
-          });
-          
-          if (response.ok) {
-            setEstimationToConvert(null);
           }
+          
+          // Delete estimation master
+          const masterResponse = await request(`/api/estimation-masters?filters[estimation_number][$eq]=${estimationToConvert.estimationNumber}`);
+          console.log('Master to delete:', masterResponse.data);
+          
+          if (masterResponse.data && masterResponse.data.length > 0) {
+            const estimationMaster = masterResponse.data[0];
+            console.log('Deleting master:', estimationMaster.documentId);
+            try {
+              await fetch(`https://jewelapi.sricashway.com/api/estimation-masters/${estimationMaster.documentId}`, {
+                method: 'DELETE'
+              });
+            } catch (e) {
+              console.log('Master deleted or already removed');
+            }
+          }
+          
+          console.log('Estimation deletion completed');
+          setEstimationToConvert(null);
         } catch (error) {
-          console.error('Failed to update estimation status:', error);
+          console.error('Failed to delete estimation:', error);
         }
       }
       
@@ -370,8 +452,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const handlePrintInvoice = () => {
     const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
-    const taxableAmount = productTotal - discountAmount;
-    const taxAmount = (taxableAmount * parseFloat(taxPercentage)) / 100;
+    const taxAmount = (productTotal * parseFloat(taxPercentage)) / 100;
     const sgst = taxAmount / 2;
     const cgst = taxAmount / 2;
     
@@ -385,15 +466,17 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         id: p.product,
         itemName: p.product,
         category: 'Jewelry',
-        weight: parseFloat(p.weight) || 0,
+        weight: p.isFixedPrice ? 0 : (parseFloat(p.weight) || 0),
         purity: p.touch,
         rate: 0,
         makingCharges: parseFloat(p.wastage) || 0,
         quantity: parseFloat(p.qty) || 1,
+        discountPercent: parseFloat(p.discountPercent) || 0,
+        discountAmount: parseFloat(p.discountAmount) || 0,
         total: parseFloat(p.total) || 0
       })),
       subtotal: productTotal,
-      discount: discountAmount,
+      discount: 0,
       gst: {
         sgst,
         cgst,
@@ -414,12 +497,11 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const handleNewSale = () => {
     setCustomer({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
-    setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", total: "" }]);
-    setDiscountPercent(0);
-    setDiscountAmount(0);
+    setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", discountPercent: "", discountAmount: "", total: "", barcode: "" }]);
     setEstimationToConvert(null);
     setShowInvoice(false);
     setLastInvoiceId("");
+    setSaleDate(new Date().toISOString().split('T')[0]);
     generateEntryNumber();
   };
 
@@ -526,20 +608,12 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   placeholder="Cash, UPI, Card"
                 />
               </FormField>
-              <FormField label="Discount %">
+
+              <FormField label="Sale Date">
                 <Input
-                  type="number"
-                  value={discountPercent || ''}
-                  onChange={(e) => handleDiscountPercentChange(parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
-                />
-              </FormField>
-              <FormField label="Discount Amount (₹)">
-                <Input
-                  type="number"
-                  value={discountAmount || ''}
-                  onChange={(e) => handleDiscountAmountChange(parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
+                  type="date"
+                  value={saleDate}
+                  onChange={(e) => setSaleDate(e.target.value)}
                 />
               </FormField>
               <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -564,7 +638,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-9 gap-4">
                 <FormField label="Barcode/Product">
                   <Input
                     value={product.product}
@@ -572,21 +646,23 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                       const value = e.target.value;
                       updateProduct(index, "product", value);
                       
-                      // Only search if it's a complete barcode
-                      if (value.length === 14 && /^\d+$/.test(value)) {
+                      // Search for any numeric barcode
+                      if (value.length >= 10 && /^\d+$/.test(value)) {
                         handleBarcodeSearch(value, index);
                       }
                     }}
                     placeholder="Scan or enter barcode"
                   />
                 </FormField>
-                <FormField label="Touch">
-                  <Input
-                    value={product.touch}
-                    onChange={(e) => updateProduct(index, "touch", e.target.value)}
-                    placeholder="Touch/Purity"
-                  />
-                </FormField>
+                {!product.isFixedPrice && (
+                  <FormField label="Touch">
+                    <Input
+                      value={product.touch}
+                      onChange={(e) => updateProduct(index, "touch", e.target.value)}
+                      placeholder="Touch/Purity"
+                    />
+                  </FormField>
+                )}
                 <FormField label="Quantity">
                   <Input
                     value={product.qty}
@@ -595,36 +671,56 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                     type="number"
                   />
                 </FormField>
-                <FormField label={`Weight (₹${silverRate}/g)`}>
-                  <Input
-                    value={product.weight}
-                    onChange={(e) => updateProduct(index, "weight", e.target.value)}
-                    placeholder="Weight"
-                    type="number"
-                  />
-                </FormField>
+                {!product.isFixedPrice && (
+                  <FormField label={`Weight (₹${silverRate}/g)`}>
+                    <Input
+                      value={product.weight}
+                      onChange={(e) => updateProduct(index, "weight", e.target.value)}
+                      placeholder="Weight"
+                      type="number"
+                    />
+                  </FormField>
+                )}
                 <FormField label="Price">
                   <Input
                     value={product.price}
-                    readOnly
-                    placeholder="Auto calculated"
-                    className="bg-gray-50"
+                    onChange={(e) => updateProduct(index, "price", e.target.value)}
+                    placeholder="Price"
+                    type="number"
                   />
                 </FormField>
-                <FormField label="VA%">
-                  <div className="space-y-1">
-                    <Input
-                      value={product.wastage}
-                      onChange={(e) => updateProduct(index, "wastage", e.target.value)}
-                      placeholder="Wastage %"
-                      type="number"
-                    />
-                    {product.price && product.wastage && (
-                      <div className="text-xs text-gray-500">
-                        Amount: ₹{((parseFloat(product.price) || 0) * (parseFloat(product.wastage) || 0) / 100).toFixed(2)}
-                      </div>
-                    )}
-                  </div>
+                {!product.isFixedPrice && (
+                  <FormField label="VA%">
+                    <div className="space-y-1">
+                      <Input
+                        value={product.wastage}
+                        onChange={(e) => updateProduct(index, "wastage", e.target.value)}
+                        placeholder="Wastage %"
+                        type="number"
+                      />
+                      {product.price && product.wastage && (
+                        <div className="text-xs text-gray-500">
+                          Amount: ₹{((parseFloat(product.price) || 0) * (parseFloat(product.wastage) || 0) / 100).toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                  </FormField>
+                )}
+                <FormField label="Discount %">
+                  <Input
+                    value={product.discountPercent}
+                    onChange={(e) => updateProduct(index, "discountPercent", e.target.value)}
+                    placeholder="Discount %"
+                    type="number"
+                  />
+                </FormField>
+                <FormField label="Discount ₹">
+                  <Input
+                    value={product.discountAmount}
+                    onChange={(e) => updateProduct(index, "discountAmount", e.target.value)}
+                    placeholder="Discount Amount"
+                    type="number"
+                  />
                 </FormField>
                 <FormField label="Total">
                   <Input
@@ -644,8 +740,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
               Add Product
             </Button>
             {!showInvoice ? (
-              <Button onClick={handleSubmit} loading={loading} size="lg">
-                Create Sale
+              <Button onClick={handleSubmit} disabled={loading} size="lg">
+                {loading ? 'Creating...' : 'Create Sale'}
               </Button>
             ) : (
               <div className="flex gap-2">

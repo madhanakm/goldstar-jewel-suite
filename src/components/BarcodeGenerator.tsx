@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
-import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List, Download } from "lucide-react";
+import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List, Download, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import JsBarcode from "jsbarcode";
 
@@ -22,13 +22,13 @@ interface BarcodeData {
   making_charges_or_wastages: string;
   trayno: string;
   code: string;
+  staticProduct: boolean;
+  price: string;
 }
 
 interface Product {
   product: string;
   touch: string;
-  rate: string;
-  weight?: string;
 }
 
 interface BarcodeGeneratorProps extends PageProps {
@@ -43,28 +43,73 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     touch: "",
     making_charges_or_wastages: "",
     trayno: "",
-    code: ""
+    code: "",
+    staticProduct: false,
+    price: ""
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [trays, setTrays] = useState<any[]>([]);
   const [generatedBarcodes, setGeneratedBarcodes] = useState<any[]>([]);
+  const [salesData, setSalesData] = useState<any[]>([]);
   const [showBarcodeList, setShowBarcodeList] = useState(false);
+  const [editingBarcode, setEditingBarcode] = useState<any>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
   const barcodeCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Computed values for table
+  const filteredBarcodes = generatedBarcodes.filter(barcode => {
+    const matchesSearch = !searchFilter || 
+      barcode.product?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      barcode.code?.toLowerCase().includes(searchFilter.toLowerCase());
+    
+    const matchesType = typeFilter === "all" || 
+      (typeFilter === "fixed" && barcode.staticProduct) ||
+      (typeFilter === "weight" && !barcode.staticProduct);
+    
+    return matchesSearch && matchesType;
+  }).sort((a, b) => {
+    const aIsSold = salesData.some(sale => {
+      const saleAttrs = sale.attributes || sale;
+      return saleAttrs.barcode && a.code && saleAttrs.barcode === a.code;
+    });
+    const bIsSold = salesData.some(sale => {
+      const saleAttrs = sale.attributes || sale;
+      return saleAttrs.barcode && b.code && saleAttrs.barcode === b.code;
+    });
+    
+    // Available items (false) come first, sold items (true) come last
+    return aIsSold - bIsSold;
+  });
+
+  const totalPages = Math.ceil(filteredBarcodes.length / pageSize);
+  const paginatedBarcodes = filteredBarcodes.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   useEffect(() => {
     loadProducts();
     loadTrays();
     loadGeneratedBarcodes();
+    loadSalesData();
     generateCode();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFilter, typeFilter, pageSize, salesData]);
 
   useEffect(() => {
     if (formData.code && showPreview) {
@@ -99,9 +144,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
             if (!exists) {
               acc.push({ 
                 product: productName, 
-                touch, 
-                rate, 
-                weight: item.weight || item.attributes?.weight || '' 
+                touch
               });
             }
           }
@@ -131,9 +174,44 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
   const loadGeneratedBarcodes = async () => {
     try {
       const response = await request(endpoints.barcode.listBarcodes());
-      setGeneratedBarcodes(response.data || []);
+      const barcodes = response.data || [];
+      
+      // Handle both Strapi v4 format (attributes) and direct format
+      const processedBarcodes = barcodes.map(barcode => {
+        const barcodeData = barcode.attributes || barcode;
+        return {
+          ...barcodeData,
+          id: barcode.id,
+          documentId: barcode.documentId
+        };
+      });
+      
+      setGeneratedBarcodes(processedBarcodes);
     } catch (error) {
-      console.error("Failed to load generated barcodes");
+      console.error("Failed to load generated barcodes", error);
+    }
+  };
+
+  const loadSalesData = async () => {
+    try {
+      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesMasters = salesMastersResponse.data || [];
+      
+      const allSalesDetails = [];
+      for (const master of salesMasters) {
+        try {
+          const masterAttrs = master.attributes || master;
+          const detailsResponse = await request(endpoints.sales.details.list(masterAttrs.invoice));
+          const details = detailsResponse.data || [];
+          allSalesDetails.push(...details);
+        } catch (error) {
+          console.error(`Failed to load details for invoice ${masterAttrs.invoice}`);
+        }
+      }
+      
+      setSalesData(allSalesDetails);
+    } catch (error) {
+      console.error("Failed to load sales data");
     }
   };
 
@@ -178,18 +256,20 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     setFormData(prev => ({
       ...prev,
       product: product.product,
-      touch: product.touch,
-      weight: product.weight || ''
+      touch: product.touch
     }));
     setShowSuggestions(false);
     setIsConfirmed(false);
   };
 
   const handlePreview = () => {
-    if (!formData.product || !formData.weight || !formData.code) {
+    const requiredField = formData.staticProduct ? formData.price : formData.weight;
+    const fieldName = formData.staticProduct ? 'price' : 'weight';
+    
+    if (!formData.product || !requiredField || !formData.code) {
       toast({
         title: "⚠️ Missing Information",
-        description: "Please fill in product name, weight, and ensure code is generated",
+        description: `Please fill in product name, ${fieldName}, and ensure code is generated`,
         variant: "destructive",
       });
       return;
@@ -199,24 +279,36 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const handleConfirm = async () => {
     try {
-      await request(endpoints.barcode.create(), 'POST', {
-        data: {
+      const payload = {
+        data: formData.staticProduct ? {
+          product: formData.product,
+          weight: formData.weight,
+          qty: formData.qty,
+          code: formData.code,
+          staticProduct: formData.staticProduct,
+          price: formData.price,
+          trayno: formData.trayno
+        } : {
           product: formData.product,
           weight: formData.weight,
           qty: formData.qty,
           touch: formData.touch,
           making_charges_or_wastages: formData.making_charges_or_wastages,
           trayno: formData.trayno,
-          code: formData.code
+          code: formData.code,
+          staticProduct: formData.staticProduct
         }
-      });
+      };
+      await request(endpoints.barcode.create(), 'POST', payload);
       setIsConfirmed(true);
       loadGeneratedBarcodes();
+      loadSalesData();
       toast({
         title: "✅ Success",
         description: "Barcode confirmed and saved to database",
       });
     } catch (error) {
+      console.error('Barcode save error:', error);
       toast({
         title: "❌ Error",
         description: "Failed to save barcode to database",
@@ -233,7 +325,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       touch: "",
       making_charges_or_wastages: "",
       trayno: "",
-      code: ""
+      code: "",
+      staticProduct: false,
+      price: ""
     });
     setShowPreview(false);
     setIsConfirmed(false);
@@ -267,15 +361,25 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.textAlign = 'center';
       
       const centerX = canvas.width / 2;
-      ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
-      ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 35);
+      
+      if (product.staticProduct) {
+        // Fixed price product - show product name, weight, price and qty
+        ctx.fillText(`${product.product}`, centerX, 20);
+        ctx.fillText(`Weight: ${product.weight}g • Price: ₹${product.price} • Qty: ${product.qty}`, centerX, 35);
+      } else {
+        // Weight-based product - show all details
+        ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
+        ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 35);
+      }
       
       // Draw barcode centered
       const x = (canvas.width - tempCanvas.width) / 2;
       ctx.drawImage(tempCanvas, x, 40);
       
-      // Add tray and VA info below barcode
-      ctx.fillText(`Tray: ${product.trayno} | VA: ${product.making_charges_or_wastages}%`, centerX, 135);
+      // Add additional info below barcode only for weight-based products
+      if (!product.staticProduct) {
+        ctx.fillText(`Tray: ${product.trayno} | VA: ${product.making_charges_or_wastages}%`, centerX, 135);
+      }
       
       // Add code below everything
       ctx.fillText(product.code, centerX, 155);
@@ -311,6 +415,83 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     link.click();
   };
 
+  const handleEdit = (barcode: any) => {
+    setEditingBarcode(barcode);
+    setFormData({
+      product: barcode.product,
+      weight: barcode.weight || '',
+      qty: barcode.qty,
+      touch: barcode.touch || '',
+      making_charges_or_wastages: barcode.making_charges_or_wastages || '',
+      trayno: barcode.trayno || '',
+      code: barcode.code,
+      staticProduct: barcode.staticProduct || false,
+      price: barcode.price || ''
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const payload = {
+        data: formData.staticProduct ? {
+          product: formData.product,
+          weight: formData.weight,
+          qty: formData.qty,
+          code: formData.code,
+          staticProduct: formData.staticProduct,
+          price: formData.price,
+          trayno: formData.trayno
+        } : {
+          product: formData.product,
+          weight: formData.weight,
+          qty: formData.qty,
+          touch: formData.touch,
+          making_charges_or_wastages: formData.making_charges_or_wastages,
+          trayno: formData.trayno,
+          code: formData.code,
+          staticProduct: formData.staticProduct
+        }
+      };
+      
+      await request(`/api/barcodes/${editingBarcode.documentId || editingBarcode.id}`, 'PUT', payload);
+      setShowEditDialog(false);
+      setEditingBarcode(null);
+      loadGeneratedBarcodes();
+      loadSalesData();
+      toast({
+        title: "✅ Success",
+        description: "Barcode updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to update barcode",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (barcode: any) => {
+    if (!confirm('Are you sure you want to delete this barcode?')) return;
+    
+    try {
+      await request(`/api/barcodes/${barcode.documentId || barcode.id}`, 'DELETE');
+      loadGeneratedBarcodes();
+      loadSalesData();
+      toast({
+        title: "✅ Success",
+        description: "Barcode deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to delete barcode",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <PageLayout>
       <PageHeader
@@ -329,9 +510,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                 Confirmed
               </Badge>
             )}
-            <ActionButton variant="outline" size="sm" onClick={() => setShowBarcodeList(true)} icon={List}>
-              <span className="hidden sm:inline">View Barcodes</span>
-            </ActionButton>
+
             {onLogout && (
               <ActionButton variant="danger" size="sm" onClick={onLogout} icon={LogOut}>
                 <span className="hidden sm:inline">Logout</span>
@@ -347,6 +526,18 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           <div className="space-y-6">
             <FormSection title="Product Information" description="Enter product details for barcode generation">
               <div className="grid grid-cols-1 gap-4">
+                <FormField label="Product Type" required>
+                  <Select value={formData.staticProduct ? 'static-price' : 'weight-based'} onValueChange={(value) => setFormData(prev => ({ ...prev, staticProduct: value === 'static-price' }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select product type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weight-based">Weight-based Product</SelectItem>
+                      <SelectItem value="static-price">Fixed Price Product</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
+
                 <FormField label="Product Name" required>
                   <div className="relative">
                     <Input
@@ -365,7 +556,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                             onClick={() => selectProduct(product)}
                           >
                             <div className="font-medium">{product.product}</div>
-                            <div className="text-xs text-gray-500">Touch: {product.touch} | Weight: {product.weight}g | Rate: ₹{product.rate}</div>
+                            <div className="text-xs text-gray-500">Touch: {product.touch}</div>
                           </div>
                         ))}
                       </div>
@@ -377,12 +568,46 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   <FormField label="Weight (g)" required>
                     <Input
                       value={formData.weight}
-                      onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                          setFormData(prev => ({ ...prev, weight: value }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value)) {
+                          setFormData(prev => ({ ...prev, weight: value.toFixed(2) }));
+                        }
+                      }}
                       placeholder="0.00"
                       type="number"
                       step="0.01"
                     />
                   </FormField>
+                  {formData.staticProduct ? (
+                    <FormField label="Price (₹)" required>
+                      <Input
+                        value={formData.price}
+                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                        placeholder="0.00"
+                        type="number"
+                        step="0.01"
+                      />
+                    </FormField>
+                  ) : (
+                    <FormField label="Quantity">
+                      <Input
+                        value={formData.qty}
+                        onChange={(e) => setFormData(prev => ({ ...prev, qty: e.target.value }))}
+                        placeholder="0"
+                        type="number"
+                      />
+                    </FormField>
+                  )}
+                </div>
+                
+                {!formData.staticProduct && (
                   <FormField label="Quantity">
                     <Input
                       value={formData.qty}
@@ -391,44 +616,89 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                       type="number"
                     />
                   </FormField>
-                </div>
+                )}
+                
+                {formData.staticProduct && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Quantity">
+                      <Input
+                        value={formData.qty}
+                        onChange={(e) => setFormData(prev => ({ ...prev, qty: e.target.value }))}
+                        placeholder="0"
+                        type="number"
+                      />
+                    </FormField>
+                    <FormField label="Tray Number">
+                      <Select value={formData.trayno} onValueChange={(value) => setFormData(prev => ({ ...prev, trayno: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select tray" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {trays.map((tray) => {
+                            const trayNo = tray.attributes?.trayno || tray.trayno;
+                            return (
+                              <SelectItem key={tray.id} value={trayNo}>
+                                {trayNo}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </FormField>
+                  </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField label="Touch/Purity">
+                {!formData.staticProduct && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Touch/Purity">
+                      <Input
+                        value={formData.touch}
+                        onChange={(e) => setFormData(prev => ({ ...prev, touch: e.target.value }))}
+                        placeholder="Enter touch/purity (e.g., 22K, 18K, 925)"
+                      />
+                    </FormField>
+                    <FormField label="Tray Number">
+                      <Select value={formData.trayno} onValueChange={(value) => setFormData(prev => ({ ...prev, trayno: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select tray" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {trays.map((tray) => {
+                            const trayNo = tray.attributes?.trayno || tray.trayno;
+                            return (
+                              <SelectItem key={tray.id} value={trayNo}>
+                                {trayNo}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </FormField>
+                  </div>
+                )}
+
+                {!formData.staticProduct && (
+                  <FormField label="VA%">
                     <Input
-                      value={formData.touch}
-                      onChange={(e) => setFormData(prev => ({ ...prev, touch: e.target.value }))}
-                      placeholder="Enter touch/purity (e.g., 22K, 18K, 925)"
+                      value={formData.making_charges_or_wastages}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                          setFormData(prev => ({ ...prev, making_charges_or_wastages: value }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value)) {
+                          setFormData(prev => ({ ...prev, making_charges_or_wastages: value.toFixed(2) }));
+                        }
+                      }}
+                      placeholder="Enter percentage (e.g., 5 for 5%)"
+                      type="number"
+                      step="0.01"
                     />
                   </FormField>
-                  <FormField label="Tray Number">
-                    <Select value={formData.trayno} onValueChange={(value) => setFormData(prev => ({ ...prev, trayno: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select tray" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {trays.map((tray) => {
-                          const trayNo = tray.attributes?.trayno || tray.trayno;
-                          return (
-                            <SelectItem key={tray.id} value={trayNo}>
-                              {trayNo}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </FormField>
-                </div>
-
-                <FormField label="VA%">
-                  <Input
-                    value={formData.making_charges_or_wastages}
-                    onChange={(e) => setFormData(prev => ({ ...prev, making_charges_or_wastages: e.target.value }))}
-                    placeholder="Enter percentage (e.g., 5 for 5%)"
-                    type="number"
-                    step="0.01"
-                  />
-                </FormField>
+                )}
 
                 <FormField label="Barcode">
                   <div className="flex gap-2">
@@ -470,19 +740,34 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                 <div className="space-y-4">
                   <div className="bg-white p-6 rounded-lg border-2 border-dashed border-amber-200">
                     <div className="text-center space-y-3">
-                      <h3 className="font-bold text-lg text-slate-800">{formData.product} - {formData.touch}</h3>
-                      <div className="flex justify-center space-x-4 text-sm text-slate-600">
-                        <span>Weight: {formData.weight}g</span>
-                        <span>•</span>
-                        <span>Qty: {formData.qty}</span>
-                      </div>
+                      {formData.staticProduct ? (
+                        <>
+                          <h3 className="font-bold text-lg text-slate-800">{formData.product}</h3>
+                          <div className="flex justify-center space-x-4 text-sm text-slate-600">
+                            <span>Price: ₹{formData.price}</span>
+                            <span>•</span>
+                            <span>Qty: {formData.qty}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="font-bold text-lg text-slate-800">{formData.product} - {formData.touch}</h3>
+                          <div className="flex justify-center space-x-4 text-sm text-slate-600">
+                            <span>Weight: {formData.weight}g</span>
+                            <span>•</span>
+                            <span>Qty: {formData.qty}</span>
+                          </div>
+                        </>
+                      )}
                       <canvas
                         ref={previewCanvasRef}
                         className="mx-auto border border-gray-200 rounded"
                       />
-                      <div className="text-xs text-slate-500">
-                        Tray: {formData.trayno} | VA: {formData.making_charges_or_wastages}%
-                      </div>
+                      {!formData.staticProduct && (
+                        <div className="text-xs text-slate-500">
+                          Tray: {formData.trayno} | VA: {formData.making_charges_or_wastages}%
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -541,6 +826,185 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         {/* Hidden canvas for printing */}
         <canvas ref={barcodeCanvasRef} style={{ display: 'none' }} />
 
+        {/* Barcode Table Section */}
+        <FormSection title="Generated Barcodes" description="View and manage all generated barcodes">
+          <div className="space-y-4">
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <FormField label="Search">
+                <Input
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search by product name or code..."
+                />
+              </FormField>
+              <FormField label="Product Type">
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="fixed">Fixed Price</SelectItem>
+                    <SelectItem value="weight">Weight Based</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField label="Entries per page">
+                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <div className="flex items-end">
+                <Button onClick={loadGeneratedBarcodes} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight/Price</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Touch</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedBarcodes.map((barcode) => {
+                      const isSold = salesData.some(sale => {
+                        const saleAttrs = sale.attributes || sale;
+                        return saleAttrs.barcode && barcode.code && saleAttrs.barcode === barcode.code;
+                      });
+                      
+                      return (
+                        <tr key={barcode.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {barcode.product}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {barcode.code}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <Badge variant={barcode.staticProduct ? "secondary" : "default"}>
+                              {barcode.staticProduct ? "Fixed Price" : "Weight Based"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {barcode.staticProduct ? `₹${barcode.price}` : `${barcode.weight}g`}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {barcode.qty}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {barcode.touch || '-'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <Badge variant={isSold ? "destructive" : "default"}>
+                              {isSold ? "Sold" : "Available"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <Button size="sm" variant="outline" onClick={() => handleEdit(barcode)}>
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDelete(barcode)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => {
+                                const canvas = generateBarcodeWithDetails(barcode);
+                                const printWindow = window.open('', '_blank');
+                                if (printWindow) {
+                                  printWindow.document.write(`
+                                    <html>
+                                      <head><title>Barcode</title></head>
+                                      <body style="text-align: center; padding: 20px;">
+                                        <img src="${canvas.toDataURL()}" />
+                                      </body>
+                                    </html>
+                                  `);
+                                  printWindow.document.close();
+                                  printWindow.print();
+                                }
+                              }}>
+                                <Printer className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredBarcodes.length)} of {filteredBarcodes.length} entries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  )
+                  .map((page, index, array) => (
+                    <React.Fragment key={page}>
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-500">...</span>
+                      )}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  ))
+                }
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
+        </FormSection>
+
         {/* Barcode List Dialog */}
         <Dialog open={showBarcodeList} onOpenChange={setShowBarcodeList}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -554,13 +1018,19 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                     <div>
                       <h3 className="font-bold">{barcode.product}</h3>
                       <div className="text-sm text-gray-600">
-                        Code: {barcode.code} | Weight: {barcode.weight}g | Tray: {barcode.trayno}
+                        Code: {barcode.code} | {barcode.staticProduct ? `Price: ₹${barcode.price}` : `Weight: ${barcode.weight}g | Tray: ${barcode.trayno}`}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Touch: {barcode.touch} | Qty: {barcode.qty}
+                        {barcode.staticProduct ? `Fixed Price Product` : `Touch: ${barcode.touch}`} | Qty: {barcode.qty}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(barcode)}>
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(barcode)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => {
                         const canvas = generateBarcodeWithDetails(barcode);
                         const printWindow = window.open('', '_blank');
@@ -577,8 +1047,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                           printWindow.print();
                         }
                       }}>
-                        <Printer className="w-3 h-3 mr-1" />
-                        Print
+                        <Printer className="w-3 h-3" />
                       </Button>
                       <div className="text-right text-sm text-gray-500">
                         {new Date(barcode.createdAt).toLocaleDateString()}
@@ -587,6 +1056,132 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   </div>
                 </Card>
               ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Barcode Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Barcode</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <FormField label="Product Type">
+                <Select value={formData.staticProduct ? 'static-price' : 'weight-based'} onValueChange={(value) => setFormData(prev => ({ ...prev, staticProduct: value === 'static-price' }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select product type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weight-based">Weight-based Product</SelectItem>
+                    <SelectItem value="static-price">Fixed Price Product</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Product Name">
+                  <Input
+                    value={formData.product}
+                    onChange={(e) => setFormData(prev => ({ ...prev, product: e.target.value }))}
+                    placeholder="Product name"
+                  />
+                </FormField>
+                {!formData.staticProduct ? (
+                  <FormField label="Touch">
+                    <Input
+                      value={formData.touch}
+                      onChange={(e) => setFormData(prev => ({ ...prev, touch: e.target.value }))}
+                      placeholder="Touch/Purity"
+                    />
+                  </FormField>
+                ) : (
+                  <FormField label="Tray Number">
+                    <Select value={formData.trayno} onValueChange={(value) => setFormData(prev => ({ ...prev, trayno: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tray" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {trays.map((tray) => {
+                          const trayNo = tray.attributes?.trayno || tray.trayno;
+                          return (
+                            <SelectItem key={tray.id} value={trayNo}>
+                              {trayNo}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Weight (g)">
+                  <Input
+                    value={formData.weight}
+                    onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                    placeholder="Weight"
+                    type="number"
+                  />
+                </FormField>
+                {formData.staticProduct && (
+                  <FormField label="Price (₹)">
+                    <Input
+                      value={formData.price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="Price"
+                      type="number"
+                    />
+                  </FormField>
+                )}
+                <FormField label="Quantity">
+                  <Input
+                    value={formData.qty}
+                    onChange={(e) => setFormData(prev => ({ ...prev, qty: e.target.value }))}
+                    placeholder="Quantity"
+                    type="number"
+                  />
+                </FormField>
+              </div>
+              
+              {!formData.staticProduct && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Tray Number">
+                    <Select value={formData.trayno} onValueChange={(value) => setFormData(prev => ({ ...prev, trayno: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tray" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {trays.map((tray) => {
+                          const trayNo = tray.attributes?.trayno || tray.trayno;
+                          return (
+                            <SelectItem key={tray.id} value={trayNo}>
+                              {trayNo}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                  <FormField label="VA%">
+                    <Input
+                      value={formData.making_charges_or_wastages}
+                      onChange={(e) => setFormData(prev => ({ ...prev, making_charges_or_wastages: e.target.value }))}
+                      placeholder="VA percentage"
+                      type="number"
+                    />
+                  </FormField>
+                </div>
+              )}
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleUpdate} loading={loading} className="flex-1">
+                  Update Barcode
+                </Button>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

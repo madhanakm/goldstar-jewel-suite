@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection } from "@/components/common";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, DataGrid, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
-import { TrendingUp, LogOut, Edit, Save, X } from "lucide-react";
+import { TrendingUp, LogOut, Edit, Save, X, Plus, DollarSign, Calendar, Hash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Rate {
@@ -23,33 +25,48 @@ export const RateManagement = ({ onNavigate, onLogout }: RateManagementProps) =>
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editRate, setEditRate] = useState("");
   const [newRate, setNewRate] = useState({ price: "" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const { loading, request } = useApi();
 
+  // Filter rates by date
+  const filteredRates = rates.filter(rate => {
+    if (!dateFrom && !dateTo) return true;
+    const rateDate = new Date(rate.updatedAt).toISOString().split('T')[0];
+    if (dateFrom && dateTo) {
+      return rateDate >= dateFrom && rateDate <= dateTo;
+    }
+    if (dateFrom) return rateDate >= dateFrom;
+    if (dateTo) return rateDate <= dateTo;
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredRates.length / itemsPerPage);
+  const paginatedRates = filteredRates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const stats = {
+    totalRates: filteredRates.length,
+    currentRate: rates.length > 0 ? rates[0].price : '0',
+    lastUpdated: rates.length > 0 ? rates[0].updatedAt : new Date().toISOString()
+  };
+
   useEffect(() => {
     loadRates();
-    testApiEndpoint();
   }, []);
 
-  const testApiEndpoint = async () => {
-    try {
-      // Test the base endpoint
-      const response = await fetch('https://jewelapi.sricashway.com/api/rates');
-      const data = await response.json();
-      console.log('Direct API test response:', data);
-      
-      // Test if rates have different ID structure
-      if (data.data && data.data.length > 0) {
-        const firstRate = data.data[0];
-        console.log('First rate structure:', firstRate);
-        console.log('Rate ID:', firstRate.id);
-        console.log('Rate attributes:', firstRate.attributes);
-      }
-    } catch (error) {
-      console.error('API test error:', error);
-    }
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFrom, dateTo]);
+
+
 
   const loadRates = async () => {
     try {
@@ -59,20 +76,25 @@ export const RateManagement = ({ onNavigate, onLogout }: RateManagementProps) =>
       
       const ratesData = response.data || [];
       console.log('Raw rates data:', ratesData);
-      console.log('First rate object:', ratesData[0]);
       
       // Handle Strapi v5 structure - use documentId for API calls
       const formattedRates = ratesData.map((rate: any) => {
         console.log('Processing rate:', rate);
-        console.log('Rate documentId:', rate.documentId, 'Rate id:', rate.id);
         return {
-          id: rate.documentId, // Use documentId for API operations
+          id: rate.documentId || rate.id, // Use documentId for API operations
           price: rate.attributes?.price || rate.price,
           updatedAt: rate.attributes?.updatedAt || rate.updatedAt || new Date().toISOString()
         };
       });
       console.log('Formatted rates:', formattedRates);
-      setRates(formattedRates);
+      
+      // Sort by updatedAt descending (latest first)
+      const sortedRates = formattedRates.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+      
+      setRates(sortedRates);
+      setTotalCount(sortedRates.length);
     } catch (error) {
       console.error('Load rates error:', error);
       toast({
@@ -106,9 +128,9 @@ export const RateManagement = ({ onNavigate, onLogout }: RateManagementProps) =>
       }
       console.log('Update response:', response);
       
-      await loadRates();
       setEditingId(null);
       setEditRate("");
+      await loadRates();
       
       toast({
         title: "✅ Success",
@@ -159,8 +181,8 @@ export const RateManagement = ({ onNavigate, onLogout }: RateManagementProps) =>
       const responseData = await response.json();
       console.log('Add response:', response);
       
-      setRates(prev => [...prev, responseData.data]);
       setNewRate({ price: "" });
+      await loadRates();
       
       toast({
         title: "✅ Success",
@@ -207,80 +229,254 @@ export const RateManagement = ({ onNavigate, onLogout }: RateManagementProps) =>
       />
       
       <PageContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Add New Rate */}
-          <FormSection title="Silver Rate" description="Set current silver price per gram">
-            <div className="space-y-4">
-              <FormField label="Silver Price per Gram (₹)" required>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <GradientCard title="Total Rate Records" icon={<Hash className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-blue-600">{stats.totalRates}</div>
+          </GradientCard>
+          
+          <GradientCard title="Current Silver Rate" icon={<DollarSign className="w-5 h-5 text-white" />}>
+            <div className="text-3xl font-bold text-green-600">₹{stats.currentRate}/g</div>
+          </GradientCard>
+          
+          <GradientCard title="Last Updated" icon={<Calendar className="w-5 h-5 text-white" />}>
+            <div className="text-lg font-bold text-purple-600">
+              {new Date(stats.lastUpdated).toLocaleDateString()}
+            </div>
+          </GradientCard>
+        </div>
+
+        {/* Add New Rate Form */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Add New Silver Rate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Silver Price per Gram (₹)
+                </label>
                 <Input
                   type="number"
                   step="0.01"
                   value={newRate.price}
                   onChange={(e) => setNewRate(prev => ({ ...prev, price: e.target.value }))}
                   placeholder="Enter silver price per gram"
+                  className="w-full"
                 />
-              </FormField>
-              <Button onClick={handleAddRate} loading={loading} className="w-full">
-                Update Silver Rate
+              </div>
+              <Button onClick={handleAddRate} loading={loading} className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Rate
               </Button>
             </div>
-          </FormSection>
+          </CardContent>
+        </Card>
 
-          {/* Current Rates */}
-          <Card className="p-6">
-            <h2 className="text-xl font-bold mb-4">Current Silver Rate</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {rates.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No silver rate found. Add the current rate!
-                </div>
-              ) : (
-                rates.map((rate) => (
-                  <Card key={rate.id} className="p-4 border-l-4 border-l-green-500">
-                    <div className="flex justify-between items-center">
-                      <div className="w-full">
-                        <h3 className="font-bold">Silver Price per Gram</h3>
-                        <div className="text-sm text-gray-600">
-                          {editingId === rate.id ? (
-                            <div className="flex items-center gap-2 mt-2">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={editRate}
-                                onChange={(e) => setEditRate(e.target.value)}
-                                className="w-32"
-                              />
-                              <Button size="sm" onClick={() => handleSaveRate(rate.id)}>
-                                <Save className="w-3 h-3" />
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={cancelEdit}>
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-lg font-bold text-green-600">
-                                  ₹{rate.price}/gram
-                                </span>
-                                <Button size="sm" variant="outline" onClick={() => startEdit(rate)}>
-                                  <Edit className="w-3 h-3" />
+        {/* Date Filters */}
+        <Card className="p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-gray-700">Date Range:</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 min-w-[60px]">From:</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 min-w-[60px]">To:</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <Button 
+                onClick={() => {
+                  setDateFrom("");
+                  setDateTo("");
+                  setCurrentPage(1);
+                }} 
+                variant="outline"
+                className="px-3"
+              >
+                Clear
+              </Button>
+              <div className="text-sm text-gray-600 ml-auto">
+                Showing {paginatedRates.length} of {filteredRates.length} rates
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Rates Table */}
+        <Card className="bg-white border shadow-lg">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  Silver Rate History
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">View and manage silver rate records</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-6 space-y-4">
+            {/* Pagination Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Entries per page</Label>
+                <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price per Gram</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedRates.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                          {loading ? 'Loading...' : 'No silver rates found'}
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedRates.map((rate, index) => (
+                        <tr key={rate.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {editingId === rate.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={editRate}
+                                  onChange={(e) => setEditRate(e.target.value)}
+                                  className="w-24"
+                                />
+                                <Button size="sm" onClick={() => handleSaveRate(rate.id)}>
+                                  <Save className="w-3 h-3" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={cancelEdit}>
+                                  <X className="w-3 h-3" />
                                 </Button>
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                Last updated: {new Date(rate.updatedAt).toLocaleString()}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              )}
+                            ) : (
+                              <span className="text-lg font-bold text-green-600">₹{rate.price}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(rate.updatedAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(rate.updatedAt).toLocaleTimeString()}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            {editingId === rate.id ? null : (
+                              <Button size="sm" variant="outline" onClick={() => startEdit(rate)}>
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </Card>
-        </div>
+
+            {/* Pagination */}
+            {filteredRates.length > 0 && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredRates.length)} of {filteredRates.length} entries
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1 || loading}
+                  >
+                    Previous
+                  </Button>
+                  {totalPages > 1 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let page;
+                    if (totalPages <= 5) {
+                      page = i + 1;
+                    } else if (currentPage <= 3) {
+                      page = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      page = totalPages - 4 + i;
+                    } else {
+                      page = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        disabled={loading}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || loading}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
       </PageContent>
       
       <SidebarWrapper

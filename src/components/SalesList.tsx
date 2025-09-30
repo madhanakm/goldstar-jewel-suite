@@ -62,8 +62,14 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
         })
       );
       
-      // Sort by date descending (latest first)
-      const sortedData = enrichedData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Sort by ID descending (latest first) then by date
+      const sortedData = enrichedData.sort((a, b) => {
+        // First sort by ID (latest entries have higher IDs)
+        const idDiff = (b.id || 0) - (a.id || 0);
+        if (idDiff !== 0) return idDiff;
+        // Then by date as fallback
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
       setSalesData(sortedData);
     } catch (error) {
       toast({
@@ -98,10 +104,19 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
     try {
       // Delete sales details first
       for (const detail of sale.salesDetails) {
-        await request(`/api/sales/${detail.documentId}`, 'DELETE');
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/sales/${detail.documentId || detail.id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) throw new Error(`Failed to delete detail ${detail.id}`);
       }
+      
       // Then delete sales master
-      await request(`/api/sales-masters/${sale.documentId}`, 'DELETE');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/sales-masters/${sale.documentId || sale.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error(`Failed to delete master ${sale.id}`);
       
       toast({
         title: "✅ Success",
@@ -109,6 +124,7 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
       });
       loadSalesData();
     } catch (error) {
+      console.error('Delete error:', error);
       toast({
         title: "❌ Error",
         description: "Failed to delete sale",
@@ -129,20 +145,25 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
         const totalWastageAmount = parseFloat(sale.wastage) || 0;
         const wastagePercent = itemPrice > 0 ? (totalWastageAmount / (itemPrice * sale.salesDetails.length)) * 100 : 0;
         
+        // Hide weight for products with zero weight (fixed price products)
+        const weight = parseFloat(detail.weight) || 0;
+        
         return {
           id: detail.id,
           itemName: detail.product || 'Product',
           category: 'Jewelry',
-          weight: parseFloat(detail.weight) || 0,
+          weight: (weight && weight > 0) ? weight : 0,
           purity: detail.touch || '',
           rate: 0,
           makingCharges: wastagePercent,
           quantity: parseFloat(detail.qty) || 1,
+          discountPercent: parseFloat(detail.discount_percentage) || 0,
+          discountAmount: parseFloat(detail.discount_amount) || 0,
           total: parseFloat(detail.amount) || 0
         };
       }),
-      subtotal: (parseFloat(sale.totalamount) || 0) + (parseFloat(sale.discount_amount) || 0),
-      discount: parseFloat(sale.discount_amount) || 0,
+      subtotal: sale.salesDetails.reduce((sum: number, detail: any) => sum + (parseFloat(detail.amount) || 0), 0),
+      discount: 0,
       gst: {
         sgst: (parseFloat(sale.totalamount) * parseFloat(sale.taxpercentage || 3)) / 200,
         cgst: (parseFloat(sale.totalamount) * parseFloat(sale.taxpercentage || 3)) / 200,
