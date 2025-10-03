@@ -395,8 +395,71 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       if (printWindow) {
         printWindow.document.write(`
           <html>
-            <head><title>Barcode</title></head>
-            <body style="text-align: center; padding: 20px;">
+            <head>
+              <title>Barcode</title>
+              <style>
+                @page {
+                  size: 9cm 1.5cm;
+                  margin: 0;
+                }
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 9cm;
+                  height: 1.5cm;
+                }
+                img {
+                  max-width: 9cm;
+                  max-height: 1.5cm;
+                  object-fit: contain;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${canvas.toDataURL()}" />
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+  };
+
+  const handleRectanglePrint = () => {
+    if (barcodeCanvasRef.current) {
+      const canvas = generateBarcodeWithDetails(formData);
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Rectangle Barcode</title>
+              <style>
+                @page {
+                  size: 50mm 25mm;
+                  margin: 0;
+                }
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 50mm;
+                  height: 25mm;
+                }
+                img {
+                  max-width: 50mm;
+                  max-height: 25mm;
+                  object-fit: contain;
+                }
+              </style>
+            </head>
+            <body>
               <img src="${canvas.toDataURL()}" />
             </body>
           </html>
@@ -788,20 +851,20 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         <Check className="w-4 h-4" />
                         <span>Barcode confirmed and saved successfully!</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <Button onClick={handlePrint} variant="outline" className="w-full">
                           <Printer className="w-4 h-4 mr-2" />
-                          Print Label
+                          Fold type label
+                        </Button>
+                        <Button onClick={handleRectanglePrint} className="w-full" size="lg">
+                          <Printer className="w-5 h-5 mr-2" />
+                          Rectangle barcode
                         </Button>
                         <Button onClick={handleReset} variant="outline" className="w-full">
                           <RefreshCw className="w-4 h-4 mr-2" />
                           New Barcode
                         </Button>
                       </div>
-                      <Button onClick={handlePrint} className="w-full mt-2" size="lg">
-                        <Printer className="w-5 h-5 mr-2" />
-                        Print Barcode Now
-                      </Button>
                     </div>
                   )}
                 </div>
@@ -935,8 +998,30 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                 if (printWindow) {
                                   printWindow.document.write(`
                                     <html>
-                                      <head><title>Barcode</title></head>
-                                      <body style="text-align: center; padding: 20px;">
+                                      <head>
+                                        <title>Fold Type Label</title>
+                                        <style>
+                                          @page {
+                                            size: 9cm 1.5cm;
+                                            margin: 0;
+                                          }
+                                          body {
+                                            margin: 0;
+                                            padding: 0;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            width: 9cm;
+                                            height: 1.5cm;
+                                          }
+                                          img {
+                                            max-width: 9cm;
+                                            max-height: 1.5cm;
+                                            object-fit: contain;
+                                          }
+                                        </style>
+                                      </head>
+                                      <body>
                                         <img src="${canvas.toDataURL()}" />
                                       </body>
                                     </html>
@@ -944,7 +1029,47 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                   printWindow.document.close();
                                   printWindow.print();
                                 }
-                              }}>
+                              }} title="Fold type label (9cm x 1.5cm)">
+                                <Printer className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="default" onClick={() => {
+                                const canvas = generateBarcodeWithDetails(barcode);
+                                const printWindow = window.open('', '_blank');
+                                if (printWindow) {
+                                  printWindow.document.write(`
+                                    <html>
+                                      <head>
+                                        <title>Rectangle Barcode</title>
+                                        <style>
+                                          @page {
+                                            size: 50mm 25mm;
+                                            margin: 0;
+                                          }
+                                          body {
+                                            margin: 0;
+                                            padding: 0;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            width: 50mm;
+                                            height: 25mm;
+                                          }
+                                          img {
+                                            max-width: 50mm;
+                                            max-height: 25mm;
+                                            object-fit: contain;
+                                          }
+                                        </style>
+                                      </head>
+                                      <body>
+                                        <img src="${canvas.toDataURL()}" />
+                                      </body>
+                                    </html>
+                                  `);
+                                  printWindow.document.close();
+                                  printWindow.print();
+                                }
+                              }} title="Rectangle barcode (50mm x 25mm)">
                                 <Printer className="w-3 h-3" />
                               </Button>
                             </div>
@@ -1037,8 +1162,30 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         if (printWindow) {
                           printWindow.document.write(`
                             <html>
-                              <head><title>Barcode</title></head>
-                              <body style="text-align: center; padding: 20px;">
+                              <head>
+                                <title>Fold Type Label</title>
+                                <style>
+                                  @page {
+                                    size: 9cm 1.5cm;
+                                    margin: 0;
+                                  }
+                                  body {
+                                    margin: 0;
+                                    padding: 0;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    width: 9cm;
+                                    height: 1.5cm;
+                                  }
+                                  img {
+                                    max-width: 9cm;
+                                    max-height: 1.5cm;
+                                    object-fit: contain;
+                                  }
+                                </style>
+                              </head>
+                              <body>
                                 <img src="${canvas.toDataURL()}" />
                               </body>
                             </html>
@@ -1046,7 +1193,47 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                           printWindow.document.close();
                           printWindow.print();
                         }
-                      }}>
+                      }} title="Fold type label (9cm x 1.5cm)">
+                        <Printer className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="default" onClick={() => {
+                        const canvas = generateBarcodeWithDetails(barcode);
+                        const printWindow = window.open('', '_blank');
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>Rectangle Barcode</title>
+                                <style>
+                                  @page {
+                                    size: 50mm 25mm;
+                                    margin: 0;
+                                  }
+                                  body {
+                                    margin: 0;
+                                    padding: 0;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    width: 50mm;
+                                    height: 25mm;
+                                  }
+                                  img {
+                                    max-width: 50mm;
+                                    max-height: 25mm;
+                                    object-fit: contain;
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <img src="${canvas.toDataURL()}" />
+                              </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                          printWindow.print();
+                        }
+                      }} title="Rectangle barcode (50mm x 25mm)">
                         <Printer className="w-3 h-3" />
                       </Button>
                       <div className="text-right text-sm text-gray-500">
