@@ -8,14 +8,15 @@ import {
   ShoppingBag,
   FileText,
   Calculator,
-  Recycle
+  Recycle,
+  Tags
 } from "lucide-react";
 
 export const sidebarConfig = [
   {
     category: "Inventory Management",
     items: [
-
+      { name: "Product Category", icon: Tags, description: "Manage product categories", color: "bg-pink-500" },
       { name: "Barcode Generator", icon: Scale, description: "Generate and print product barcodes", color: "bg-indigo-500" },
       { name: "Tray Management", icon: Package, description: "Track products in trays", color: "bg-purple-500" },
       { name: "Purchase Entry", icon: Receipt, description: "Record purchase entries", color: "bg-orange-500" }

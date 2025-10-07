@@ -29,6 +29,7 @@ import { Estimation } from "./components/Estimation";
 import { EstimationList } from "./components/EstimationList";
 import { OldSilverManagement } from "./components/OldSilverManagement";
 import { OldSilverReport } from "./components/OldSilverReport";
+import { ProductCategory } from "./components/ProductCategory";
 import { useState, useEffect } from "react";
 import { authService } from "./lib/auth";
 import { ROUTES } from "./constants";
@@ -113,12 +114,14 @@ const AppContent = () => {
         navigate('/product-module');
         break;
       case "Product Catalog":
-      case "Product Categories":
       case "Pricing Management":
       case "Product Variants":
       case "Add Product":
       case "New Product":
         navigate('/simple-product-management');
+        break;
+      case "Product Category":
+        navigate('/product-category');
         break;
       case "Barcode Generation":
       case "Barcode Generator":
@@ -263,6 +266,7 @@ const AppContent = () => {
       <Route path="/estimation-list" element={<EstimationList onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/old-silver-management" element={<OldSilverManagement onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/old-silver-report" element={<OldSilverReport onNavigate={handleNavigate} onLogout={handleLogout} />} />
+      <Route path="/product-category" element={<ProductCategory onNavigate={handleNavigate} onLogout={handleLogout} />} />
       <Route path="/locker-room-management" element={<LockerRoomManagement onBack={handleBack} onNavigate={handleNavigate} />} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1>Page Not Found</h1></div>} />
     </Routes>

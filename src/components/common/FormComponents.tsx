@@ -25,14 +25,20 @@ interface FormSectionProps {
   title: string;
   description?: string;
   children: React.ReactNode;
+  action?: React.ReactNode;
 }
 
-export const FormSection = ({ title, description, children }: FormSectionProps) => {
+export const FormSection = ({ title, description, children, action }: FormSectionProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          </div>
+          {action && <div>{action}</div>}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {children}

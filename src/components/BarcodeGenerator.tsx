@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
 import { useApi, endpoints, PageProps } from "@/shared";
-import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List, Download, Edit, Trash2 } from "lucide-react";
+import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List, Download, Edit, Trash2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import JsBarcode from "jsbarcode";
 
@@ -24,6 +24,7 @@ interface BarcodeData {
   code: string;
   staticProduct: boolean;
   price: string;
+  category: string;
 }
 
 interface Product {
@@ -45,12 +46,14 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     trayno: "",
     code: "",
     staticProduct: false,
-    price: ""
+    price: "",
+    category: ""
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [trays, setTrays] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [generatedBarcodes, setGeneratedBarcodes] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
   const [showBarcodeList, setShowBarcodeList] = useState(false);
@@ -60,6 +63,11 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [touchFilter, setTouchFilter] = useState("all");
+  const [showBulkUpdateDialog, setShowBulkUpdateDialog] = useState(false);
+  const [bulkUpdatePercentage, setBulkUpdatePercentage] = useState("");
+  const [bulkUpdateCategory, setBulkUpdateCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const { sidebarOpen, toggleSidebar } = useSidebar();
@@ -78,7 +86,13 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       (typeFilter === "fixed" && barcode.staticProduct) ||
       (typeFilter === "weight" && !barcode.staticProduct);
     
-    return matchesSearch && matchesType;
+    const matchesCategory = categoryFilter === "all" || 
+      barcode.category === categoryFilter;
+    
+    const matchesTouch = touchFilter === "all" || 
+      barcode.touch === touchFilter;
+    
+    return matchesSearch && matchesType && matchesCategory && matchesTouch;
   }).sort((a, b) => {
     const aIsSold = salesData.some(sale => {
       const saleAttrs = sale.attributes || sale;
@@ -102,6 +116,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
   useEffect(() => {
     loadProducts();
     loadTrays();
+    loadCategories();
     loadGeneratedBarcodes();
     loadSalesData();
     generateCode();
@@ -109,7 +124,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchFilter, typeFilter, pageSize, salesData]);
+  }, [searchFilter, typeFilter, categoryFilter, touchFilter, pageSize, salesData]);
 
   useEffect(() => {
     if (formData.code && showPreview) {
@@ -168,6 +183,16 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       setTrays(response.data || []);
     } catch (error) {
       console.error("Failed to load trays");
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await request('/api/product-categories');
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error("Failed to load categories");
+      setCategories([]);
     }
   };
 
@@ -287,7 +312,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           code: formData.code,
           staticProduct: formData.staticProduct,
           price: formData.price,
-          trayno: formData.trayno
+          trayno: formData.trayno,
+          category: formData.category
         } : {
           product: formData.product,
           weight: formData.weight,
@@ -296,7 +322,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           making_charges_or_wastages: formData.making_charges_or_wastages,
           trayno: formData.trayno,
           code: formData.code,
-          staticProduct: formData.staticProduct
+          staticProduct: formData.staticProduct,
+          category: formData.category
         }
       };
       await request(endpoints.barcode.create(), 'POST', payload);
@@ -327,7 +354,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       trayno: "",
       code: "",
       staticProduct: false,
-      price: ""
+      price: "",
+      category: ""
     });
     setShowPreview(false);
     setIsConfirmed(false);
@@ -489,7 +517,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       trayno: barcode.trayno || '',
       code: barcode.code,
       staticProduct: barcode.staticProduct || false,
-      price: barcode.price || ''
+      price: barcode.price || '',
+      category: barcode.category || ''
     });
     setShowEditDialog(true);
   };
@@ -504,7 +533,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           code: formData.code,
           staticProduct: formData.staticProduct,
           price: formData.price,
-          trayno: formData.trayno
+          trayno: formData.trayno,
+          category: formData.category
         } : {
           product: formData.product,
           weight: formData.weight,
@@ -513,7 +543,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           making_charges_or_wastages: formData.making_charges_or_wastages,
           trayno: formData.trayno,
           code: formData.code,
-          staticProduct: formData.staticProduct
+          staticProduct: formData.staticProduct,
+          category: formData.category
         }
       };
       
@@ -550,6 +581,81 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       toast({
         title: "❌ Error",
         description: "Failed to delete barcode",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkPriceUpdate = async () => {
+    if (!bulkUpdatePercentage || isNaN(parseFloat(bulkUpdatePercentage))) {
+      toast({
+        title: "⚠️ Warning",
+        description: "Please enter a valid percentage",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const percentage = parseFloat(bulkUpdatePercentage);
+    const fixedPriceBarcodes = generatedBarcodes.filter(barcode => {
+      const isFixedPrice = barcode.staticProduct && barcode.price;
+      const matchesCategory = bulkUpdateCategory === "all" || barcode.category === bulkUpdateCategory;
+      return isFixedPrice && matchesCategory;
+    });
+    
+    if (fixedPriceBarcodes.length === 0) {
+      toast({
+        title: "⚠️ Warning",
+        description: `No fixed price products found in ${bulkUpdateCategory === "all" ? "any category" : bulkUpdateCategory + " category"} to update`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const categoryText = bulkUpdateCategory === "all" ? "all categories" : `${bulkUpdateCategory} category`;
+    if (!confirm(`Are you sure you want to update ${fixedPriceBarcodes.length} fixed price products in ${categoryText} by ${percentage}%?`)) {
+      return;
+    }
+
+    try {
+      let updatedCount = 0;
+      
+      for (const barcode of fixedPriceBarcodes) {
+        const oldPrice = parseFloat(barcode.price);
+        const newPrice = oldPrice + (oldPrice * percentage / 100);
+        
+        const payload = {
+          data: {
+            product: barcode.product,
+            weight: barcode.weight,
+            qty: barcode.qty,
+            code: barcode.code,
+            staticProduct: barcode.staticProduct,
+            price: newPrice.toFixed(2),
+            trayno: barcode.trayno,
+            category: barcode.category,
+            touch: barcode.touch,
+            making_charges_or_wastages: barcode.making_charges_or_wastages
+          }
+        };
+        
+        await request(`/api/barcodes/${barcode.documentId || barcode.id}`, 'PUT', payload);
+        updatedCount++;
+      }
+      
+      setShowBulkUpdateDialog(false);
+      setBulkUpdatePercentage("");
+      setBulkUpdateCategory("all");
+      loadGeneratedBarcodes();
+      
+      toast({
+        title: "✅ Success",
+        description: `Successfully updated ${updatedCount} fixed price products`,
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "Failed to update prices",
         variant: "destructive",
       });
     }
@@ -601,31 +707,47 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   </Select>
                 </FormField>
 
-                <FormField label="Product Name" required>
-                  <div className="relative">
-                    <Input
-                      value={formData.product}
-                      onChange={(e) => handleProductSearch(e.target.value)}
-                      placeholder="Search or enter product name..."
-                      className="pr-10"
-                    />
-                    <Package className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    {showSuggestions && filteredProducts.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
-                        {filteredProducts.map((product, index) => (
-                          <div
-                            key={index}
-                            className="p-3 hover:bg-amber-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                            onClick={() => selectProduct(product)}
-                          >
-                            <div className="font-medium">{product.product}</div>
-                            <div className="text-xs text-gray-500">Touch: {product.touch}</div>
-                          </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Product Name" required>
+                    <div className="relative">
+                      <Input
+                        value={formData.product}
+                        onChange={(e) => handleProductSearch(e.target.value)}
+                        placeholder="Search or enter product name..."
+                        className="pr-10"
+                      />
+                      <Package className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      {showSuggestions && filteredProducts.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                          {filteredProducts.map((product, index) => (
+                            <div
+                              key={index}
+                              className="p-3 hover:bg-amber-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                              onClick={() => selectProduct(product)}
+                            >
+                              <div className="font-medium">{product.product}</div>
+                              <div className="text-xs text-gray-500">Touch: {product.touch}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </FormField>
+                  <FormField label="Category">
+                    <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
                         ))}
-                      </div>
-                    )}
-                  </div>
-                </FormField>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField label="Weight (g)" required>
@@ -669,17 +791,6 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                     </FormField>
                   )}
                 </div>
-                
-                {!formData.staticProduct && (
-                  <FormField label="Quantity">
-                    <Input
-                      value={formData.qty}
-                      onChange={(e) => setFormData(prev => ({ ...prev, qty: e.target.value }))}
-                      placeholder="0"
-                      type="number"
-                    />
-                  </FormField>
-                )}
                 
                 {formData.staticProduct && (
                   <div className="grid grid-cols-2 gap-4">
@@ -890,10 +1001,25 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         <canvas ref={barcodeCanvasRef} style={{ display: 'none' }} />
 
         {/* Barcode Table Section */}
-        <FormSection title="Generated Barcodes" description="View and manage all generated barcodes">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Generated Barcodes</h2>
+              <p className="text-sm text-gray-600">View and manage all generated barcodes</p>
+            </div>
+            <Button 
+              onClick={() => setShowBulkUpdateDialog(true)} 
+              className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 border border-yellow-500 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-medium"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Bulk Price Update
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="p-6 space-y-6">
           <div className="space-y-4">
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <FormField label="Search">
                 <Input
                   value={searchFilter}
@@ -910,6 +1036,36 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="fixed">Fixed Price</SelectItem>
                     <SelectItem value="weight">Weight Based</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField label="Category">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField label="Touch/Purity">
+                <Select value={touchFilter} onValueChange={setTouchFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All touch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Touch</SelectItem>
+                    {[...new Set(generatedBarcodes.map(b => b.touch).filter(Boolean))].map((touch) => (
+                      <SelectItem key={touch} value={touch}>
+                        {touch}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FormField>
@@ -941,6 +1097,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight/Price</th>
@@ -961,6 +1118,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         <tr key={barcode.id} className="hover:bg-gray-50">
                           <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {barcode.product}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {barcode.category || '-'}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                             {barcode.code}
@@ -1128,7 +1288,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
               </div>
             </div>
           </div>
-        </FormSection>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Barcode List Dialog */}
         <Dialog open={showBarcodeList} onOpenChange={setShowBarcodeList}>
@@ -1247,6 +1409,57 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
           </DialogContent>
         </Dialog>
 
+        {/* Bulk Price Update Dialog */}
+        <Dialog open={showBulkUpdateDialog} onOpenChange={setShowBulkUpdateDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Bulk Price Update</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+
+              <FormField label="Category" required>
+                <Select value={bulkUpdateCategory} onValueChange={setBulkUpdateCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField label="Percentage (%)" required>
+                <Input
+                  value={bulkUpdatePercentage}
+                  onChange={(e) => setBulkUpdatePercentage(e.target.value)}
+                  placeholder="e.g., 3 for +3% or -5 for -5%"
+                  type="number"
+                  step="0.01"
+                />
+              </FormField>
+              <div className="text-xs text-gray-500">
+                Fixed price products in {bulkUpdateCategory === "all" ? "all categories" : bulkUpdateCategory}: {generatedBarcodes.filter(b => {
+                  const isFixedPrice = b.staticProduct && b.price;
+                  const matchesCategory = bulkUpdateCategory === "all" || b.category === bulkUpdateCategory;
+                  return isFixedPrice && matchesCategory;
+                }).length}
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleBulkPriceUpdate} loading={loading} className="flex-1">
+                  Update Prices
+                </Button>
+                <Button variant="outline" onClick={() => setShowBulkUpdateDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Edit Barcode Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-2xl">
@@ -1274,6 +1487,23 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                     placeholder="Product name"
                   />
                 </FormField>
+                <FormField label="Category">
+                  <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 {!formData.staticProduct ? (
                   <FormField label="Touch">
                     <Input

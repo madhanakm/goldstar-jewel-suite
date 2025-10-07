@@ -283,6 +283,15 @@ export const Dashboard = ({ onLogout, onNavigate }: DashboardProps) => {
                   <Recycle className="w-6 h-6 mb-2" />
                   <span className="text-xs font-semibold">Old Silver</span>
                 </ActionButton>
+                
+                <ActionButton 
+                  variant="info" 
+                  className="h-20 flex-col p-4 bg-gradient-to-br from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-white" 
+                  onClick={() => onNavigate("Product Category")}
+                >
+                  <Package className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-semibold">Categories</span>
+                </ActionButton>
               </div>
             </GradientCard>
           </div>
