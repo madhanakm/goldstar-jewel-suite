@@ -23,6 +23,7 @@ export const useApi = <T>(options?: UseApiOptions) => {
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
         method,
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },

@@ -34,17 +34,17 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
 
   const loadSalesData = async () => {
     try {
-      const response = await request(endpoints.sales.masters.list(1, 1000));
-      const salesMasters = response.data || response || [];
+      const response = await request('/api/sales-masters?pagination[pageSize]=1000');
+      const salesMasters = response.data || [];
       
       const enrichedData = await Promise.all(
         salesMasters.map(async (sale: any) => {
           try {
             const [customerRes, salesDetailsRes] = await Promise.all([
-              request(endpoints.customers.list()).then(res => 
+              request('/api/customers?pagination[pageSize]=1000').then(res => 
                 res.data?.find((c: any) => c.id == sale.cid)
               ),
-              request(endpoints.sales.details.list(sale.invoice))
+              request(`/api/sales?filters[invoice_id][$eq]=${sale.invoice}`)
             ]);
             
             return {

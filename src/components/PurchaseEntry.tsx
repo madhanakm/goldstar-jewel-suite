@@ -76,34 +76,27 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  // Computed values for table
-  const filteredPurchases = purchaseMasters
-    .filter(purchase => {
-      const matchesSearch = !searchFilter || 
-        purchase.suppliername?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        purchase.id?.toString().includes(searchFilter);
-      
-      return matchesSearch;
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const totalPages = Math.ceil(filteredPurchases.length / pageSize);
-  const paginatedPurchases = filteredPurchases.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Use purchaseMasters directly since API handles filtering and pagination
+  const paginatedPurchases = purchaseMasters;
+  const totalPages = Math.ceil(purchaseMasters.length / pageSize); // This will be updated when we get total count from API
 
   const loadPurchaseMasters = useCallback(async (pageNum = 1, search = "") => {
     try {
-      const data = await request(endpoints.purchase.masters.list(1, 1000, search));
-      const sortedData = (data.data || []).sort((a, b) => b.id - a.id);
-      setPurchaseMasters(sortedData);
+      const searchQuery = search ? `&filters[suppliername][$contains]=${encodeURIComponent(search)}` : '';
+      const data = await request(`/api/purchase-masters?pagination[page]=${pageNum}&pagination[pageSize]=${pageSize}${searchQuery}&sort=id:desc`);
+      const masters = data.data || [];
       
-      // Load weights for each purchase master
+      if (pageNum === 1) {
+        setPurchaseMasters(masters);
+      } else {
+        setPurchaseMasters(prev => [...prev, ...masters]);
+      }
+      
+      // Load weights for new masters only
       const weights: {[key: number]: string} = {};
-      for (const master of sortedData) {
+      for (const master of masters) {
         try {
-          const detailsData = await request(endpoints.purchase.details.list(master.id.toString()));
+          const detailsData = await request(`/api/purchases?filters[pid][$eq]=${master.id}`);
           const totalWeight = (detailsData.data || []).reduce((sum: number, purchase: any) => 
             sum + (parseFloat(purchase.weight) * parseFloat(purchase.qty)), 0
           );
@@ -112,7 +105,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
           weights[master.id] = '0';
         }
       }
-      setPurchaseWeights(weights);
+      setPurchaseWeights(prev => ({...prev, ...weights}));
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -120,11 +113,11 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
         variant: "destructive",
       });
     }
-  }, [request, toast]);
+  }, [request, toast, pageSize]);
 
   const loadPurchaseDetails = async (masterId: string) => {
     try {
-      const data = await request(endpoints.purchase.details.list(masterId));
+      const data = await request(`/api/purchases?filters[pid][$eq]=${masterId}`);
       setPurchases(data.data || []);
     } catch (error) {
       toast({
@@ -154,7 +147,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
     if (!confirm('Are you sure you want to delete this purchase entry?')) return;
     
     try {
-      await request(endpoints.purchase.masters.delete(id), 'DELETE');
+      await request(`/api/purchase-masters/${id}`, 'DELETE');
       toast({
         title: "✅ Success",
         description: "Purchase entry deleted successfully",
@@ -209,12 +202,12 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
   const handleSupplierChange = (value: string) => {
     setNewPurchase(prev => ({ ...prev, suppliername: value }));
     
-    if (value) {
+    if (value.length > 0) {
       const filtered = existingSuppliers.filter(s => 
         s.toLowerCase().includes(value.toLowerCase())
-      );
+      ).slice(0, 10);
       setSupplierSuggestions(filtered);
-      setShowSupplierSuggestions(true);
+      setShowSupplierSuggestions(filtered.length > 0);
     } else {
       setShowSupplierSuggestions(false);
     }
@@ -254,13 +247,13 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       );
 
       // Create purchase master
-      const masterData = await request(endpoints.purchase.masters.create(), 'POST', {
+      const masterData = await request('/api/purchase-masters', 'POST', {
         data: {
           suppliername: newPurchase.suppliername,
           modeofpayment: newPurchase.modeofpayment,
           totalamount: totalAmount.toString(),
           totalqty: totalQty.toString(),
-          totalweight: totalWeight.toString(),
+          totalWeight: totalWeight.toString(),
           date: new Date(newPurchase.date).toISOString()
         }
       });
@@ -270,7 +263,7 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
       // Create individual purchases
       for (const product of newPurchase.products) {
         if (product.product && product.qty && product.totalWeight && product.totalPrice) {
-          await request(endpoints.purchase.details.create(), 'POST', {
+          await request('/api/purchases', 'POST', {
             data: {
               pid: masterId.toString(),
               product: product.product,
@@ -443,7 +436,11 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Search</Label>
                   <Input
                     value={searchFilter}
-                    onChange={(e) => setSearchFilter(e.target.value)}
+                    onChange={(e) => {
+                      setSearchFilter(e.target.value);
+                      setCurrentPage(1);
+                      loadPurchaseMasters(1, e.target.value);
+                    }}
                     placeholder="Search by supplier name or ID..."
                   />
                 </div>
@@ -462,7 +459,11 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
                   </Select>
                 </div>
                 <div className="flex items-end">
-                  <Button onClick={() => loadPurchaseMasters()} variant="outline">
+                  <Button onClick={() => {
+                    setCurrentPage(1);
+                    setPurchaseMasters([]);
+                    loadPurchaseMasters(1, searchFilter);
+                  }} variant="outline">
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Refresh
                   </Button>
@@ -541,43 +542,33 @@ export const PurchaseEntry = ({ onBack, onNavigate, onLogout }: PurchaseEntryPro
               {/* Pagination */}
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredPurchases.length)} of {filteredPurchases.length} entries
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, paginatedPurchases.length)} of {paginatedPurchases.length} entries
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => {
+                      const newPage = Math.max(currentPage - 1, 1);
+                      setCurrentPage(newPage);
+                      loadPurchaseMasters(newPage, searchFilter);
+                    }}
+                    disabled={currentPage === 1 || loading}
                   >
                     Previous
                   </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => 
-                      page === 1 || 
-                      page === totalPages || 
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    )
-                    .map((page, index, array) => (
-                      <React.Fragment key={page}>
-                        {index > 0 && array[index - 1] !== page - 1 && (
-                          <span className="px-2 text-gray-500">...</span>
-                        )}
-                        <Button
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                        >
-                          {page}
-                        </Button>
-                      </React.Fragment>
-                    ))
-                  }
+                  <span className="px-3 py-1 text-sm bg-gray-100 rounded">
+                    Page {currentPage}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      const newPage = currentPage + 1;
+                      setCurrentPage(newPage);
+                      loadPurchaseMasters(newPage, searchFilter);
+                    }}
+                    disabled={paginatedPurchases.length < pageSize || loading}
                   >
                     Next
                   </Button>

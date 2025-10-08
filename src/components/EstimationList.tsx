@@ -34,17 +34,17 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
 
   const loadEstimationData = async () => {
     try {
-      const response = await request('/api/estimation-masters');
-      const estimationMasters = response.data || response || [];
+      const response = await request('/api/estimation-masters?pagination[pageSize]=1000');
+      const estimationMasters = response.data || [];
       
       const enrichedData = await Promise.all(
         estimationMasters.map(async (estimation: any) => {
           try {
             const [customerRes, estimationDetailsRes] = await Promise.all([
-              request(endpoints.customers.list()).then(res => 
+              request('/api/customers?pagination[pageSize]=1000').then(res => 
                 res.data?.find((c: any) => c.id == estimation.cid)
               ),
-              request(endpoints.estimation.details.list(estimation.estimation_number))
+              request(`/api/estimation-details?filters[estimation_id][$eq]=${estimation.estimation_number}`)
             ]);
             
             return {
