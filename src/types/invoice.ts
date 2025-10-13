@@ -32,6 +32,7 @@ export interface Invoice extends BaseEntity {
     total: number;
   };
   total: number;
+  roundoff?: number;
   paymentMethod: string;
   status: 'paid' | 'pending' | 'partially_paid';
   notes?: string;
@@ -49,6 +50,7 @@ export interface InvoiceTemplate {
   subtotal: number;
   sgst: number;
   cgst: number;
+  roundoff?: number;
   total: number;
   amountInWords: string;
 }

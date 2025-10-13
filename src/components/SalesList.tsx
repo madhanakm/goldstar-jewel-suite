@@ -170,6 +170,7 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
         total: (parseFloat(sale.totalamount) * parseFloat(sale.taxpercentage || 3)) / 100
       },
       total: parseFloat(sale.totalamount) || 0,
+      roundoff: parseFloat(sale.roundoff) || 0,
       paymentMethod: sale.modeofpayment || 'Cash',
       status: 'paid' as const,
       createdAt: sale.date,
@@ -241,7 +242,7 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
                 {
                   key: 'totalamount',
                   header: 'Amount',
-                  render: (value) => `₹${parseFloat(value).toLocaleString()}`
+                  render: (value) => `₹${Math.round(parseFloat(value)).toLocaleString()}`
                 },
                 { key: 'modeofpayment', header: 'Payment' },
                 {

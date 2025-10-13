@@ -49,6 +49,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const [taxPercentage, setTaxPercentage] = useState("3");
   const [silverRate, setSilverRate] = useState(0);
   const [modeOfPayment, setModeOfPayment] = useState("Cash");
+  const [roundOff, setRoundOff] = useState(0);
   const [lastInvoiceId, setLastInvoiceId] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
   const [entryNumber, setEntryNumber] = useState("");
@@ -123,7 +124,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   useEffect(() => {
     calculateTotal();
-  }, [products, taxPercentage]);
+  }, [products, taxPercentage, roundOff]);
 
   const loadBarcodeProducts = async () => {
     try {
@@ -137,7 +138,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const loadSilverRate = async () => {
     try {
-      const response = await request(endpoints.rates.list());
+      const response = await request('/api/rates?sort=id:desc&pagination[pageSize]=1');
       if (response.data && response.data.length > 0) {
         const latestRate = response.data[0];
         setSilverRate(parseFloat(latestRate.price) || 0);
@@ -175,7 +176,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const calculateTotal = () => {
     const productTotal = products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0);
     const taxAmount = (productTotal * parseFloat(taxPercentage)) / 100;
-    setTotalAmount(productTotal + taxAmount);
+    const subtotalWithTax = productTotal + taxAmount;
+    const finalTotal = Math.round((subtotalWithTax + roundOff) * 100) / 100;
+    setTotalAmount(finalTotal);
   };
 
 
@@ -350,7 +353,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
           wastage: totalWastageAmount.toString(),
           remarks: `wastage_percent:${avgWastagePercent}`,
           discount_percentage: "0",
-          discount_amount: "0"
+          discount_amount: "0",
+          roundoff: roundOff.toString()
         }
       };
       const salesMasterResponse = await request(endpoints.sales.masters.create(), 'POST', salesMasterPayload);
@@ -483,6 +487,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
         total: taxAmount
       },
       total: totalAmount,
+      roundoff: roundOff,
       paymentMethod: modeOfPayment,
       status: 'paid' as const,
       createdAt: new Date().toISOString(),
@@ -498,6 +503,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
   const handleNewSale = () => {
     setCustomer({ id: 0, name: "", phone: "", email: "", address: "", aadhar: "", gstin: "" });
     setProducts([{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", discountPercent: "", discountAmount: "", total: "", barcode: "" }]);
+    setRoundOff(0);
     setEstimationToConvert(null);
     setShowInvoice(false);
     setLastInvoiceId("");
@@ -606,6 +612,15 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                   value={modeOfPayment}
                   onChange={(e) => setModeOfPayment(e.target.value)}
                   placeholder="Cash, UPI, Card"
+                />
+              </FormField>
+              <FormField label="Round Off">
+                <Input
+                  value={roundOff}
+                  onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
                 />
               </FormField>
 
