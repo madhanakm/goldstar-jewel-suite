@@ -183,6 +183,7 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
       })),
       subtotal: parseFloat(estimation.subtotal) || 0,
       discount: parseFloat(estimation.discount_amount) || 0,
+      roundoff: parseFloat(estimation.roundoff) || 0,
       total: parseFloat(estimation.total_amount) || 0
     };
     

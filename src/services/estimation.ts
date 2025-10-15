@@ -90,7 +90,7 @@ export class EstimationService {
     }).join('');
     
     // Generate empty rows to fill space
-    const maxRows = 15;
+    const maxRows = 25; // Maximum rows that can fit
     const emptyRowsCount = Math.max(0, maxRows - estimation.items.length);
     const emptyRowsHTML = Array(emptyRowsCount).fill(0).map(() => `
       <tr>
@@ -114,15 +114,15 @@ export class EstimationService {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; font-size: 10px; }
-        .invoice-container { width: 145mm; height: 210mm; margin: 0 auto; padding: 5mm; }
+        .invoice-container { width: 135mm; height: 200mm; margin: 0 auto; padding: 3mm; }
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 2px 3px; text-align: center; }
         .logo { width: 90%; filter: grayscale(100%); }
         .estimation-badge { color: #fff; background-color: #007bff; padding: 2px 6px; border-radius: 5px; font-size: 8px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
-            .invoice-container { width: 145mm; height: 210mm; padding: 5mm; margin: 0; }
-            @page { margin: 0; size: 145mm 210mm; }
+            .invoice-container { width: 135mm; height: 200mm; padding: 3mm; margin: 5mm auto; }
+            @page { margin: 5mm; size: 145mm 210mm; }
         }
     </style>
 </head>
@@ -130,15 +130,15 @@ export class EstimationService {
     <div class="invoice-container">
         <table class="invoice-table">
             <tr style="font-weight: bold">
-                <td colspan="2" style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 9px;">98422 44014</td>
-                <td colspan="3" style="text-align: center; font-size: 9px;">நடப்பது யாவும் நன்மைக்கே</td>
-                <td colspan="2" style="text-align: right; font-size: 9px;">90478 07888</td>
+                <td style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 9px; white-space: nowrap;">98422 44014</td>
+                <td colspan="5" style="text-align: center; font-size: 9px; vertical-align: middle; padding-left: 50px;">நடப்பது யாவும் நன்மைக்கே</td>
+                <td style="text-align: right; font-size: 9px; white-space: nowrap;">90478 07888</td>
             </tr>
-            <tr><td colspan="9"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
+            <tr><td colspan="7"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
-                <td colspan="2" style="text-align: left; font-size: 9px;">EST-No: ${estimation.estimationNumber}</td>
-                <td colspan="3" style="text-align: center;"><span class="estimation-badge" style="font-size: 8px; padding: 2px 6px; white-space: nowrap; display: inline-block;">Price Estimation</span></td>
-                <td colspan="2"></td>
+                <td style="text-align: left; font-size: 9px;">EST-No: ${estimation.estimationNumber}</td>
+                <td colspan="5" style="text-align: center; padding-left: 50px;"><span class="estimation-badge" style="font-size: 10px; padding: 3px 8px; white-space: nowrap; display: inline-block;">Price Estimation</span></td>
+                <td style="text-align: right; font-size: 9px; white-space: nowrap;"></td>
             </tr>
             <tr><td colspan="7" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 8px; padding: 1px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
             <tr>
@@ -147,12 +147,12 @@ export class EstimationService {
             </tr>
             <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="7"><strong>Customer Details:</strong> ${estimation.customer.address}</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Mobile:</strong> ${estimation.customer.phone}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="4"><strong>Silver Rate:</strong> ₹${estimation.silverRate}/g</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="4"><strong>Mobile:</strong> ${estimation.customer.phone}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Silver Rate:</strong> ₹${estimation.silverRate}/g</td>
             </tr>
             <tr style="font-weight: bold; background-color: #f5f5f5;">
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">S. No</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 40%;">Description</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 40%;">Description ( HSN Code - 7113 )</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">QTY</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Weight</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">VA%</td>
@@ -162,26 +162,30 @@ export class EstimationService {
             ${itemsHTML}
             ${emptyRowsHTML}
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: right; vertical-align: bottom; padding: 1px; font-size: 8px;" rowspan="2" colspan="5">Extra 3% GST</td>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px;">Sub Total:</td>
-                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px;">₹${estimation.subtotal.toLocaleString()}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 1px; font-weight: bold; font-size: 8px;" rowspan="3" colspan="5"><strong>Amount in Words:</strong> ${this.numberToWords(Math.round(estimation.total))}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">Sub Total:</td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">₹${estimation.subtotal.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-weight: bold; font-size: 8px; white-space: nowrap;"><strong>Total:</strong></td>
-                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px;">₹${estimation.total.toLocaleString()}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">Round Off:</td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">₹${(estimation.roundoff || 0).toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000" colspan="3"></td>
-                <td style="border-top: 1px solid #000" colspan="4">For PRABANJAM JEWELLERY LIMITED</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-weight: bold; font-size: 8px; text-align: right;"><strong>Total:</strong></td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; font-weight: bold;">₹${estimation.total.toFixed(2)}</td>
+            </tr>
+            <tr>
+                <td style="border-top: 1px solid #000" colspan="4">Weight & Pieces Verified Found O.K</td>
+                <td style="border-top: 1px solid #000" colspan="3">For PRABANJAM JEWELLERY LIMITED</td>
             </tr>
             <tr><td colspan="7" style="height: 30px;"></td></tr>
             <tr>
-                <td colspan="3"></td>
-                <td colspan="4">Authorised Signature</td>
+                <td colspan="4">Customer Signature</td>
+                <td colspan="3">Authorised Signature</td>
             </tr>
             <tr>
-                <td colspan="3" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருககக்கு நன்றி மீண்டும் வருக.</td>
-                <td colspan="4" style="text-align: center; font-style: italic; color: #666;">*This is an estimation only</td>
+                <td colspan="4" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருகைக்கு நன்றி, மீண்டும் வருக!</td>
+                <td colspan="3" style="text-align: center; font-style: italic; color: #666;">*This is an estimation only</td>
             </tr>
         </table>
     </div>

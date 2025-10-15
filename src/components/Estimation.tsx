@@ -96,6 +96,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   const [lastEstimationDate, setLastEstimationDate] = useState("");
   const [showPrintOption, setShowPrintOption] = useState(false);
   const [estimationDate, setEstimationDate] = useState(new Date().toISOString().split('T')[0]);
+  const [roundOff, setRoundOff] = useState(0);
 
 
   const addItem = () => {
@@ -213,7 +214,8 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   };
 
   const getTotalEstimation = () => {
-    return getSubtotal();
+    const subtotal = getSubtotal();
+    return Math.round((subtotal + roundOff) * 100) / 100;
   };
 
 
@@ -264,6 +266,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
         })),
         subtotal: getSubtotal(),
         discount: 0,
+        roundoff: roundOff,
         total: getTotalEstimation()
       };
       
@@ -299,6 +302,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
     setLastEstimationId("");
     setLastEstimationDate("");
     setEstimationDate(new Date().toISOString().split('T')[0]);
+    setRoundOff(0);
   };
 
   const generateEstimationNumber = async () => {
@@ -379,7 +383,8 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
           discount_amount: "0",
           total_amount: totalAmount.toString(),
           current_silver_rate: silverRate.toString(),
-          wastage: avgWastagePercent.toString()
+          wastage: avgWastagePercent.toString(),
+          roundoff: roundOff.toString()
         }
       };
       
@@ -707,7 +712,16 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                   <span className="text-lg">₹{getSubtotal().toFixed(2)}</span>
                 </div>
                 
-
+                <div>
+                  <Label>Round Off</Label>
+                  <Input
+                    type="number"
+                    value={roundOff}
+                    onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
                 
                 <div>
                   <Label>Estimation Date</Label>

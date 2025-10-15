@@ -114,8 +114,9 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
       
       setProducts(convertedProducts.length > 0 ? convertedProducts : [{ product: "", touch: "", weight: "", qty: "", price: "", wastage: "", discountPercent: "", discountAmount: "", total: "", barcode: "" }]);
       
-      // Set silver rate
+      // Set silver rate and round off
       setSilverRate(data.silverRate);
+      setRoundOff(parseFloat(data.roundoff) || 0);
       
       // Clear session storage
       sessionStorage.removeItem('estimationToConvert');
