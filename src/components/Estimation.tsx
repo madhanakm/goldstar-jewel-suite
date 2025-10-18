@@ -68,7 +68,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
 
   const loadSilverRate = async () => {
     try {
-      const response = await request(endpoints.rates.list());
+      const response = await request('/api/rates?sort=id:desc&pagination[pageSize]=1');
       if (response.data && response.data.length > 0) {
         const latestRate = response.data[0];
         setSilverRate(parseFloat(latestRate.price) || 0);
@@ -143,9 +143,9 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
           } : item
         ));
       } else {
-        // Weight-based product
+        // Weight-based product - use current silver rate
         const weight = parseFloat(foundProduct.weight) || 0;
-        const rate = silverRate || 0;
+        const rate = silverRate; // Use current loaded silver rate
         const makingCharges = parseFloat(foundProduct.making_charges_or_wastages) || 0;
         const goldValue = weight * rate;
         const makingAmount = (goldValue * makingCharges) / 100;
@@ -720,6 +720,15 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                     onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
                     step="0.01"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Current Silver Rate</Label>
+                  <Input
+                    value={`₹${silverRate}/g`}
+                    readOnly
+                    className="bg-gray-50 font-semibold"
                   />
                 </div>
                 
