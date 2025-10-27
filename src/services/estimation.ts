@@ -145,8 +145,7 @@ export class EstimationService {
             </tr>
             <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="6"><strong>Customer Details:</strong> ${estimation.customer.address}</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Mobile:</strong> ${estimation.customer.phone}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Silver Rate:</strong> ₹${estimation.silverRate}/g</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="6"><strong>Mobile:</strong> ${estimation.customer.phone}</td>
             </tr>
             <tr style="font-weight: bold; background-color: #f5f5f5;">
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">S. No</td>
