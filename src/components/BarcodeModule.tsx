@@ -6,6 +6,8 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { BarcodeGenerator } from '../lib/barcodeGenerator';
 import { BarcodeLabel } from './BarcodeLabel';
+import { BarcodeLabelService } from '@/services/barcodeLabel';
+import { FoldLabel } from './FoldLabel';
 
 interface JewelryItem {
   id: string;
@@ -112,16 +114,30 @@ export const BarcodeModule: React.FC<BarcodeModuleProps> = ({ onBack }) => {
             <Button onClick={handlePrint} disabled={!generatedBarcode} variant="outline">
               Print Label
             </Button>
+            <Button 
+              onClick={() => BarcodeLabelService.printBarcodeLabel(generatedBarcode, item.name)} 
+              disabled={!generatedBarcode} 
+              variant="secondary"
+            >
+              Fold Type Label
+            </Button>
           </div>
 
           {generatedBarcode && (
-            <div ref={printRef}>
-              <BarcodeLabel product={{
-                name: item.name,
-                sku: item.id,
-                barcode: generatedBarcode,
-                price: parseFloat(item.price) || 0
-              }} />
+            <div className="space-y-6">
+              <div ref={printRef}>
+                <BarcodeLabel product={{
+                  name: item.name,
+                  sku: item.id,
+                  barcode: generatedBarcode,
+                  price: parseFloat(item.price) || 0
+                }} />
+              </div>
+              
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Fold-Type Label Preview</h3>
+                <FoldLabel barcodeValue={generatedBarcode} />
+              </div>
             </div>
           )}
         </CardContent>

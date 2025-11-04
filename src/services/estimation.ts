@@ -112,15 +112,17 @@ export class EstimationService {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; font-size: 10px; }
-        .invoice-container { width: 135mm; height: 200mm; margin: 0 auto; padding: 3mm; }
+        /* .invoice-container { width: 135mm; height: 200mm; margin: 0 auto; padding: 3mm; } */
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 2px 3px; text-align: center; }
         .logo { width: 90%; filter: grayscale(100%); }
         .estimation-badge { color: #fff; background-color: #007bff; padding: 2px 6px; border-radius: 5px; font-size: 8px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
-            .invoice-container { width: 135mm; height: 200mm; padding: 3mm; margin: 5mm auto; }
-            @page { margin: 5mm; size: 145mm 210mm; }
+            .invoice-container { width: 210mm; height: 297mm; padding: 5mm; margin: 0; }
+            @page { margin: 0; size: A4; }
+            /* .invoice-container { width: 135mm; height: 200mm; padding: 5mm; margin: 0; }
+            @page { margin: 5mm; size: 145mm 210mm; } */
         }
     </style>
 </head>

@@ -4,3 +4,4 @@ export * from './auth';
 export * from './product';
 export * from './barcode';
 export * from './invoice';
+export * from './barcodeLabel';

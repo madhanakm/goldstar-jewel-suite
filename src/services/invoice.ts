@@ -109,15 +109,17 @@ export class InvoiceService {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; font-size: 10px; }
-        .invoice-container { width: 135mm; height: 200mm; margin: 0 auto; padding: 3mm; }
+        .invoice-container { width: 210mm; height: 297mm; margin: 0 auto; padding: 5mm; }
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 2px 3px; text-align: center; }
         .logo { width: 90%; }
         .tax-badge { color: #fff; background-color: #000; padding: 2px 6px; border-radius: 5px; font-size: 8px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
-            .invoice-container { width: 135mm; height: 200mm; padding: 3mm; margin: 5mm auto; }
-            @page { margin: 5mm; size: 145mm 210mm; }
+            .invoice-container { width: 210mm; height: 297mm; padding: 5mm; margin: 0; }
+            @page { margin: 0; size: A4; }
+            /* .invoice-container { width: 135mm; height: 200mm; padding: 5mm; margin: 0; }
+            @page { margin: 5mm; size: 145mm 210mm; } */
         }
     </style>
 </head>
@@ -180,12 +182,12 @@ export class InvoiceService {
                 <td style="border-top: 1px solid #000" colspan="3">Weight & Pieces Verified Found O.K</td>
                 <td style="border-top: 1px solid #000; white-space: nowrap;" colspan="3">For PRABANJAM JEWELLERY LIMITED</td>
             </tr>
-            <tr><td colspan="6" style="height: 30px;"></td></tr>
+            <tr><td colspan="6" style="height: 15px;"></td></tr>
             <tr>
                 <td colspan="3">Customer Signature</td>
                 <td colspan="3">Authorised Signature</td>
             </tr>
-            <tr>
+<tr>
                 <td colspan="3" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருகைக்கு நன்றி, மீண்டும் வருக!</td>
                 <td colspan="3"></td>
             </tr>
@@ -218,8 +220,7 @@ export class InvoiceService {
       // Wait for images to load before printing (Chrome fix)
       setTimeout(() => {
         printWindow.print();
-        printWindow.close();
-      }, 1000);
+      }, 500);
     }
   }
 }
