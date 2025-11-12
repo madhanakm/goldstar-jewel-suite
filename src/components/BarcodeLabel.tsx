@@ -72,19 +72,24 @@ export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
         </div>
         <style>{`
           @media print {
+            * { margin: 0; padding: 0; }
+            body { margin: 0; padding: 0; }
             body * { visibility: hidden; }
             .print-area, .print-area * { visibility: visible; }
             .print-area { 
-              position: absolute; 
-              left: 0; 
-              top: 0;
-              width: 50mm !important;
-              height: 25mm !important;
-              transform: scale(1);
+              position: fixed !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              margin: 0 !important;
+              padding: 5px !important;
+              transform: none !important;
+              box-sizing: border-box !important;
             }
             @page { 
-              margin: 0; 
-              size: 50mm 25mm;
+              margin: 0;
+              size: 55mm 25mm;
               -webkit-print-color-adjust: exact;
             }
           }
