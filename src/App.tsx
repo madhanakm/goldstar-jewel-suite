@@ -208,7 +208,6 @@ const AppContent = () => {
       case "Customer Analytics":
       case "Performance Metrics":
       case "Business Analytics":
-      case "Sales Reports":
       case "Daily Report":
         navigate('/analytics-reports');
         break;
