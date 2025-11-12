@@ -29,7 +29,7 @@ export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div 
-          className="border p-4 bg-white text-black text-center"
+          className="border p-4 bg-white text-black text-center print-area"
           style={{
             width: '50mm',
             height: '25mm',
@@ -37,29 +37,29 @@ export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            fontSize: '8px'
+            fontSize: '12px'
           }}
         >
-          <h3 className="font-bold text-xs">{product.name}</h3>
-          <p className="text-xs">SKU: {product.sku}</p>
+          <h3 className="font-bold" style={{fontSize: '14px'}}>{product.name}</h3>
+          <p style={{fontSize: '12px'}}>SKU: {product.sku}</p>
           <div 
             className="my-1 font-mono font-bold"
             style={{
-              fontSize: '10px',
+              fontSize: '14px',
               letterSpacing: '1px',
               fontFamily: 'Courier New, monospace',
               backgroundColor: '#000',
               color: '#fff',
-              padding: '2px 4px',
+              padding: '3px 6px',
               borderRadius: '2px'
             }}
           >
             {product.barcode}
           </div>
-          <p className="font-semibold text-xs">₹{product.price}</p>
+          <p className="font-semibold" style={{fontSize: '12px'}}>₹{product.price}</p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
@@ -68,6 +68,25 @@ export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
             Download
           </Button>
         </div>
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { 
+              position: absolute; 
+              left: 0; 
+              top: 0;
+              width: 50mm !important;
+              height: 25mm !important;
+              transform: scale(1);
+            }
+            @page { 
+              margin: 0; 
+              size: 50mm 25mm;
+              -webkit-print-color-adjust: exact;
+            }
+          }
+        `}</style>
       </CardContent>
     </Card>
   );

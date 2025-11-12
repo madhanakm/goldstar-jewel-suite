@@ -52,8 +52,8 @@ export const FoldLabel: React.FC<FoldLabelProps> = ({
         ref={printRef}
         className="border border-gray-300"
         style={{
-          width: `${totalWidth}cm`,
-          height: `${height}cm`,
+          width: '9cm',
+          height: '1.5cm',
           display: 'flex',
           margin: '0 auto'
         }}
@@ -62,7 +62,7 @@ export const FoldLabel: React.FC<FoldLabelProps> = ({
         <div 
           className="bg-gray-100 border-r border-dashed border-gray-400 flex items-center justify-center"
           style={{
-            width: `${foldLength}cm`,
+            width: '4cm',
             height: '100%'
           }}
         >
@@ -73,7 +73,7 @@ export const FoldLabel: React.FC<FoldLabelProps> = ({
         <div 
           className="bg-white flex items-center justify-center"
           style={{
-            width: `${printableLength}cm`,
+            width: '5cm',
             height: '100%'
           }}
         >
@@ -87,10 +87,10 @@ export const FoldLabel: React.FC<FoldLabelProps> = ({
         </Button>
       </div>
       
-      <style jsx>{`
+      <style>{`
         @media print {
-          body { margin: 0; padding: 0; }
-          @page { margin: 0; size: ${totalWidth}cm ${height}cm; }
+          body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
+          @page { margin: 0; size: 9cm 1.5cm; }
         }
       `}</style>
     </div>
