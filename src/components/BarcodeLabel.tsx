@@ -37,26 +37,28 @@ export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            fontSize: '12px'
+            fontSize: '20px'
           }}
         >
-          <h3 className="font-bold" style={{fontSize: '14px'}}>{product.name}</h3>
-          <p style={{fontSize: '12px'}}>SKU: {product.sku}</p>
+          <h3 className="font-bold" style={{fontSize: '28px', lineHeight: '1.1', color: '#000', margin: '1mm 0'}}>{product.name}</h3>
+          <p style={{fontSize: '22px', margin: '1mm 0', color: '#000', fontWeight: 'bold'}}>SKU: {product.sku}</p>
           <div 
             className="my-1 font-mono font-bold"
             style={{
-              fontSize: '14px',
-              letterSpacing: '1px',
+              fontSize: '24px',
+              letterSpacing: '3px',
               fontFamily: 'Courier New, monospace',
               backgroundColor: '#000',
               color: '#fff',
-              padding: '3px 6px',
-              borderRadius: '2px'
+              padding: '2mm 3mm',
+              borderRadius: '1mm',
+              minHeight: '8mm',
+              border: '2px solid #000'
             }}
           >
             {product.barcode}
           </div>
-          <p className="font-semibold" style={{fontSize: '12px'}}>₹{product.price}</p>
+          <p className="font-semibold" style={{fontSize: '22px', margin: '1mm 0', color: '#000', fontWeight: 'bold'}}>₹{product.price}</p>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => window.print()}>
