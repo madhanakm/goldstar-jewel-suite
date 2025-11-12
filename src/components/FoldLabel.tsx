@@ -23,15 +23,18 @@ export const FoldLabel: React.FC<FoldLabelProps> = ({
     if (barcodeRef.current && barcodeValue) {
       JsBarcode(barcodeRef.current, barcodeValue, {
         format: "CODE128",
-        width: 3,
-        height: 50,
+        width: 2,
+        height: 60,
         displayValue: true,
-        fontSize: 14,
+        fontSize: 16,
         fontOptions: "bold",
+        font: "Arial",
         textAlign: "center",
         textPosition: "bottom",
-        textMargin: 2,
-        margin: 5
+        textMargin: 3,
+        margin: 3,
+        background: "#ffffff",
+        lineColor: "#000000"
       });
     }
   }, [barcodeValue]);

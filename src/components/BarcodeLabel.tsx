@@ -28,11 +28,35 @@ export const BarcodeLabel = ({ product }: BarcodeLabelProps) => {
         <CardTitle>Barcode Label</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="border p-4 bg-white text-black text-center">
-          <h3 className="font-bold">{product.name}</h3>
-          <p className="text-sm">SKU: {product.sku}</p>
-          <div className="my-2 font-mono text-lg">||||| {product.barcode} |||||</div>
-          <p className="font-semibold">₹{product.price}</p>
+        <div 
+          className="border p-4 bg-white text-black text-center"
+          style={{
+            width: '50mm',
+            height: '25mm',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: '8px'
+          }}
+        >
+          <h3 className="font-bold text-xs">{product.name}</h3>
+          <p className="text-xs">SKU: {product.sku}</p>
+          <div 
+            className="my-1 font-mono font-bold"
+            style={{
+              fontSize: '10px',
+              letterSpacing: '1px',
+              fontFamily: 'Courier New, monospace',
+              backgroundColor: '#000',
+              color: '#fff',
+              padding: '2px 4px',
+              borderRadius: '2px'
+            }}
+          >
+            {product.barcode}
+          </div>
+          <p className="font-semibold text-xs">₹{product.price}</p>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline">
