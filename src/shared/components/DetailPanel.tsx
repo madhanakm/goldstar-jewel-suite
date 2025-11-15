@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface DetailPanelProps {
   title: string;
@@ -19,7 +20,7 @@ export function DetailPanel({ title, isOpen, onClose, children }: DetailPanelPro
           <div className="flex items-center justify-between">
             <CardTitle>{title}</CardTitle>
             <Button variant="outline" size="sm" onClick={onClose}>
-              ✕
+              <X className="w-4 h-4" />
             </Button>
           </div>
         </CardHeader>
