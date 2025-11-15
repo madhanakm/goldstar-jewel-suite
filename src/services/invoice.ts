@@ -75,12 +75,12 @@ export class InvoiceService {
       
       return `
       <tr>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${index + 1}</td>
-        <td style="border-right: 1px solid #000; width: 56%; padding: 1px; text-align: left; font-size: 9px;">${item.itemName} (${item.purity || '-'})</td>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${item.quantity}</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px; font-size: 9px;">${weightDisplay}</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px; font-size: 9px;">${item.discountAmount ? '₹' + item.discountAmount.toFixed(2) : '-'}</td>
-        <td style="border-left: 1px solid #000; width: 4%; padding: 1px; font-size: 9px;">₹${item.total.toLocaleString()}</td>
+        <td style="border-right: 1px solid #000; padding: 1px; font-size: 9px;">${index + 1}</td>
+        <td style="border-right: 1px solid #000; padding: 1px; text-align: left; font-size: 9px;" colspan="5">${item.itemName} (${item.purity || '-'})</td>
+        <td style="border-right: 1px solid #000; padding: 1px; font-size: 9px;">${item.quantity}</td>
+        <td style="border-right: 1px solid #000; padding: 1px; font-size: 9px;">${weightDisplay}</td>
+        <td style="border-right: 1px solid #000; padding: 1px; font-size: 9px;">${item.discountAmount ? '₹' + item.discountAmount.toFixed(2) : '-'}</td>
+        <td style="border-left: 1px solid #000; padding: 1px; font-size: 9px;">₹${item.total.toLocaleString()}</td>
       </tr>
       `;
     }).join('');
@@ -90,12 +90,12 @@ export class InvoiceService {
     const emptyRowsCount = Math.max(0, maxRows - template.items.length);
     const emptyRowsHTML = Array(emptyRowsCount).fill(0).map(() => `
       <tr>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 56%; padding: 1px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px;">&nbsp;</td>
-        <td style="border-left: 1px solid #000; width: 4%; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; padding: 1px; font-size: 9px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; padding: 1px;" colspan="5">&nbsp;</td>
+        <td style="border-right: 1px solid #000; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; padding: 1px;">&nbsp;</td>
+        <td style="border-left: 1px solid #000; padding: 1px;">&nbsp;</td>
       </tr>
     `).join('');
 
@@ -113,7 +113,7 @@ export class InvoiceService {
         .invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .invoice-table td { padding: 2px 3px; text-align: center; }
         .logo { width: 90%; }
-        .tax-badge { color: #fff; background-color: #000; padding: 2px 6px; border-radius: 5px; font-size: 8px; }
+        .tax-badge { color: #fff; background-color: #000; padding: 2px 6px !important; display:inline-block; border-radius: 5px; font-size: 8px; }
         @media print {
             body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             .invoice-container { width: 210mm; height: 297mm; padding: 5mm; margin: 0; }
@@ -127,40 +127,41 @@ export class InvoiceService {
     <div class="invoice-container">
         <table class="invoice-table">
             <tr style="font-weight: bold">
-                <td style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 9px; white-space: nowrap;">98422 44014</td>
-                <td colspan="4" style="text-align: center; font-size: 9px; vertical-align: middle; padding-left: 50px;">நடப்பது யாவும் நன்மைக்கே</td>
-                <td style="text-align: right; font-size: 9px; white-space: nowrap;">90478 07888</td>
+                <td style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 9px; white-space: nowrap; width: 20%;" colspan="2">98422 44014</td>
+                <td colspan="6" style="text-align: center; font-size: 9px; vertical-align: middle; width: 60%;">நடப்பது யாவும் நன்மைக்கே</td>
+                <td style="text-align: right; font-size: 9px; white-space: nowrap; width: 20%;" colspan="2">90478 07888</td>
             </tr>
-            <tr><td colspan="6"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
+            <tr><td colspan="10"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
-                <td style="text-align: left; font-size: 9px;">Invoice No: ${template.invoiceNumber}</td>
-                <td colspan="4" style="text-align: center; padding-left: 50px;"><span class="tax-badge" style="font-size: 10px; padding: 3px 8px; white-space: nowrap; display: inline-block;">Tax Invoice</span></td>
-                <td style="text-align: right; font-size: 9px; white-space: nowrap;">GSTIN: 33AAPCP7799B1ZX</td>
+                <!-- <td style="text-align: left; font-size: 9px; width: 20%;" colspan="2">Invoice No: </td> -->
+                <td style="text-align: left; font-size: 9px;" colspan="2">Invoice No: ${template.invoiceNumber}</td>
+                <td colspan="6" style="text-align: center; width: 60%;"><span class="tax-badge" style="font-size: 10px; padding: 3px 0px; white-space: nowrap; display: inline-block;">Tax Invoice</span></td>
+                <td style="text-align: right; font-size: 9px; white-space: nowrap; width: 20%;" colspan="2">GSTIN: 33AAPCP7799B1ZX</td>
             </tr>
-            <tr><td colspan="6" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 8px; padding: 1px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
+            <tr><td colspan="10" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 8px; padding: 1px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Name:</strong> ${template.customerName}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="3"><strong>Date:</strong> ${template.date}</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 60%;" colspan="6"><strong>Name:</strong> ${template.customerName}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 40%;" colspan="4"><strong>Date:</strong> ${template.date}</td>
             </tr>
-            <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="6"><strong>Customer Details:</strong> ${template.customerAddress}</td></tr>
+            <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="10"><strong>Customer Details:</strong> ${template.customerAddress}</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="2"><strong>Mobile:</strong> ${template.customerPhone}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="4"><strong>Customer GSTIN:</strong> ${template.customerGstin}</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 50%;" colspan="5"><strong>Mobile:</strong> ${template.customerPhone}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 50%;" colspan="5"><strong>Customer GSTIN:</strong> ${template.customerGstin}</td>
             </tr>
             <tr style="font-weight: bold; background-color: #f5f5f5;">
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">S. No</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 56%;">Description ( HSN Code - 7113 )</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 50%;" colspan="5">Description ( HSN Code - 7113 )</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">QTY</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Weight</td>
                 <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Disc Amt</td>
-                <td style="border-left: 1px solid #000; border-bottom: 1px solid #000; width: 4%;">Amount</td>
+                <td style="border-left: 1px solid #000; border-bottom: 1px solid #000; width: 10%;">Amount</td>
             </tr>
             ${itemsHTML}
             ${emptyRowsHTML}
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 1px; font-weight: bold; font-size: 8px;" rowspan="5" colspan="4"><strong>Amount in Words:</strong> ${template.amountInWords}</td>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">Sub Total:</td>
-                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">₹${invoice.subtotal.toLocaleString()}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 1px; font-weight: bold; font-size: 8px; width: 80%;" rowspan="5" colspan="8"><strong>Amount in Words:</strong> ${template.amountInWords}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; width: 12%;">Sub Total:</td>
+                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; width: 8%;">₹${invoice.subtotal.toLocaleString()}</td>
             </tr>
             <tr>
                 <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; white-space: nowrap;">SGST 1.5%:</td>
@@ -179,17 +180,17 @@ export class InvoiceService {
                 <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; font-weight: bold;">₹${template.total.toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000" colspan="3">Weight & Pieces Verified Found O.K</td>
-                <td style="border-top: 1px solid #000; white-space: nowrap;" colspan="3">For PRABANJAM JEWELLERY LIMITED</td>
+                <td style="border-top: 1px solid #000; width: 50%;" colspan="5">Weight & Pieces Verified Found O.K</td>
+                <td style="border-top: 1px solid #000; white-space: nowrap; width: 50%;" colspan="5">For PRABANJAM JEWELLERY LIMITED</td>
             </tr>
-            <tr><td colspan="6" style="height: 15px;"></td></tr>
+            <tr><td colspan="10" style="height: 15px;"></td></tr>
             <tr>
-                <td colspan="3">Customer Signature</td>
-                <td colspan="3">Authorised Signature</td>
+                <td colspan="5" style="width: 50%;">Customer Signature</td>
+                <td colspan="5" style="width: 50%;">Authorised Signature</td>
             </tr>
 <tr>
-                <td colspan="3" style="text-align: center; color: red; font-weight: bold; padding: 2px;">தங்கள் வருகைக்கு நன்றி, மீண்டும் வருக!</td>
-                <td colspan="3"></td>
+                <td colspan="5" style="text-align: center; color: red; font-weight: bold; padding: 2px; width: 50%;">தங்கள் வருகைக்கு நன்றி, மீண்டும் வருக!</td>
+                <td colspan="5" style="width: 50%;"></td>
             </tr>
         </table>
     </div>
