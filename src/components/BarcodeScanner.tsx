@@ -12,11 +12,38 @@ interface BarcodeScannerProps {
 
 export const BarcodeScanner = ({ isOpen, onScan, onClose }: BarcodeScannerProps) => {
   const [manualCode, setManualCode] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
 
   const handleManualSubmit = () => {
     if (manualCode.trim()) {
       onScan(manualCode.trim());
       setManualCode("");
+    }
+  };
+
+  // Handle barcode scanner input (rapid character input)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleManualSubmit();
+    }
+  };
+
+  // Auto-submit when barcode scanner sends Enter after rapid input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setManualCode(value);
+    
+    // If input length suggests barcode scanner (typically 8-20 characters)
+    if (value.length >= 8 && !isScanning) {
+      setIsScanning(true);
+      // Auto-submit after short delay to catch Enter key
+      setTimeout(() => {
+        if (value.trim() && value === manualCode) {
+          handleManualSubmit();
+        }
+        setIsScanning(false);
+      }, 100);
     }
   };
 
@@ -36,9 +63,10 @@ export const BarcodeScanner = ({ isOpen, onScan, onClose }: BarcodeScannerProps)
             <div className="flex gap-2">
               <Input
                 value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 placeholder="Enter barcode or product ID"
-                onKeyPress={(e) => e.key === 'Enter' && handleManualSubmit()}
+                autoFocus
               />
               <Button onClick={handleManualSubmit}>Add</Button>
             </div>

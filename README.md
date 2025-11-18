@@ -2,7 +2,7 @@
 
 A comprehensive billing, inventory management and reports application for jewelry shops built with React, TypeScript, and Tailwind CSS.
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 src/
@@ -34,7 +34,7 @@ src/
 └── lib/                # Third-party library configurations
 ```
 
-## 🚀 Features
+## Features
 
 - **Sales & Billing**: GST-compliant billing system with invoice generation
 - **Inventory Management**: Real-time stock tracking with barcode system
@@ -45,7 +45,7 @@ src/
 - **Barcode System**: Generate and print product barcodes
 - **Purchase Entry**: Vendor management and stock inward
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite
 - **Styling**: Tailwind CSS, shadcn/ui
@@ -54,7 +54,7 @@ src/
 - **API**: RESTful API with Strapi backend
 - **Build Tool**: Vite with SWC
 
-## 📦 Installation
+## Installation
 
 ```bash
 # Clone the repository
@@ -70,7 +70,7 @@ npm install
 npm run dev
 ```
 
-## 🔧 Development
+## Development
 
 ```bash
 # Development server
@@ -86,7 +86,7 @@ npm run preview
 npm run lint
 ```
 
-## 📁 Code Organization
+## Code Organization
 
 ### Components
 - **Common Components**: Reusable UI components used across features
@@ -107,7 +107,7 @@ npm run lint
 - Comprehensive TypeScript definitions for type safety
 - API response types and business entity types
 
-## 🎯 Best Practices
+## Best Practices
 
 - **Feature-based architecture** for scalability
 - **TypeScript** for type safety
@@ -117,7 +117,7 @@ npm run lint
 - **Error handling** and loading states
 - **Responsive design** with Tailwind CSS
 
-## 🔐 Environment Variables
+## Environment Variables
 
 Create a `.env` file in the root directory:
 
@@ -125,14 +125,14 @@ Create a `.env` file in the root directory:
 VITE_API_BASE_URL=https://jewelapi.sricashway.com
 ```
 
-## 📱 Responsive Design
+## Responsive Design
 
 The application is fully responsive and works on:
 - Desktop (1024px+)
 - Tablet (768px - 1023px)
 - Mobile (320px - 767px)
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run tests (when implemented)
@@ -142,7 +142,7 @@ npm run test
 npm run test:watch
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ```bash
 # Build for production
@@ -151,6 +151,6 @@ npm run build:prod
 # The dist/ folder contains the production build
 ```
 
-## 📄 License
+## License
 
 This project is proprietary software for Sri Cashway jewelry management.

@@ -11,9 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { StatCard, ProductCard, DataTable, FormField } from "@/components/common";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Plus, Minus, Printer, Calculator, CreditCard, Banknote, Smartphone, Receipt, Scan, Gem, Crown, Star } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Printer, Calculator, CreditCard, Banknote, Smartphone, Receipt, Scan, Gem, Crown, Star, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { BarcodeInput } from "@/hooks/useBarcodeScanner";
 import { Customer } from "@/types/customer";
 import { Invoice } from "@/types/invoice";
 import { InvoiceService } from "@/services/invoice";
@@ -113,13 +114,23 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
       setSelectedCustomer(newCustomer);
       setIsNewCustomer(false);
       toast({
-        title: "✅ Customer Created",
-        description: "New customer added successfully",
+        title: "Customer Created",
+        description: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            New customer added successfully
+          </div>
+        ),
       });
     } catch (error) {
       toast({
-        title: "❌ Error",
-        description: "Failed to create customer",
+        title: "Error",
+        description: (
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-600" />
+            Failed to create customer
+          </div>
+        ),
         variant: "destructive"
       });
     }
@@ -177,13 +188,23 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
     if (product) {
       addToBill(product);
       toast({
-        title: "✅ Product Added",
-        description: `${product.name} (${product.barcode}) added to bill`,
+        title: "Product Added",
+        description: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            {product.name} ({product.barcode}) added to bill
+          </div>
+        ),
       });
     } else {
       toast({
-        title: "❌ Product Not Found",
-        description: `No product found with code: ${cleanBarcode}. Try manual search or check the barcode.`,
+        title: "Product Not Found",
+        description: (
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-600" />
+            No product found with code: {cleanBarcode}. Try manual search or check the barcode.
+          </div>
+        ),
         variant: "destructive"
       });
     }
@@ -423,10 +444,40 @@ export const SalesBilling = ({ onBack }: SalesBillingProps) => {
                   </CardHeader>
                   <CardContent>
                     <div className="mb-4">
-                      <Input
+                      <BarcodeInput
                         placeholder="Search products by name, category, or barcode..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={setSearchQuery}
+                        onBarcodeScanned={(barcode) => {
+                          const product = allProducts.find(p => 
+                            p.barcode === barcode || 
+                            p.id === barcode ||
+                            p.name.toLowerCase().includes(barcode.toLowerCase())
+                          );
+                          if (product) {
+                            addToBill(product);
+                            toast({
+                              title: "Product Added",
+                              description: (
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  {product.name} ({barcode}) added to bill
+                                </div>
+                              ),
+                            });
+                          } else {
+                            toast({
+                              title: "Product Not Found",
+                              description: (
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="w-4 h-4 text-red-600" />
+                                  No product found with code: {barcode}
+                                </div>
+                              ),
+                              variant: "destructive"
+                            });
+                          }
+                        }}
                         className="w-full"
                       />
                     </div>
