@@ -78,12 +78,12 @@ export class EstimationService {
       
       return `
       <tr>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${index + 1}</td>
-        <td style="border-right: 1px solid #000; width: 50%; padding: 1px; text-align: left; font-size: 9px;" colspan="5">${item.itemName} (${item.purity || '-'})</td>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">${item.quantity}</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px; font-size: 9px;">${weightDisplay}</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px; font-size: 9px;">${item.discountAmount ? '₹' + parseFloat(item.discountAmount).toFixed(2) : '-'}</td>
-        <td style="width: 12%; padding: 1px; font-size: 10px;">₹${item.total.toLocaleString()}</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 2px; font-size: 12px;">${index + 1}</td>
+        <td style="border-right: 1px solid #000; width: 50%; padding: 2px; text-align: left; font-size: 12px;" colspan="5">${item.itemName} (${item.purity || '-'})</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 2px; font-size: 12px;">${item.quantity}</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 2px; font-size: 12px;">${weightDisplay}</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 2px; font-size: 12px;">${item.discountAmount ? '₹' + parseFloat(item.discountAmount).toFixed(2) : '-'}</td>
+        <td style="width: 12%; padding: 2px; font-size: 12px;">₹${item.total.toLocaleString()}</td>
       </tr>
       `;
     }).join('');
@@ -93,12 +93,12 @@ export class EstimationService {
     const emptyRowsCount = Math.max(0, maxRows - estimation.items.length);
     const emptyRowsHTML = Array(emptyRowsCount).fill(0).map(() => `
       <tr>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px; font-size: 9px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 50%; padding: 1px;" colspan="5">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 8%; padding: 1px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px;">&nbsp;</td>
-        <td style="border-right: 1px solid #000; width: 12%; padding: 1px;">&nbsp;</td>
-        <td style="width: 10%; padding: 1px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 2px; font-size: 12px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 50%; padding: 2px;" colspan="5">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 8%; padding: 2px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 2px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; width: 12%; padding: 2px;">&nbsp;</td>
+        <td style="width: 10%; padding: 2px;">&nbsp;</td>
       </tr>
     `).join('');
 
@@ -130,47 +130,47 @@ export class EstimationService {
     <div class="invoice-container">
         <table class="invoice-table">
             <tr style="font-weight: bold">
-                <td style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 9px; white-space: nowrap; width: 20%;" colspan="2">98422 44014</td>
-                <td colspan="6" style="text-align: center; font-size: 9px; vertical-align: middle; width: 60%;">நடப்பது யாவும் நன்மைக்கே</td>
-                <td style="text-align: right; font-size: 9px; white-space: nowrap; width: 20%;" colspan="2">90478 07888</td>
+                <td style="border-left: none; border-bottom: none; border-right: none; text-align: left; font-size: 12px; white-space: nowrap; width: 20%;" colspan="2">98422 44014</td>
+                <td colspan="6" style="text-align: center; font-size: 12px; vertical-align: middle; width: 60%;">நடப்பது யாவும் நன்மைக்கே</td>
+                <td style="text-align: right; font-size: 12px; white-space: nowrap; width: 20%;" colspan="2">90478 07888</td>
             </tr>
             <tr><td colspan="10"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
-                <td style="text-align: left; font-size: 9px; width: 20%;" colspan="2">EST-No: ${estimation.estimationNumber}</td>
-                <td colspan="6" style="text-align: center; width: 60%;"><span class="estimation-badge" style="font-size: 10px; padding: 3px 8px; white-space: nowrap; display: inline-block;">Price Estimation</span></td>
-                <td colspan="2" style="text-align: right; font-size: 9px; white-space: nowrap; width: 20%;"></td>
+                <td style="text-align: left; font-size: 12px; width: 20%;" colspan="2">EST-No: ${estimation.estimationNumber}</td>
+                <td colspan="6" style="text-align: center; width: 60%;"><span class="estimation-badge" style="font-size: 12px; padding: 3px 8px; white-space: nowrap; display: inline-block;">Price Estimation</span></td>
+                <td colspan="2" style="text-align: right; font-size: 12px; white-space: nowrap; width: 20%;"></td>
             </tr>
-            <tr><td colspan="10" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 8px; padding: 1px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
+            <tr><td colspan="10" style="font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 10px; padding: 2px;">NO-1, BRINDHAVAN GARDEN, BHARATHIYAR ROAD,MANIYAKARANPALAYAM , GANAPATHY, CBE-06.CELL : 98422 44014</td></tr>
             <tr>
-                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 50%;" colspan="5"><strong>Name:</strong> ${estimation.customer.name}</td>
-                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 50%;" colspan="5"><strong>Date:</strong> ${new Date(estimation.date).toLocaleDateString('en-GB')}</td>
+                <td style="text-align: left; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px; font-size: 12px; width: 50%;" colspan="5"><strong>Name:</strong> ${estimation.customer.name}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 2px; font-size: 12px; width: 50%;" colspan="5"><strong>Date:</strong> ${new Date(estimation.date).toLocaleDateString('en-GB')}</td>
             </tr>
-            <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px;" colspan="10"><strong>Customer Details:</strong> ${estimation.customer.address}</td></tr>
+            <tr><td style="text-align: left; border-bottom: 1px solid #000; padding: 2px; font-size: 12px;" colspan="10"><strong>Customer Details:</strong> ${estimation.customer.address}</td></tr>
             <tr>
-                <td style="text-align: left; border-bottom: 1px solid #000; padding: 1px; font-size: 9px; width: 100%;" colspan="10"><strong>Mobile:</strong> ${estimation.customer.phone}</td>
+                <td style="text-align: left; border-bottom: 1px solid #000; padding: 2px; font-size: 12px; width: 100%;" colspan="10"><strong>Mobile:</strong> ${estimation.customer.phone}</td>
             </tr>
             <tr style="font-weight: bold; background-color: #f5f5f5;">
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">S. No</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 50%;" colspan="5">Description</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%;">QTY</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Weight</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%;">Disc Amt</td>
-                <td style="border-bottom: 1px solid #000; width: 10%;">Amount</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%; font-size: 12px; padding: 2px;">S. No</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 50%; font-size: 12px; padding: 2px;" colspan="5">Description</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%; font-size: 12px; padding: 2px;">QTY</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%; font-size: 12px; padding: 2px;">Weight</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%; font-size: 12px; padding: 2px;">Disc Amt</td>
+                <td style="border-bottom: 1px solid #000; width: 10%; font-size: 12px; padding: 2px;">Amount</td>
             </tr>
             ${itemsHTML}
             ${emptyRowsHTML}
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 1px; font-weight: bold; font-size: 8px; width: 80%;" rowspan="3" colspan="8"><strong>Amount in Words:</strong> ${this.numberToWords(Math.round(estimation.total))}</td>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; width: 12%;">Sub Total:</td>
-                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; width: 8%;">₹${estimation.subtotal.toLocaleString()}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 2px; font-weight: bold; font-size: 11px; width: 80%;" rowspan="3" colspan="8"><strong>Amount in Words:</strong> ${this.numberToWords(Math.round(estimation.total))}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 11px; text-align: right; width: 12%;">Sub Total:</td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 11px; text-align: right; width: 8%;">₹${estimation.subtotal.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">Round Off:</td>
-                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right;">₹${(estimation.roundoff || 0).toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 11px; text-align: right;">Round Off:</td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 11px; text-align: right;">₹${(estimation.roundoff || 0).toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 1px; font-weight: bold; font-size: 8px; text-align: right;"><strong>Total:</strong></td>
-                <td style="border-top: 1px solid #000; padding: 1px; font-size: 8px; text-align: right; font-weight: bold;">₹${estimation.total.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-weight: bold; font-size: 12px; text-align: right;"><strong>Total:</strong></td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 12px; text-align: right; font-weight: bold;">₹${estimation.total.toFixed(2)}</td>
             </tr>
             <tr>
                 <td style="border-top: 1px solid #000; width: 50%;" colspan="5">Weight & Pieces Verified Found O.K</td>
