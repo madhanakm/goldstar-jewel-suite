@@ -408,8 +408,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.drawImage(tempCanvas, x, 45);
       
       // Add code below barcode with some space
-      ctx.font = 'bold 24px Arial';
-      ctx.fillText(product.code, centerX, 140);
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(product.code, centerX, 138);
     }
     
     return canvas;
