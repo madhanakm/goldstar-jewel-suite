@@ -377,15 +377,15 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       const tempCanvas = document.createElement('canvas');
       JsBarcode(tempCanvas, product.code, {
         format: 'CODE128',
-        width: 3,
-        height: 80,
+        width: 2,
+        height: 60,
         displayValue: false,
         margin: 2
       });
       
       // Add product details above barcode
       ctx.fillStyle = 'black';
-      ctx.font = 'bold 18px Arial';
+      ctx.font = 'bold 16px Arial';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '1px';
       
@@ -394,12 +394,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       if (product.staticProduct) {
         // Fixed price product - show product name, weight and qty only
         ctx.fillText(`${product.product}`, centerX, 20);
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 40);
       } else {
         // Weight-based product - show all details
         ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 40);
       }
       
@@ -408,8 +408,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.drawImage(tempCanvas, x, 45);
       
       // Add code below barcode with some space
-      ctx.font = 'bold 20px Arial';
-      ctx.fillText(product.code, centerX, 138);
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(product.code, centerX, 125);
     }
     
     return canvas;
