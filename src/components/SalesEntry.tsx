@@ -185,6 +185,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
 
   const handleBarcodeSearch = async (barcode: string, index: number) => {
+    console.log('Searching for barcode:', barcode, 'in products:', barcodeProducts);
     const foundProduct = barcodeProducts.find(p => p.code === barcode);
     
     if (foundProduct) {
@@ -662,8 +663,8 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
                       const value = e.target.value;
                       updateProduct(index, "product", value);
                       
-                      // Search for any numeric barcode
-                      if (value.length >= 10 && /^\d+$/.test(value)) {
+                      // Search for barcode - more flexible detection
+                      if (value.length >= 6 && /^\d+$/.test(value)) {
                         handleBarcodeSearch(value, index);
                       }
                     }}

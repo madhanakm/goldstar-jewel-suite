@@ -366,7 +366,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = 300;
-    canvas.height = 180;
+    canvas.height = 150;
     
     if (ctx) {
       // White background
@@ -380,12 +380,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         width: 2,
         height: 60,
         displayValue: false,
-        margin: 10
+        margin: 2
       });
       
       // Add product details above barcode
       ctx.fillStyle = 'black';
-      ctx.font = '12px Arial';
+      ctx.font = 'bold 16px Arial';
       ctx.textAlign = 'center';
       
       const centerX = canvas.width / 2;
@@ -393,10 +393,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       if (product.staticProduct) {
         // Fixed price product - show product name, weight, price and qty
         ctx.fillText(`${product.product}`, centerX, 20);
+        ctx.font = '14px Arial';
         ctx.fillText(`Weight: ${product.weight}g • Price: ₹${product.price} • Qty: ${product.qty}`, centerX, 35);
       } else {
         // Weight-based product - show all details
         ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
+        ctx.font = '14px Arial';
         ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 35);
       }
       
@@ -406,11 +408,13 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       
       // Add additional info below barcode only for weight-based products
       if (!product.staticProduct) {
-        ctx.fillText(`Tray: ${product.trayno} | VA: ${product.making_charges_or_wastages}%`, centerX, 135);
+        ctx.font = '12px Arial';
+        ctx.fillText(`Tray: ${product.trayno} | VA: ${product.making_charges_or_wastages}%`, centerX, 115);
       }
       
       // Add code below everything
-      ctx.fillText(product.code, centerX, 155);
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText(product.code, centerX, 135);
     }
     
     return canvas;
