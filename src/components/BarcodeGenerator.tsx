@@ -378,7 +378,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       JsBarcode(tempCanvas, product.code, {
         format: 'CODE128',
         width: 2,
-        height: 100,
+        height: 75,
         displayValue: false,
         margin: 2
       });
