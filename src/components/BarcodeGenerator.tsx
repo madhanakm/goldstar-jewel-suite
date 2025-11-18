@@ -387,34 +387,29 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.fillStyle = 'black';
       ctx.font = 'bold 16px Arial';
       ctx.textAlign = 'center';
+      ctx.letterSpacing = '1px';
       
       const centerX = canvas.width / 2;
       
       if (product.staticProduct) {
-        // Fixed price product - show product name, weight, price and qty
+        // Fixed price product - show product name, weight and qty only
         ctx.fillText(`${product.product}`, centerX, 20);
-        ctx.font = '14px Arial';
-        ctx.fillText(`Weight: ${product.weight}g • Price: ₹${product.price} • Qty: ${product.qty}`, centerX, 35);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 40);
       } else {
         // Weight-based product - show all details
         ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
-        ctx.font = '14px Arial';
-        ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 35);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 40);
       }
       
       // Draw barcode centered
       const x = (canvas.width - tempCanvas.width) / 2;
-      ctx.drawImage(tempCanvas, x, 40);
+      ctx.drawImage(tempCanvas, x, 45);
       
-      // Add additional info below barcode only for weight-based products
-      if (!product.staticProduct) {
-        ctx.font = '12px Arial';
-        ctx.fillText(`Tray: ${product.trayno} | VA: ${product.making_charges_or_wastages}%`, centerX, 115);
-      }
-      
-      // Add code below everything
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText(product.code, centerX, 135);
+      // Add code below barcode with some space
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(product.code, centerX, 125);
     }
     
     return canvas;
