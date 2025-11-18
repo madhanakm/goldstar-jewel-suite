@@ -134,7 +134,7 @@ export class InvoiceService {
             <tr><td colspan="10"><img src="${logoBase64}" alt="Logo" class="logo"></td></tr>
             <tr style="font-weight: bold">
                 <!-- <td style="text-align: left; font-size: 9px; width: 20%;" colspan="2">Invoice No: </td> -->
-                <td style="text-align: left; font-size: 12px;" colspan="2">Invoice No: ${template.invoiceNumber}</td>
+                <td style="text-align: left; font-size: 12px;" colspan="2">Invoice No: ${template.invoiceNumber.replace('PJ-', '')}</td>
                 <td colspan="6" style="text-align: center; width: 60%;"><span class="tax-badge" style="font-size: 12px; padding: 3px 0px; white-space: nowrap; display: inline-block;">Tax Invoice</span></td>
                 <td style="text-align: right; font-size: 12px; white-space: nowrap; width: 20%;" colspan="2">GSTIN: 33AAPCP7799B1ZX</td>
             </tr>

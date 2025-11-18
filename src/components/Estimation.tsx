@@ -588,8 +588,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                         <Input
                           type="number"
                           value={item.weight || ''}
-                          readOnly
-                          className="bg-gray-50"
+                          onChange={(e) => updateItem(item.id, 'weight', parseFloat(e.target.value) || 0)}
                           placeholder="0.00"
                         />
                       </div>
@@ -600,8 +599,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                       <Input
                         type="number"
                         value={item.quantity === 0 ? '' : item.quantity}
-                        readOnly
-                        className="bg-gray-50"
+                        onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                         placeholder="0"
                       />
                     </div>
@@ -611,8 +609,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                         <Label>Touch</Label>
                         <Input
                           value={item.purity}
-                          readOnly
-                          className="bg-gray-50"
+                          onChange={(e) => updateItem(item.id, 'purity', e.target.value)}
                           placeholder="Touch"
                         />
                       </div>
@@ -623,8 +620,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                       <Input
                         type="number"
                         value={item.ratePerGram || ''}
-                        readOnly
-                        className="bg-gray-50"
+                        onChange={(e) => updateItem(item.id, 'ratePerGram', parseFloat(e.target.value) || 0)}
                         placeholder="0.00"
                       />
                     </div>
@@ -636,8 +632,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                           <Input
                             type="number"
                             value={item.makingChargesPercent || ''}
-                            readOnly
-                            className="bg-gray-50"
+                            onChange={(e) => updateItem(item.id, 'makingChargesPercent', parseFloat(e.target.value) || 0)}
                             placeholder="0.00"
                           />
                           {item.ratePerGram && item.weight && item.makingChargesPercent && (
