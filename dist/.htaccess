@@ -1,0 +1,13 @@
+Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [QSA,L]
+
+# Set correct MIME types
+<FilesMatch "\.(js|mjs)$">
+  Header set Content-Type "application/javascript"
+</FilesMatch>
+
+<FilesMatch "\.css$">
+  Header set Content-Type "text/css"
+</FilesMatch>
