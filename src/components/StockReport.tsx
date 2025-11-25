@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { Package, LogOut, Download, Search, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -36,26 +36,16 @@ export const StockReport = ({ onNavigate, onLogout }: StockReportProps) => {
 
   const loadStockData = async () => {
     try {
-      const barcodeResponse = await request(endpoints.barcode.listBarcodes());
+      const barcodeResponse = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       const products = barcodeResponse.data || [];
       
       // Load all sales data
-      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
-      const salesMasters = salesMastersResponse.data || [];
-      
-      const allSalesDetails = [];
-      for (const master of salesMasters) {
-        try {
-          const detailsResponse = await request(endpoints.sales.details.list(master.invoice));
-          allSalesDetails.push(...(detailsResponse.data || []));
-        } catch (error) {
-          console.error(`Failed to load details for invoice ${master.invoice}`);
-        }
-      }
+      const allSalesDetails = await fetchAllPaginated(request, endpoints.sales.details.listAll());
+      const salesDetails = allSalesDetails.data || [];
 
       // Filter out sold products - only show available items
       const availableProducts = products.filter((product: any) => {
-        const isSold = allSalesDetails.some((sale: any) => {
+        const isSold = salesDetails.some((sale: any) => {
           const saleAttrs = sale.attributes || sale;
           return saleAttrs.barcode && product.code && saleAttrs.barcode === product.code;
         });

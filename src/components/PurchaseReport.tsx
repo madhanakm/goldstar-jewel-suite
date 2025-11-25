@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { ShoppingBag, LogOut, Download, Calendar, DollarSign, Package, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -36,7 +36,7 @@ export const PurchaseReport = ({ onNavigate, onLogout }: PurchaseReportProps) =>
 
   const loadPurchaseData = async () => {
     try {
-      const response = await request(endpoints.barcode.list(1000));
+      const response = await fetchAllPaginated(request, endpoints.barcode.listAll());
       const data = (response.data || []).sort((a, b) => b.id - a.id);
       setPurchaseData(data);
       setFilteredData(data);

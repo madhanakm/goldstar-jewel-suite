@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { Recycle, LogOut, Download, Calendar, DollarSign, Package, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -35,6 +36,7 @@ export const OldSilverReport = ({ onNavigate, onLogout }: OldSilverReportProps) 
   });
   const { sidebarOpen, toggleSidebar } = useSidebar();
   const { toast } = useToast();
+  const { request } = useApi();
   const { goBack } = useNavigation();
 
   useEffect(() => {
@@ -59,9 +61,8 @@ export const OldSilverReport = ({ onNavigate, onLogout }: OldSilverReportProps) 
 
   const loadReportData = async () => {
     try {
-      const response = await fetch('https://jewelapi.sricashway.com/api/old-silver-entries?sort=createdAt:desc');
-      const data = await response.json();
-      const entries = data.data || [];
+      const response = await fetchAllPaginated(request, endpoints.oldSilver.listAll());
+      const entries = response.data || [];
       
       setReportData(entries);
     } catch (error) {

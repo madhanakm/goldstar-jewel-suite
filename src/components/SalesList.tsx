@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { FileText, Printer, LogOut, Calendar, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -34,22 +34,23 @@ export const SalesList = ({ onNavigate, onLogout }: SalesListProps) => {
 
   const loadSalesData = async () => {
     try {
-      const response = await request('/api/sales-masters?pagination[pageSize]=1000');
+      const response = await fetchAllPaginated(request, endpoints.sales.masters.listAll());
       const salesMasters = response.data || [];
+      
+      const [customersResponse] = await Promise.all([
+        fetchAllPaginated(request, endpoints.customers.listAll())
+      ]);
+      const customers = customersResponse.data || [];
       
       const enrichedData = await Promise.all(
         salesMasters.map(async (sale: any) => {
           try {
-            const [customerRes, salesDetailsRes] = await Promise.all([
-              request('/api/customers?pagination[pageSize]=1000').then(res => 
-                res.data?.find((c: any) => c.id == sale.cid)
-              ),
-              request(`/api/sales?filters[invoice_id][$eq]=${sale.invoice}`)
-            ]);
+            const customer = customers.find((c: any) => c.id == sale.cid);
+            const salesDetailsRes = await request(`/api/sales?filters[invoice_id][$eq]=${sale.invoice}`);
             
             return {
               ...sale,
-              customer: customerRes || { name: 'Unknown', phone: '', address: '', gstin: '', aadhar: '' },
+              customer: customer || { name: 'Unknown', phone: '', address: '', gstin: '', aadhar: '' },
               salesDetails: salesDetailsRes?.data || []
             };
           } catch (err) {

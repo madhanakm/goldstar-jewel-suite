@@ -75,12 +75,12 @@ export class InvoiceService {
       
       return `
       <tr>
-        <td style="border-right: 1px solid #000; padding: 2px; font-size: 12px;">${index + 1}</td>
-        <td style="border-right: 1px solid #000; padding: 2px; text-align: left; font-size: 12px;" colspan="5">${item.itemName} (${item.purity || '-'})</td>
-        <td style="border-right: 1px solid #000; padding: 2px; font-size: 12px;">${item.quantity}</td>
-        <td style="border-right: 1px solid #000; padding: 2px; font-size: 12px;">${weightDisplay}</td>
-        <td style="border-right: 1px solid #000; padding: 2px; font-size: 12px;">${item.discountAmount ? '₹' + item.discountAmount.toFixed(2) : '-'}</td>
-        <td style="border-left: 1px solid #000; padding: 2px; font-size: 12px;">₹${item.total.toLocaleString()}</td>
+        <td style="border-right: 1px solid #000; padding: 2px; font-size: 14px;">${index + 1}</td>
+        <td style="border-right: 1px solid #000; padding: 2px; text-align: left; font-size: 14px;" colspan="5">${item.itemName} (${item.purity || '-'})</td>
+        <td style="border-right: 1px solid #000; padding: 2px; font-size: 14px;">${item.quantity}</td>
+        <td style="border-right: 1px solid #000; padding: 2px; font-size: 14px;">${weightDisplay}</td>
+        <td style="border-right: 1px solid #000; padding: 2px; font-size: 14px;">${item.discountAmount ? '₹' + item.discountAmount.toFixed(2) : '-'}</td>
+        <td style="border-left: 1px solid #000; padding: 2px; font-size: 14px;">₹${item.total.toLocaleString()}</td>
       </tr>
       `;
     }).join('');
@@ -90,7 +90,7 @@ export class InvoiceService {
     const emptyRowsCount = Math.max(0, maxRows - template.items.length);
     const emptyRowsHTML = Array(emptyRowsCount).fill(0).map(() => `
       <tr>
-        <td style="border-right: 1px solid #000; padding: 2px; font-size: 12px;">&nbsp;</td>
+        <td style="border-right: 1px solid #000; padding: 2px; font-size: 14px;">&nbsp;</td>
         <td style="border-right: 1px solid #000; padding: 2px;" colspan="5">&nbsp;</td>
         <td style="border-right: 1px solid #000; padding: 2px;">&nbsp;</td>
         <td style="border-right: 1px solid #000; padding: 2px;">&nbsp;</td>
@@ -149,35 +149,35 @@ export class InvoiceService {
                 <td style="text-align: left; border-bottom: 1px solid #000; padding: 2px; font-size: 12px; width: 50%;" colspan="5"><strong>Customer GSTIN:</strong> ${template.customerGstin}</td>
             </tr>
             <tr style="font-weight: bold; background-color: #f5f5f5;">
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%; font-size: 12px; padding: 2px;">S. No</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 50%; font-size: 12px; padding: 2px;" colspan="5">Description ( HSN Code - 7113 )</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%; font-size: 12px; padding: 2px;">QTY</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%; font-size: 12px; padding: 2px;">Weight</td>
-                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%; font-size: 12px; padding: 2px;">Disc Amt</td>
-                <td style="border-left: 1px solid #000; border-bottom: 1px solid #000; width: 10%; font-size: 12px; padding: 2px;">Amount</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%; font-size: 14px; padding: 2px;">S. No</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 50%; font-size: 14px; padding: 2px;" colspan="5">Description ( HSN Code - 7113 )</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 8%; font-size: 14px; padding: 2px;">QTY</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%; font-size: 14px; padding: 2px;">Weight</td>
+                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; width: 12%; font-size: 14px; padding: 2px;">Disc Amt</td>
+                <td style="border-left: 1px solid #000; border-bottom: 1px solid #000; width: 10%; font-size: 14px; padding: 2px;">Amount</td>
             </tr>
             ${itemsHTML}
             ${emptyRowsHTML}
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 2px; font-weight: bold; font-size: 11px; width: 80%;" rowspan="5" colspan="8"><strong>Amount in Words:</strong> ${template.amountInWords}</td>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 11px; text-align: right; width: 12%;">Sub Total:</td>
-                <td style="border-top: 1px solid #000; padding: 2px; font-size: 11px; text-align: right; width: 8%;">₹${invoice.subtotal.toLocaleString()}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; text-align: left; padding: 2px; font-weight: bold; font-size: 13px; width: 80%;" rowspan="5" colspan="8"><strong>Amount in Words:</strong> ${template.amountInWords}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 13px; text-align: right; width: 12%;">Sub Total:</td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 13px; text-align: right; width: 8%;">₹${invoice.subtotal.toLocaleString()}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 11px; text-align: right; white-space: nowrap;">SGST 1.5%:</td>
-                <td style="border-top: 1px solid #000; padding: 2px; font-size: 11px; text-align: right;">₹${template.sgst.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 13px; text-align: right; white-space: nowrap;">SGST 1.5%:</td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 13px; text-align: right;">₹${template.sgst.toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 11px; text-align: right; white-space: nowrap;">CGST 1.5%:</td>
-                <td style="border-top: 1px solid #000; padding: 2px; font-size: 11px; text-align: right;">₹${template.cgst.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 13px; text-align: right; white-space: nowrap;">CGST 1.5%:</td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 13px; text-align: right;">₹${template.cgst.toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 11px; text-align: right;">Round Off:</td>
-                <td style="border-top: 1px solid #000; padding: 2px; font-size: 11px; text-align: right;">₹${(template.roundoff || 0).toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-size: 13px; text-align: right;">Round Off:</td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 13px; text-align: right;">₹${(template.roundoff || 0).toFixed(2)}</td>
             </tr>
             <tr>
-                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-weight: bold; font-size: 12px; text-align: right;"><strong>Total:</strong></td>
-                <td style="border-top: 1px solid #000; padding: 2px; font-size: 12px; text-align: right; font-weight: bold;">₹${template.total.toFixed(2)}</td>
+                <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 2px; font-weight: bold; font-size: 14px; text-align: right;"><strong>Total:</strong></td>
+                <td style="border-top: 1px solid #000; padding: 2px; font-size: 14px; text-align: right; font-weight: bold;">₹${template.total.toFixed(2)}</td>
             </tr>
             <tr>
                 <td style="border-top: 1px solid #000; width: 50%;" colspan="5">Weight & Pieces Verified Found O.K</td>

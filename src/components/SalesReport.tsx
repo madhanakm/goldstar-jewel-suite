@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { TrendingUp, LogOut, Download, Calendar, DollarSign, ShoppingCart, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -52,23 +52,24 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
 
   const loadSalesData = async () => {
     try {
-      const response = await request(endpoints.sales.masters.list(1, 1000));
-      const salesMasters = response.data || response || [];
+      const response = await fetchAllPaginated(request, endpoints.sales.masters.listAll());
+      const salesMasters = response.data || [];
       
       // Fetch customer and product details for each sale
+      const [customersRes] = await Promise.all([
+        fetchAllPaginated(request, endpoints.customers.listAll())
+      ]);
+      const customers = customersRes.data || [];
+      
       const enrichedData = await Promise.all(
         salesMasters.map(async (sale: any) => {
           try {
-            const [customerRes, salesDetailsRes] = await Promise.all([
-              request(endpoints.customers.list()).then(res => 
-                res.data?.find((c: any) => c.id == sale.cid)
-              ),
-              request(endpoints.sales.details.list(sale.invoice))
-            ]);
+            const customer = customers.find((c: any) => c.id == sale.cid);
+            const salesDetailsRes = await request(endpoints.sales.details.list(sale.invoice));
             
             return {
               ...sale,
-              customerName: customerRes?.name || customerRes?.customername || 'Unknown',
+              customerName: customer?.name || customer?.customername || 'Unknown',
               salesDetails: salesDetailsRes?.data || []
             };
           } catch (err) {
@@ -83,7 +84,6 @@ export const SalesReport = ({ onNavigate, onLogout }: SalesReportProps) => {
       );
       
       setSalesData(enrichedData);
-      // Don't set filtered data here, let useEffect handle current date filtering
     } catch (error) {
       toast({
         title: "❌ Error",

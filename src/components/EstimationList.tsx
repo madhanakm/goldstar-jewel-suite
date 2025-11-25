@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, DataGrid } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { Calculator, Printer, LogOut, Calendar, ShoppingCart, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -34,22 +34,23 @@ export const EstimationList = ({ onNavigate, onLogout }: EstimationListProps) =>
 
   const loadEstimationData = async () => {
     try {
-      const response = await request('/api/estimation-masters?pagination[pageSize]=1000');
+      const response = await fetchAllPaginated(request, endpoints.estimation.masters.listAll());
       const estimationMasters = response.data || [];
+      
+      const [customersResponse] = await Promise.all([
+        fetchAllPaginated(request, endpoints.customers.listAll())
+      ]);
+      const customers = customersResponse.data || [];
       
       const enrichedData = await Promise.all(
         estimationMasters.map(async (estimation: any) => {
           try {
-            const [customerRes, estimationDetailsRes] = await Promise.all([
-              request('/api/customers?pagination[pageSize]=1000').then(res => 
-                res.data?.find((c: any) => c.id == estimation.cid)
-              ),
-              request(`/api/estimation-details?filters[estimation_id][$eq]=${estimation.estimation_number}`)
-            ]);
+            const customer = customers.find((c: any) => c.id == estimation.cid);
+            const estimationDetailsRes = await request(`/api/estimation-details?filters[estimation_id][$eq]=${estimation.estimation_number}`);
             
             return {
               ...estimation,
-              customer: customerRes || { name: 'Unknown', phone: '', address: '', gstin: '', aadhar: '' },
+              customer: customer || { name: 'Unknown', phone: '', address: '', gstin: '', aadhar: '' },
               estimationDetails: estimationDetailsRes?.data || []
             };
           } catch (err) {

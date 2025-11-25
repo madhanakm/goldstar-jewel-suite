@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Separator } from "@/components/ui/separator";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints, PageProps } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated, PageProps } from "@/shared";
 import { QrCode, Sparkles, Eye, Check, RefreshCw, Printer, AlertCircle, Package, LogOut, List, Download, Edit, Trash2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import JsBarcode from "jsbarcode";
@@ -198,7 +198,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const loadGeneratedBarcodes = async () => {
     try {
-      const response = await request(endpoints.barcode.listBarcodes());
+      const response = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       const barcodes = response.data || [];
       
       // Handle both Strapi v4 format (attributes) and direct format
@@ -219,20 +219,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const loadSalesData = async () => {
     try {
-      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
-      const salesMasters = salesMastersResponse.data || [];
-      
-      const allSalesDetails = [];
-      for (const master of salesMasters) {
-        try {
-          const masterAttrs = master.attributes || master;
-          const detailsResponse = await request(endpoints.sales.details.list(masterAttrs.invoice));
-          const details = detailsResponse.data || [];
-          allSalesDetails.push(...details);
-        } catch (error) {
-          console.error(`Failed to load details for invoice ${masterAttrs.invoice}`);
-        }
-      }
+      const salesDetailsResponse = await fetchAllPaginated(request, endpoints.sales.details.listAll());
+      const allSalesDetails = salesDetailsResponse.data || [];
       
       setSalesData(allSalesDetails);
     } catch (error) {

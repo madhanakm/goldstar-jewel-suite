@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints, PageProps } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated, PageProps } from "@/shared";
 import { FileText, Package, Calendar, Printer, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,15 +36,15 @@ export const TrayReport = ({ onNavigate }: TrayReportProps) => {
     setLoading(true);
     try {
       // Load all trays
-      const traysResponse = await request(endpoints.trays.list());
+      const traysResponse = await fetchAllPaginated(request, endpoints.trays.listAll());
       const allTrays = traysResponse.data || [];
 
       // Load all products
-      const productsResponse = await request(endpoints.barcode.listBarcodes());
+      const productsResponse = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       const allProducts = productsResponse.data || [];
 
       // Load sales data for selected date only
-      const salesMastersResponse = await request(endpoints.sales.masters.list(1, 1000));
+      const salesMastersResponse = await fetchAllPaginated(request, endpoints.sales.masters.listAll());
       const salesMasters = salesMastersResponse.data || [];
       
       // Filter sales masters by selected date
