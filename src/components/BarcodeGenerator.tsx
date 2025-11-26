@@ -375,8 +375,10 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       
-      // Shift content left to add 20mm right margin (20mm ≈ 57px at 72dpi)
-      const centerX = (canvas.width - 57) / 2;
+      // Shift content left to add 25mm right margin (25mm ≈ 71px at 72dpi)
+      const centerX = (canvas.width - 71) / 2;
+      // Add 5mm top margin (5mm ≈ 14px at 72dpi)
+      const topMargin = 14;
       
       // Truncate product name if too long
       const maxProductLength = 22;
@@ -386,24 +388,24 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       if (product.staticProduct) {
         // Fixed price product - show product name only
         ctx.font = 'bold 16px Arial';
-        ctx.fillText(productName, centerX, 15);
+        ctx.fillText(productName, centerX, 15 + topMargin);
         ctx.font = 'bold 14px Arial';
-        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 28);
+        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 28 + topMargin);
       } else {
         // Weight-based product - show product name and touch
         ctx.font = 'bold 14px Arial';
-        ctx.fillText(`${productName} - ${product.touch}`, centerX, 13);
+        ctx.fillText(`${productName} - ${product.touch}`, centerX, 13 + topMargin);
         ctx.font = 'bold 12px Arial';
-        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 25);
+        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 25 + topMargin);
       }
       
       // Draw barcode with minimal left margin
       const x = centerX - (tempCanvas.width / 2);
-      ctx.drawImage(tempCanvas, x, 32);
+      ctx.drawImage(tempCanvas, x, 32 + topMargin);
       
       // Add code below barcode
       ctx.font = 'bold 16px Arial';
-      ctx.fillText(product.code, centerX, 120);
+      ctx.fillText(product.code, centerX, 120 + topMargin);
     }
     
     return canvas;
