@@ -373,31 +373,36 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       
       // Add product details above barcode
       ctx.fillStyle = 'black';
-      ctx.font = 'bold 16px Arial';
       ctx.textAlign = 'center';
-      ctx.letterSpacing = '1px';
       
       const centerX = canvas.width / 2;
       
+      // Truncate product name if too long
+      const maxProductLength = 20;
+      const productName = product.product.length > maxProductLength ? 
+        product.product.substring(0, maxProductLength) + '...' : product.product;
+      
       if (product.staticProduct) {
-        // Fixed price product - show product name, weight and qty only
-        ctx.fillText(`${product.product}`, centerX, 20);
+        // Fixed price product - show product name only
         ctx.font = 'bold 14px Arial';
-        ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 40);
+        ctx.fillText(productName, centerX, 20);
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 35);
       } else {
-        // Weight-based product - show all details
-        ctx.fillText(`${product.product} - ${product.touch}`, centerX, 20);
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText(`Weight: ${product.weight}g • Qty: ${product.qty}`, centerX, 40);
+        // Weight-based product - show product name and touch
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText(`${productName} - ${product.touch}`, centerX, 18);
+        ctx.font = 'bold 11px Arial';
+        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 32);
       }
       
       // Draw barcode centered
       const x = (canvas.width - tempCanvas.width) / 2;
-      ctx.drawImage(tempCanvas, x, 45);
+      ctx.drawImage(tempCanvas, x, 40);
       
       // Add code below barcode with some space
-      ctx.font = 'bold 16px Arial';
-      ctx.fillText(product.code, centerX, 125);
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText(product.code, centerX, 130);
     }
     
     return canvas;
