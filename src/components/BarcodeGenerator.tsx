@@ -457,22 +457,24 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const handleRectanglePrint = () => {
     if (barcodeCanvasRef.current) {
-      // Create smaller canvas for rectangle format
+      // Create high-resolution canvas for rectangle format
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 189; // 50mm at 96dpi
-      canvas.height = 94;  // 25mm at 96dpi
+      const scale = 3; // 3x resolution for better quality
+      canvas.width = 189 * scale; // 50mm at high DPI
+      canvas.height = 94 * scale;  // 25mm at high DPI
+      ctx.scale(scale, scale);
       
       if (ctx) {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Generate smaller barcode
+        // Generate high-quality barcode
         const tempCanvas = document.createElement('canvas');
         JsBarcode(tempCanvas, formData.code, {
           format: 'CODE128',
-          width: 1.5,
-          height: 40,
+          width: 2,
+          height: 50,
           displayValue: false,
           margin: 0
         });
@@ -482,22 +484,22 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
         const centerX = canvas.width / 2;
         
         // Product name
-        ctx.font = 'bold 10px Arial';
+        ctx.font = 'bold 12px Arial';
         const productName = formData.product.length > 18 ? 
           formData.product.substring(0, 18) + '...' : formData.product;
-        ctx.fillText(productName, centerX, 12);
+        ctx.fillText(productName, centerX / scale, 12);
         
         // Weight and qty
-        ctx.font = 'bold 8px Arial';
-        ctx.fillText(`${formData.weight}g • Qty:${formData.qty}`, centerX, 24);
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText(`${formData.weight}g • Qty:${formData.qty}`, centerX / scale, 24);
         
         // Barcode
-        const x = (canvas.width - tempCanvas.width) / 2;
+        const x = (canvas.width / scale - tempCanvas.width) / 2;
         ctx.drawImage(tempCanvas, x, 28);
         
         // Code
-        ctx.font = 'bold 9px Arial';
-        ctx.fillText(formData.code, centerX, 85);
+        ctx.font = 'bold 11px Arial';
+        ctx.fillText(formData.code, centerX / scale, 85);
       }
       
       const printWindow = window.open('', '_blank');
@@ -1239,22 +1241,24 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                 <Printer className="w-3 h-3" />
                               </Button>
                               <Button size="sm" variant="default" onClick={() => {
-                                // Create smaller canvas for rectangle format
+                                // Create high-resolution canvas for rectangle format
                                 const canvas = document.createElement('canvas');
                                 const ctx = canvas.getContext('2d');
-                                canvas.width = 189; // 50mm at 96dpi
-                                canvas.height = 94;  // 25mm at 96dpi
+                                const scale = 3; // 3x resolution for better quality
+                                canvas.width = 189 * scale; // 50mm at high DPI
+                                canvas.height = 94 * scale;  // 25mm at high DPI
+                                ctx.scale(scale, scale);
                                 
                                 if (ctx) {
                                   ctx.fillStyle = 'white';
                                   ctx.fillRect(0, 0, canvas.width, canvas.height);
                                   
-                                  // Generate smaller barcode
+                                  // Generate high-quality barcode
                                   const tempCanvas = document.createElement('canvas');
                                   JsBarcode(tempCanvas, barcode.code, {
                                     format: 'CODE128',
-                                    width: 1.5,
-                                    height: 40,
+                                    width: 2,
+                                    height: 50,
                                     displayValue: false,
                                     margin: 0
                                   });
@@ -1264,22 +1268,22 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                   const centerX = canvas.width / 2;
                                   
                                   // Product name
-                                  ctx.font = 'bold 10px Arial';
+                                  ctx.font = 'bold 12px Arial';
                                   const productName = barcode.product.length > 18 ? 
                                     barcode.product.substring(0, 18) + '...' : barcode.product;
-                                  ctx.fillText(productName, centerX, 12);
+                                  ctx.fillText(productName, centerX / scale, 12);
                                   
                                   // Weight and qty
-                                  ctx.font = 'bold 8px Arial';
-                                  ctx.fillText(`${barcode.weight}g • Qty:${barcode.qty}`, centerX, 24);
+                                  ctx.font = 'bold 10px Arial';
+                                  ctx.fillText(`${barcode.weight}g • Qty:${barcode.qty}`, centerX / scale, 24);
                                   
                                   // Barcode
-                                  const x = (canvas.width - tempCanvas.width) / 2;
+                                  const x = (canvas.width / scale - tempCanvas.width) / 2;
                                   ctx.drawImage(tempCanvas, x, 28);
                                   
                                   // Code
-                                  ctx.font = 'bold 9px Arial';
-                                  ctx.fillText(barcode.code, centerX, 85);
+                                  ctx.font = 'bold 11px Arial';
+                                  ctx.fillText(barcode.code, centerX / scale, 85);
                                 }
                                 const printWindow = window.open('', '_blank');
                                 if (printWindow) {
@@ -1452,22 +1456,24 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         <Printer className="w-3 h-3" />
                       </Button>
                       <Button size="sm" variant="default" onClick={() => {
-                        // Create smaller canvas for rectangle format
+                        // Create high-resolution canvas for rectangle format
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        canvas.width = 189; // 50mm at 96dpi
-                        canvas.height = 94;  // 25mm at 96dpi
+                        const scale = 3; // 3x resolution for better quality
+                        canvas.width = 189 * scale; // 50mm at high DPI
+                        canvas.height = 94 * scale;  // 25mm at high DPI
+                        ctx.scale(scale, scale);
                         
                         if (ctx) {
                           ctx.fillStyle = 'white';
                           ctx.fillRect(0, 0, canvas.width, canvas.height);
                           
-                          // Generate smaller barcode
+                          // Generate high-quality barcode
                           const tempCanvas = document.createElement('canvas');
                           JsBarcode(tempCanvas, barcode.code, {
                             format: 'CODE128',
-                            width: 1.5,
-                            height: 40,
+                            width: 2,
+                            height: 50,
                             displayValue: false,
                             margin: 0
                           });
@@ -1477,22 +1483,22 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                           const centerX = canvas.width / 2;
                           
                           // Product name
-                          ctx.font = 'bold 10px Arial';
+                          ctx.font = 'bold 12px Arial';
                           const productName = barcode.product.length > 18 ? 
                             barcode.product.substring(0, 18) + '...' : barcode.product;
-                          ctx.fillText(productName, centerX, 12);
+                          ctx.fillText(productName, centerX / scale, 12);
                           
                           // Weight and qty
-                          ctx.font = 'bold 8px Arial';
-                          ctx.fillText(`${barcode.weight}g • Qty:${barcode.qty}`, centerX, 24);
+                          ctx.font = 'bold 10px Arial';
+                          ctx.fillText(`${barcode.weight}g • Qty:${barcode.qty}`, centerX / scale, 24);
                           
                           // Barcode
-                          const x = (canvas.width - tempCanvas.width) / 2;
+                          const x = (canvas.width / scale - tempCanvas.width) / 2;
                           ctx.drawImage(tempCanvas, x, 28);
                           
                           // Code
-                          ctx.font = 'bold 9px Arial';
-                          ctx.fillText(barcode.code, centerX, 85);
+                          ctx.font = 'bold 11px Arial';
+                          ctx.fillText(barcode.code, centerX / scale, 85);
                         }
                         const printWindow = window.open('', '_blank');
                         if (printWindow) {
