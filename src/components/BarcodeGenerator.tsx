@@ -375,10 +375,10 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       
-      // Shift content left to add 30mm right margin (30mm ≈ 85px at 72dpi)
-      const centerX = (canvas.width - 85) / 2;
-      // Add 5mm top margin (5mm ≈ 14px at 72dpi)
-      const topMargin = 14;
+      // Shift content left to add 35mm right margin (35mm ≈ 99px at 72dpi)
+      const centerX = (canvas.width - 99) / 2;
+      // Add 7mm top margin (7mm ≈ 20px at 72dpi)
+      const topMargin = 20;
       
       // Truncate product name if too long
       const maxProductLength = 22;
