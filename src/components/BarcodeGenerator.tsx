@@ -375,10 +375,10 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       
-      // Shift content left to add 35mm right margin (35mm ≈ 99px at 72dpi)
-      const centerX = (canvas.width - 99) / 2;
-      // Add 7mm top margin (7mm ≈ 20px at 72dpi)
-      const topMargin = 20;
+      // Shift content left to add 25mm right margin (25mm ≈ 71px at 72dpi)
+      const centerX = (canvas.width - 71) / 2;
+      // Add 5mm top margin (5mm ≈ 14px at 72dpi)
+      const topMargin = 14;
       
       // Truncate product name if too long
       const maxProductLength = 22;
@@ -466,32 +466,35 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
               <title>Rectangle Barcode</title>
               <style>
                 @page {
-                  size: 50mm 25mm;
+                  size: 50mm 30mm;
                   margin: 0;
                 }
-                body {
+                * {
                   margin: 0;
                   padding: 0;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
+                  box-sizing: border-box;
+                }
+                html, body {
+                  margin: 0;
+                  padding: 0;
                   width: 50mm;
-                  height: 25mm;
+                  height: 30mm;
+                  overflow: hidden;
                 }
                 img {
-                  max-width: 50mm;
-                  max-height: 25mm;
+                  width: 50mm;
+                  height: 30mm;
                   object-fit: contain;
+                  display: block;
                 }
               </style>
             </head>
             <body>
-              <img src="${canvas.toDataURL()}" />
+              <img src="${canvas.toDataURL()}" onload="window.print();" />
             </body>
           </html>
         `);
         printWindow.document.close();
-        printWindow.print();
       }
     }
   };
@@ -1203,32 +1206,35 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                         <title>Rectangle Barcode</title>
                                         <style>
                                           @page {
-                                            size: 50mm 25mm;
+                                            size: 50mm 30mm;
                                             margin: 0;
                                           }
-                                          body {
+                                          * {
                                             margin: 0;
                                             padding: 0;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
+                                            box-sizing: border-box;
+                                          }
+                                          html, body {
+                                            margin: 0;
+                                            padding: 0;
                                             width: 50mm;
-                                            height: 25mm;
+                                            height: 30mm;
+                                            overflow: hidden;
                                           }
                                           img {
-                                            max-width: 50mm;
-                                            max-height: 25mm;
+                                            width: 50mm;
+                                            height: 30mm;
                                             object-fit: contain;
+                                            display: block;
                                           }
                                         </style>
                                       </head>
                                       <body>
-                                        <img src="${canvas.toDataURL()}" />
+                                        <img src="${canvas.toDataURL()}" onload="window.print();" />
                                       </body>
                                     </html>
                                   `);
                                   printWindow.document.close();
-                                  printWindow.print();
                                 }
                               }} title="Rectangle barcode (50mm x 25mm)">
                                 <Printer className="w-3 h-3" />
@@ -1372,32 +1378,35 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                 <title>Rectangle Barcode</title>
                                 <style>
                                   @page {
-                                    size: 50mm 25mm;
+                                    size: 50mm 30mm;
                                     margin: 0;
                                   }
-                                  body {
+                                  * {
                                     margin: 0;
                                     padding: 0;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
+                                    box-sizing: border-box;
+                                  }
+                                  html, body {
+                                    margin: 0;
+                                    padding: 0;
                                     width: 50mm;
-                                    height: 25mm;
+                                    height: 30mm;
+                                    overflow: hidden;
                                   }
                                   img {
-                                    max-width: 50mm;
-                                    max-height: 25mm;
+                                    width: 50mm;
+                                    height: 30mm;
                                     object-fit: contain;
+                                    display: block;
                                   }
                                 </style>
                               </head>
                               <body>
-                                <img src="${canvas.toDataURL()}" />
+                                <img src="${canvas.toDataURL()}" onload="window.print();" />
                               </body>
                             </html>
                           `);
                           printWindow.document.close();
-                          printWindow.print();
                         }
                       }} title="Rectangle barcode (50mm x 25mm)">
                         <Printer className="w-3 h-3" />
