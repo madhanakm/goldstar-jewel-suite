@@ -353,22 +353,20 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
   const generateBarcodeWithDetails = (product: any) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const scale = 3; // 3x resolution for better quality
-    canvas.width = 300 * scale;
-    canvas.height = 150 * scale;
-    ctx.scale(scale, scale);
+    canvas.width = 300;
+    canvas.height = 150;
     
     if (ctx) {
       // White background
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Generate high-quality barcode
+      // Generate barcode without display value
       const tempCanvas = document.createElement('canvas');
       JsBarcode(tempCanvas, product.code, {
         format: 'CODE128',
-        width: 2.5,
-        height: 75,
+        width: 2,
+        height: 70,
         displayValue: false,
         margin: 0
       });
@@ -378,7 +376,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.textAlign = 'center';
       
       // Shift content left to add 25mm right margin (25mm ≈ 71px at 72dpi)
-      const centerX = (canvas.width / scale - 71) / 2;
+      const centerX = (canvas.width - 71) / 2;
       // Add 5mm top margin (5mm ≈ 14px at 72dpi)
       const topMargin = 14;
       
