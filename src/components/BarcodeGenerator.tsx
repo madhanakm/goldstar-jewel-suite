@@ -375,8 +375,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       
-      // Shift content left to add 25mm right margin (25mm ≈ 71px at 72dpi)
-      const centerX = (canvas.width - 71) / 2;
+      // Shift content left to add 30mm right margin (30mm ≈ 85px at 72dpi)
+      const centerX = (canvas.width - 85) / 2;
       // Add 5mm top margin (5mm ≈ 14px at 72dpi)
       const topMargin = 14;
       
