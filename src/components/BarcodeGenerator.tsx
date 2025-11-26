@@ -366,9 +366,9 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       JsBarcode(tempCanvas, product.code, {
         format: 'CODE128',
         width: 2,
-        height: 75,
+        height: 70,
         displayValue: false,
-        margin: 2
+        margin: 0
       });
       
       // Add product details above barcode
@@ -378,31 +378,31 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       const centerX = canvas.width / 2;
       
       // Truncate product name if too long
-      const maxProductLength = 20;
+      const maxProductLength = 22;
       const productName = product.product.length > maxProductLength ? 
         product.product.substring(0, maxProductLength) + '...' : product.product;
       
       if (product.staticProduct) {
         // Fixed price product - show product name only
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText(productName, centerX, 20);
-        ctx.font = 'bold 12px Arial';
-        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 35);
+        ctx.font = 'bold 13px Arial';
+        ctx.fillText(productName, centerX, 15);
+        ctx.font = 'bold 11px Arial';
+        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 28);
       } else {
         // Weight-based product - show product name and touch
-        ctx.font = 'bold 12px Arial';
-        ctx.fillText(`${productName} - ${product.touch}`, centerX, 18);
         ctx.font = 'bold 11px Arial';
-        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 32);
+        ctx.fillText(`${productName} - ${product.touch}`, centerX, 13);
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText(`${product.weight}g • Qty:${product.qty}`, centerX, 25);
       }
       
-      // Draw barcode centered
+      // Draw barcode with minimal left margin
       const x = (canvas.width - tempCanvas.width) / 2;
-      ctx.drawImage(tempCanvas, x, 40);
+      ctx.drawImage(tempCanvas, x, 32);
       
-      // Add code below barcode with some space
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText(product.code, centerX, 130);
+      // Add code below barcode
+      ctx.font = 'bold 13px Arial';
+      ctx.fillText(product.code, centerX, 120);
     }
     
     return canvas;
