@@ -422,29 +422,32 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   size: 9cm 1.5cm;
                   margin: 0;
                 }
-                body {
+                * {
                   margin: 0;
                   padding: 0;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
+                  box-sizing: border-box;
+                }
+                html, body {
+                  margin: 0;
+                  padding: 0;
                   width: 9cm;
                   height: 1.5cm;
+                  overflow: hidden;
                 }
                 img {
-                  max-width: 9cm;
-                  max-height: 1.5cm;
+                  width: 9cm;
+                  height: 1.5cm;
                   object-fit: contain;
+                  display: block;
                 }
               </style>
             </head>
             <body>
-              <img src="${canvas.toDataURL()}" />
+              <img src="${canvas.toDataURL()}" onload="window.print();" />
             </body>
           </html>
         `);
         printWindow.document.close();
-        printWindow.print();
       }
     }
   };
@@ -1157,29 +1160,32 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                             size: 9cm 1.5cm;
                                             margin: 0;
                                           }
-                                          body {
+                                          * {
                                             margin: 0;
                                             padding: 0;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
+                                            box-sizing: border-box;
+                                          }
+                                          html, body {
+                                            margin: 0;
+                                            padding: 0;
                                             width: 9cm;
                                             height: 1.5cm;
+                                            overflow: hidden;
                                           }
                                           img {
-                                            max-width: 9cm;
-                                            max-height: 1.5cm;
+                                            width: 9cm;
+                                            height: 1.5cm;
                                             object-fit: contain;
+                                            display: block;
                                           }
                                         </style>
                                       </head>
                                       <body>
-                                        <img src="${canvas.toDataURL()}" />
+                                        <img src="${canvas.toDataURL()}" onload="window.print();" />
                                       </body>
                                     </html>
                                   `);
                                   printWindow.document.close();
-                                  printWindow.print();
                                 }
                               }} title="Fold type label (9cm x 1.5cm)">
                                 <Printer className="w-3 h-3" />
@@ -1323,29 +1329,32 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                     size: 9cm 1.5cm;
                                     margin: 0;
                                   }
-                                  body {
+                                  * {
                                     margin: 0;
                                     padding: 0;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
+                                    box-sizing: border-box;
+                                  }
+                                  html, body {
+                                    margin: 0;
+                                    padding: 0;
                                     width: 9cm;
                                     height: 1.5cm;
+                                    overflow: hidden;
                                   }
                                   img {
-                                    max-width: 9cm;
-                                    max-height: 1.5cm;
+                                    width: 9cm;
+                                    height: 1.5cm;
                                     object-fit: contain;
+                                    display: block;
                                   }
                                 </style>
                               </head>
                               <body>
-                                <img src="${canvas.toDataURL()}" />
+                                <img src="${canvas.toDataURL()}" onload="window.print();" />
                               </body>
                             </html>
                           `);
                           printWindow.document.close();
-                          printWindow.print();
                         }
                       }} title="Fold type label (9cm x 1.5cm)">
                         <Printer className="w-3 h-3" />

@@ -547,27 +547,31 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                   size: 9cm 1.5cm;
                   margin: 0;
                 }
-                body {
+                * {
                   margin: 0;
                   padding: 0;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
+                  box-sizing: border-box;
+                }
+                html, body {
+                  margin: 0;
+                  padding: 0;
                   width: 9cm;
                   height: 1.5cm;
+                  overflow: hidden;
                 }
                 img {
-                  max-width: 9cm;
-                  max-height: 1.5cm;
+                  width: 9cm;
+                  height: 1.5cm;
                   object-fit: contain;
+                  display: block;
                 }
               </style>
             </head>
             <body>
-              <img src="${B.toDataURL()}" />
+              <img src="${B.toDataURL()}" onload="window.print();" />
             </body>
           </html>
-        `),he.document.close(),he.print())}},td=()=>{if(Be.current){const B=On(o),he=window.open("","_blank");he&&(he.document.write(`
+        `),he.document.close())}},td=()=>{if(Be.current){const B=On(o),he=window.open("","_blank");he&&(he.document.write(`
           <html>
             <head>
               <title>Rectangle Barcode</title>
@@ -605,27 +609,31 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                                             size: 9cm 1.5cm;
                                             margin: 0;
                                           }
-                                          body {
+                                          * {
                                             margin: 0;
                                             padding: 0;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
+                                            box-sizing: border-box;
+                                          }
+                                          html, body {
+                                            margin: 0;
+                                            padding: 0;
                                             width: 9cm;
                                             height: 1.5cm;
+                                            overflow: hidden;
                                           }
                                           img {
-                                            max-width: 9cm;
-                                            max-height: 1.5cm;
+                                            width: 9cm;
+                                            height: 1.5cm;
                                             object-fit: contain;
+                                            display: block;
                                           }
                                         </style>
                                       </head>
                                       <body>
-                                        <img src="${Te.toDataURL()}" />
+                                        <img src="${Te.toDataURL()}" onload="window.print();" />
                                       </body>
                                     </html>
-                                  `),tt.document.close(),tt.print())},title:"Fold type label (9cm x 1.5cm)",children:e.jsx(un,{className:"w-3 h-3"})}),e.jsx(H,{size:"sm",variant:"default",onClick:()=>{const Te=On(B),tt=window.open("","_blank");tt&&(tt.document.write(`
+                                  `),tt.document.close())},title:"Fold type label (9cm x 1.5cm)",children:e.jsx(un,{className:"w-3 h-3"})}),e.jsx(H,{size:"sm",variant:"default",onClick:()=>{const Te=On(B),tt=window.open("","_blank");tt&&(tt.document.write(`
                                     <html>
                                       <head>
                                         <title>Rectangle Barcode</title>
@@ -663,27 +671,31 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                                     size: 9cm 1.5cm;
                                     margin: 0;
                                   }
-                                  body {
+                                  * {
                                     margin: 0;
                                     padding: 0;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
+                                    box-sizing: border-box;
+                                  }
+                                  html, body {
+                                    margin: 0;
+                                    padding: 0;
                                     width: 9cm;
                                     height: 1.5cm;
+                                    overflow: hidden;
                                   }
                                   img {
-                                    max-width: 9cm;
-                                    max-height: 1.5cm;
+                                    width: 9cm;
+                                    height: 1.5cm;
                                     object-fit: contain;
+                                    display: block;
                                   }
                                 </style>
                               </head>
                               <body>
-                                <img src="${he.toDataURL()}" />
+                                <img src="${he.toDataURL()}" onload="window.print();" />
                               </body>
                             </html>
-                          `),Te.document.close(),Te.print())},title:"Fold type label (9cm x 1.5cm)",children:e.jsx(un,{className:"w-3 h-3"})}),e.jsx(H,{size:"sm",variant:"default",onClick:()=>{const he=On(B),Te=window.open("","_blank");Te&&(Te.document.write(`
+                          `),Te.document.close())},title:"Fold type label (9cm x 1.5cm)",children:e.jsx(un,{className:"w-3 h-3"})}),e.jsx(H,{size:"sm",variant:"default",onClick:()=>{const he=On(B),Te=window.open("","_blank");Te&&(Te.document.write(`
                             <html>
                               <head>
                                 <title>Rectangle Barcode</title>
