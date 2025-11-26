@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection, GradientCard } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints, PageProps } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated, PageProps } from "@/shared";
 import { ShoppingCart, User, Plus, Trash2, LogOut, QrCode, FileText, Printer } from "lucide-react";
 import { InvoiceService } from "@/services/invoice";
 import { useToast } from "@/hooks/use-toast";
@@ -129,7 +129,7 @@ export const SalesEntry = ({ onNavigate, onLogout }: SalesEntryProps) => {
 
   const loadBarcodeProducts = async () => {
     try {
-      const response = await request(endpoints.barcode.listBarcodes());
+      const response = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       // Barcode products loaded successfully
       setBarcodeProducts(response.data || []);
     } catch (error) {

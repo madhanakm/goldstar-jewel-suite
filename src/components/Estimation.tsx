@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerAutocomplete } from "@/components/ui/customer-autocomplete";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Plus, Trash2 } from "lucide-react";
 import { EstimationService } from "@/services/estimation";
@@ -59,7 +59,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
 
   const loadBarcodeProducts = async () => {
     try {
-      const response = await request(endpoints.barcode.listBarcodes());
+      const response = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       setBarcodeProducts(response.data || []);
     } catch (error) {
       console.error("Failed to load barcode products");
