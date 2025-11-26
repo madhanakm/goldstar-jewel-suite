@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints, PageProps } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated, PageProps } from "@/shared";
 import { Package, Plus, Edit, Trash2, LogOut, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -45,7 +45,7 @@ export const ProductCategory = ({ onBack, onNavigate, onLogout }: ProductCategor
 
   const loadCategories = async () => {
     try {
-      const response = await request('/api/product-categories');
+      const response = await fetchAllPaginated(request, '/api/product-categories');
       setCategories(response.data || []);
     } catch (error) {
       toast({

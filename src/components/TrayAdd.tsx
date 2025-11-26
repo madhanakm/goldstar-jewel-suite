@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, FormField, FormSection } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints, PageProps } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated, PageProps } from "@/shared";
 import { Package, LogOut, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,7 +30,7 @@ export const TrayAdd = ({ onNavigate, onLogout }: TrayAddProps) => {
 
   const loadTrays = async () => {
     try {
-      const response = await request(endpoints.trays.list());
+      const response = await fetchAllPaginated(request, endpoints.trays.list());
       const trayList = response.data?.map((item: any) => ({
         id: item.id,
         trayno: item.attributes?.trayno || item.trayno

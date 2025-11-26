@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageLayout, PageContent, PageHeader, useSidebar, SidebarWrapper, ActionButton, GradientCard, FormField } from "@/components/common";
 import { sidebarConfig } from "@/lib/sidebarConfig";
-import { useApi, endpoints, PageProps } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated, PageProps } from "@/shared";
 import { Package, LogOut, Search, QrCode, ShoppingCart, Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,7 +56,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
 
   const loadAllTrays = async () => {
     try {
-      const response = await request(endpoints.trays.list());
+      const response = await fetchAllPaginated(request, endpoints.trays.list());
       setAllTrays(response.data || []);
     } catch (error) {
       console.error("Failed to load trays");
@@ -65,7 +65,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
 
   const loadTrayData = async () => {
     try {
-      const response = await request(endpoints.barcode.listBarcodes());
+      const response = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       console.log('Barcode data:', response.data);
       const products = response.data?.map((item: any) => {
         return {

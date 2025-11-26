@@ -179,7 +179,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const loadTrays = async () => {
     try {
-      const response = await request(endpoints.trays.list());
+      const response = await fetchAllPaginated(request, endpoints.trays.list());
       setTrays(response.data || []);
     } catch (error) {
       console.error("Failed to load trays");
@@ -188,7 +188,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const loadCategories = async () => {
     try {
-      const response = await request('/api/product-categories');
+      const response = await fetchAllPaginated(request, '/api/product-categories');
       setCategories(response.data || []);
     } catch (error) {
       console.error("Failed to load categories");

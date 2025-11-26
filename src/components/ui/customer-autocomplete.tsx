@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { User, Plus } from "lucide-react";
-import { useApi, endpoints } from "@/shared";
+import { useApi, endpoints, fetchAllPaginated } from "@/shared";
 
 interface Customer {
   id: number;
@@ -48,8 +48,13 @@ export const CustomerAutocomplete = ({
   const searchCustomers = async (searchTerm: string) => {
     setLoading(true);
     try {
-      const response = await request(`/api/customers?filters[name][$containsi]=${encodeURIComponent(searchTerm)}&pagination[pageSize]=10`);
-      const customers = response.data?.map((item: any) => ({
+      const allCustomers = await fetchAllPaginated(request, `/api/customers`);
+      const filteredCustomers = allCustomers.filter((item: any) => {
+        const name = item.attributes?.name || item.name || '';
+        return name.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+      
+      const customers = filteredCustomers.map((item: any) => ({
         id: item.id,
         name: item.attributes?.name || item.name,
         phone: item.attributes?.phone || item.phone,
@@ -57,7 +62,7 @@ export const CustomerAutocomplete = ({
         address: item.attributes?.address || item.address,
         aadhar: item.attributes?.aadhar || item.aadhar,
         gstin: item.attributes?.gstin || item.gstin
-      })) || [];
+      }));
       
       setSuggestions(customers);
       setShowSuggestions(true);
