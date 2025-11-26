@@ -577,8 +577,8 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
               <title>Rectangle Barcode</title>
               <style>
                 @page {
-                  size: 50mm 30mm;
-                  margin: 0;
+                  size: 50mm 25mm;
+                  margin: 0 !important;
                 }
                 * {
                   margin: 0;
@@ -589,12 +589,12 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                   margin: 0;
                   padding: 0;
                   width: 50mm;
-                  height: 30mm;
+                  height: 25mm;
                   overflow: hidden;
                 }
                 img {
                   width: 50mm;
-                  height: 30mm;
+                  height: 25mm;
                   object-fit: contain;
                   display: block;
                 }
@@ -643,8 +643,8 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                                         <title>Rectangle Barcode</title>
                                         <style>
                                           @page {
-                                            size: 50mm 30mm;
-                                            margin: 0;
+                                            size: 50mm 25mm;
+                                            margin: 0 !important;
                                           }
                                           * {
                                             margin: 0;
@@ -655,12 +655,12 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                                             margin: 0;
                                             padding: 0;
                                             width: 50mm;
-                                            height: 30mm;
+                                            height: 25mm;
                                             overflow: hidden;
                                           }
                                           img {
                                             width: 50mm;
-                                            height: 30mm;
+                                            height: 25mm;
                                             object-fit: contain;
                                             display: block;
                                           }
@@ -709,8 +709,8 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                                 <title>Rectangle Barcode</title>
                                 <style>
                                   @page {
-                                    size: 50mm 30mm;
-                                    margin: 0;
+                                    size: 50mm 25mm;
+                                    margin: 0 !important;
                                   }
                                   * {
                                     margin: 0;
@@ -721,12 +721,12 @@ For more information, see https://radix-ui.com/primitives/docs/components/${s.do
                                     margin: 0;
                                     padding: 0;
                                     width: 50mm;
-                                    height: 30mm;
+                                    height: 25mm;
                                     overflow: hidden;
                                   }
                                   img {
                                     width: 50mm;
-                                    height: 30mm;
+                                    height: 25mm;
                                     object-fit: contain;
                                     display: block;
                                   }

@@ -466,8 +466,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
               <title>Rectangle Barcode</title>
               <style>
                 @page {
-                  size: 50mm 30mm;
-                  margin: 0;
+                  size: 50mm 25mm;
+                  margin: 0 !important;
                 }
                 * {
                   margin: 0;
@@ -478,12 +478,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                   margin: 0;
                   padding: 0;
                   width: 50mm;
-                  height: 30mm;
+                  height: 25mm;
                   overflow: hidden;
                 }
                 img {
                   width: 50mm;
-                  height: 30mm;
+                  height: 25mm;
                   object-fit: contain;
                   display: block;
                 }
@@ -1206,8 +1206,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                         <title>Rectangle Barcode</title>
                                         <style>
                                           @page {
-                                            size: 50mm 30mm;
-                                            margin: 0;
+                                            size: 50mm 25mm;
+                                            margin: 0 !important;
                                           }
                                           * {
                                             margin: 0;
@@ -1218,12 +1218,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                             margin: 0;
                                             padding: 0;
                                             width: 50mm;
-                                            height: 30mm;
+                                            height: 25mm;
                                             overflow: hidden;
                                           }
                                           img {
                                             width: 50mm;
-                                            height: 30mm;
+                                            height: 25mm;
                                             object-fit: contain;
                                             display: block;
                                           }
@@ -1378,8 +1378,8 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                 <title>Rectangle Barcode</title>
                                 <style>
                                   @page {
-                                    size: 50mm 30mm;
-                                    margin: 0;
+                                    size: 50mm 25mm;
+                                    margin: 0 !important;
                                   }
                                   * {
                                     margin: 0;
@@ -1390,12 +1390,12 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                                     margin: 0;
                                     padding: 0;
                                     width: 50mm;
-                                    height: 30mm;
+                                    height: 25mm;
                                     overflow: hidden;
                                   }
                                   img {
                                     width: 50mm;
-                                    height: 30mm;
+                                    height: 25mm;
                                     object-fit: contain;
                                     display: block;
                                   }
