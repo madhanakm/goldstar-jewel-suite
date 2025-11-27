@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,16 +14,19 @@ interface ActionButtonProps {
   className?: string;
 }
 
-export const ActionButton = ({
-  children,
-  onClick,
-  variant = "primary",
-  size = "md",
-  icon: Icon,
-  loading = false,
-  disabled = false,
-  className
-}: ActionButtonProps) => {
+export const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>((
+  {
+    children,
+    onClick,
+    variant = "primary",
+    size = "md",
+    icon: Icon,
+    loading = false,
+    disabled = false,
+    className
+  },
+  ref
+) => {
   const variants = {
     default: "bg-gradient-to-r from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 text-slate-700 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95",
     primary: "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95",
@@ -44,6 +47,7 @@ export const ActionButton = ({
 
   return (
     <Button
+      ref={ref}
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
@@ -66,4 +70,6 @@ export const ActionButton = ({
       </span>
     </Button>
   );
-};
+});
+
+ActionButton.displayName = "ActionButton";

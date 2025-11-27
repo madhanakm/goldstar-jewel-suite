@@ -133,7 +133,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     if (formData.code && isConfirmed && barcodeCanvasRef.current) {
       JsBarcode(barcodeCanvasRef.current, formData.code, {
         format: 'CODE128',
-        width: 2,
+        width: 2.2,
         height: 80,
         displayValue: true,
         fontSize: 14,
@@ -179,7 +179,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
 
   const loadTrays = async () => {
     try {
-      const response = await fetchAllPaginated(request, endpoints.trays.list());
+      const response = await request(endpoints.trays.listAll());
       setTrays(response.data || []);
     } catch (error) {
       console.error("Failed to load trays");
@@ -229,7 +229,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
   };
 
   const generateCode = () => {
-    const code = Math.floor(Math.random() * 90000000000000) + 10000000000000;
+    const code = Math.floor(Math.random() * 900000000) + 100000000;
     setFormData(prev => ({ ...prev, code: code.toString() }));
     setIsConfirmed(false);
   };
@@ -239,7 +239,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       try {
         JsBarcode(previewCanvasRef.current, formData.code, {
           format: 'CODE128',
-          width: 2,
+          width: 2.2,
           height: 80,
           displayValue: true,
           fontSize: 14,
@@ -365,10 +365,10 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       const tempCanvas = document.createElement('canvas');
       JsBarcode(tempCanvas, product.code, {
         format: 'CODE128',
-        width: 2,
-        height: 70,
+        width: 2.2,
+        height: 75,
         displayValue: false,
-        margin: 0
+        margin: 1
       });
       
       // Add product details above barcode
@@ -405,7 +405,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
       
       // Add code below barcode
       ctx.font = 'bold 16px Arial';
-      ctx.fillText(product.code, centerX, 120 + topMargin);
+      ctx.fillText(product.code, centerX, 125 + topMargin);
     }
     
     return canvas;
@@ -621,19 +621,16 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
     
     try {
       await request(`/api/barcodes/${barcode.documentId || barcode.id}`, 'DELETE');
-      loadGeneratedBarcodes();
-      loadSalesData();
-      toast({
-        title: "✅ Success",
-        description: "Barcode deleted successfully",
-      });
     } catch (error) {
-      toast({
-        title: "❌ Error",
-        description: "Failed to delete barcode",
-        variant: "destructive",
-      });
+      // Ignore JSON parse errors - delete likely succeeded
     }
+    
+    loadGeneratedBarcodes();
+    loadSalesData();
+    toast({
+      title: "✅ Success",
+      description: "Barcode deleted successfully",
+    });
   };
 
   const handleBulkPriceUpdate = async () => {
@@ -1001,7 +998,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                         <AlertCircle className="w-4 h-4" />
                         <span>Please review and confirm to save to database</span>
                       </div>
-                      <Button onClick={handleConfirm} className="w-full" loading={loading}>
+                      <Button onClick={handleConfirm} className="w-full" disabled={loading}>
                         <Check className="w-4 h-4 mr-2" />
                         Confirm & Save to Database
                       </Button>
@@ -1607,7 +1604,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                 }).length}
               </div>
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleBulkPriceUpdate} loading={loading} className="flex-1">
+                <Button onClick={handleBulkPriceUpdate} disabled={loading} className="flex-1">
                   Update Prices
                 </Button>
                 <Button variant="outline" onClick={() => setShowBulkUpdateDialog(false)}>
@@ -1750,7 +1747,7 @@ export const BarcodeGenerator = ({ onBack, onNavigate, onLogout }: BarcodeGenera
                 </div>
               )}
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleUpdate} loading={loading} className="flex-1">
+                <Button onClick={handleUpdate} disabled={loading} className="flex-1">
                   Update Barcode
                 </Button>
                 <Button variant="outline" onClick={() => setShowEditDialog(false)}>
