@@ -120,7 +120,10 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   };
 
   const handleBarcodeSearch = async (barcode: string, id: string) => {
-    const foundProduct = barcodeProducts.find(p => p.code === barcode);
+    const foundProduct = barcodeProducts.find(p => {
+      const productCode = p.attributes?.code || p.code;
+      return productCode === barcode;
+    });
     
     if (foundProduct) {
       if (foundProduct.staticProduct) {

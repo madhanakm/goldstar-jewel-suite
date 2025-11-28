@@ -56,7 +56,7 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
 
   const loadAllTrays = async () => {
     try {
-      const response = await fetchAllPaginated(request, endpoints.trays.list());
+      const response = await request(endpoints.trays.listAll());
       setAllTrays(response.data || []);
     } catch (error) {
       console.error("Failed to load trays");
@@ -68,14 +68,15 @@ export const TrayManagement = ({ onNavigate, onLogout }: TrayManagementProps) =>
       const response = await fetchAllPaginated(request, endpoints.barcode.listBarcodes());
       console.log('Barcode data:', response.data);
       const products = response.data?.map((item: any) => {
+        const barcodeData = item.attributes || item;
         return {
           id: item.id,
-          product: item.product || '',
-          touch: item.touch || '',
-          weight: item.weight || '0',
-          qty: item.qty || '1',
-          code: item.code || '',
-          trayno: item.trayno || '',
+          product: barcodeData.product || '',
+          touch: barcodeData.touch || '',
+          weight: barcodeData.weight || '0',
+          qty: barcodeData.qty || '1',
+          code: barcodeData.code || '',
+          trayno: barcodeData.trayno || '',
           status: 'available' as const
         };
       }) || [];
