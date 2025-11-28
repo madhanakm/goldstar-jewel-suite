@@ -120,36 +120,35 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
   };
 
   const handleBarcodeSearch = async (barcode: string, id: string) => {
-    const foundProduct = barcodeProducts.find(p => {
-      const productCode = p.attributes?.code || p.code;
-      return productCode === barcode;
-    });
+    const foundProduct = barcodeProducts.find(p => p.code === barcode);
     
     if (foundProduct) {
-      if (foundProduct.staticProduct) {
+      const productData = foundProduct;
+      
+      if (productData.staticProduct) {
         // Fixed price product
-        const price = parseFloat(foundProduct.price) || 0;
+        const price = parseFloat(productData.price) || 0;
         
         setItems(items.map(item => 
           item.id === id ? {
             ...item,
-            description: foundProduct.product || '',
+            description: productData.product || '',
             weight: 0,
             purity: '',
             ratePerGram: price,
             makingChargesPercent: 0,
             discountPercent: 0,
             discountAmount: 0,
-            quantity: parseFloat(foundProduct.qty) || 1,
+            quantity: parseFloat(productData.qty) || 1,
             total: price,
             isFixedPrice: true
           } : item
         ));
       } else {
         // Weight-based product - use current silver rate
-        const weight = parseFloat(foundProduct.weight) || 0;
+        const weight = parseFloat(productData.weight) || 0;
         const rate = silverRate; // Use current loaded silver rate
-        const makingCharges = parseFloat(foundProduct.making_charges_or_wastages) || 0;
+        const makingCharges = parseFloat(productData.making_charges_or_wastages) || 0;
         const goldValue = weight * rate;
         const makingAmount = (goldValue * makingCharges) / 100;
         const total = goldValue + makingAmount;
@@ -157,14 +156,14 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
         setItems(items.map(item => 
           item.id === id ? {
             ...item,
-            description: foundProduct.product || '',
+            description: productData.product || '',
             weight: weight,
-            purity: foundProduct.touch || '',
+            purity: productData.touch || '',
             ratePerGram: rate,
             makingChargesPercent: makingCharges,
             discountPercent: 0,
             discountAmount: 0,
-            quantity: parseFloat(foundProduct.qty) || 1,
+            quantity: parseFloat(productData.qty) || 1,
             total: total,
             isFixedPrice: false
           } : item
@@ -577,7 +576,7 @@ export const Estimation = ({ onNavigate, onLogout }: EstimationProps) => {
                           updateItem(item.id, 'description', value);
                           
                           // Search for any numeric barcode
-                          if (value.length >= 10 && /^\d+$/.test(value)) {
+                          if (value.length >= 9 && /^\d+$/.test(value)) {
                             handleBarcodeSearch(value, item.id);
                           }
                         }}
